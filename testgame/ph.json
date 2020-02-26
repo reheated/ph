@@ -1,0 +1,9 @@
+{
+    "resources": "resources",
+    "static": "static",
+    "staticRoot": "staticRoot",
+    "build": "build",
+    "serveFolder": "juicefruit",
+    "bundleFilename": "game.dat",
+    "port": 8080
+}

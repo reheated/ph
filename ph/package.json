@@ -1,0 +1,19 @@
+{
+  "name": "ph",
+  "version": "0.1.0",
+  "description": "A game bundler for HTML5 games.",
+  "main": "ph.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "dependencies": {
+    "connect": "^3.7.0",
+    "serve-static": "^1.14.1"
+  },
+  "devDependencies": {
+    "@types/connect": "^3.4.33",
+    "@types/node": "^13.7.4",
+    "@types/serve-static": "^1.13.3"
+  }
+}

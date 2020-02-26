@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "none",
+        "sourceMap": true,
+        "strict": true,
+        "allowJs": true,
+        "outFile": "build/juicefruit/game.js"
+    },
+    "include": [
+        "src/**/*"
+    ]
+}

@@ -1,0 +1,34 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "pH: Watch Data",
+            "type": "shell",
+            "command": "node ${workspaceFolder:ph}/ph.js",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "group": "pH"
+            }
+        },
+        {
+            "label": "pH: Watch Source",
+            "type": "typescript",
+            "tsconfig": "tsconfig.json",
+            "option": "watch",
+            "problemMatcher": ["$tsc-watch"],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "group": "pH"
+            }
+        },
+        {
+            "label": "pH: Watch Source and Data",
+            "dependsOn": ["pH: Watch Data", "pH: Watch Source"],
+            "problemMatcher": ["$tsc-watch"],
+            "group": "build"
+        }
+    ]
+}
