@@ -8,6 +8,7 @@
         "outFile": "build/juicefruit/game.js"
     },
     "include": [
-        "src/**/*"
+        "../ph/lib/**/*",
+        "src/**.*"
     ]
 }

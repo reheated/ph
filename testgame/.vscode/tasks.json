@@ -13,7 +13,7 @@
             }
         },
         {
-            "label": "pH: Watch Source",
+            "label": "Watch Source",
             "type": "typescript",
             "tsconfig": "tsconfig.json",
             "option": "watch",
@@ -26,8 +26,8 @@
         },
         {
             "label": "pH: Watch Source and Data",
-            "dependsOn": ["pH: Watch Data", "pH: Watch Source"],
-            "problemMatcher": ["$tsc-watch"],
+            "dependsOn": ["pH: Watch Data", "Watch Source"],
+            "problemMatcher": [],
             "group": "build"
         }
     ]

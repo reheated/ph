@@ -98,6 +98,7 @@ class PHWatcher {
 
     public rebundle() {
         // Repackage all the resources
+        console.log("Rebundling");
 
         // Check the settings
         let failed = false;
@@ -182,6 +183,6 @@ class PHWatcher {
 
 }
 
+console.log('ph watcher starting');
 let phWatcher = new PHWatcher();
 phWatcher.start();
-console.log('ph watcher starting');
