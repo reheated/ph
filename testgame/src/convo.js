@@ -27,7 +27,7 @@
         // is first shown, and a bool representing whether it's been
         // shown yet.
         if(typeof(callback) === "undefined") callback = null;
-        var wrapped = (msg === null)? msg : wordWrapByChars(msg, 33);
+        var wrapped = (msg === null)? msg : PH.wordWrapByChars(msg, 33);
         convoQ.push([speaker, wrapped, callback, false]);
         
         if(convoQ.length === 1)
@@ -70,7 +70,7 @@
                     if(c[0] === null)
                     {
                         // no speaker - just draw text
-                        drawMultiLineText(ctx, c[1], l + 4, t + 4);
+                        mainFont.drawMultiLineText(ctx, c[1], l + 4, t + 4);
                     }
                     else
                     {
@@ -78,10 +78,10 @@
                         ctx.drawImage(resources.data[c[0]], l + 4, t + 4);
                         
                         // character name
-                        drawSpriteText(ctx, nameDict[c[0]], l + 28, t + 4);
+                        mainFont.drawText(ctx, nameDict[c[0]], l + 28, t + 4);
 
                         // message
-                        drawMultiLineText(ctx, c[1], l + 28, t + 20);
+                        mainFont.drawMultiLineText(ctx, c[1], l + 28, t + 20);
                     }
                 }
             }

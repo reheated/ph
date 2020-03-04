@@ -246,7 +246,7 @@
                 // if the count is more than 1, draw it
                 if(pc[1] > 1)
                 {
-                    drawSpriteText(ctx, pc[1].toString(), x + 10, y);
+                    mainFont.drawText(ctx, pc[1].toString(), x + 10, y);
                 }
             }
         }
@@ -275,7 +275,7 @@
 
     function drawInfoText(ctx)
     {
-        drawMultiLineText(ctx, infoTextLines, 164, 128);
+        mainFont.drawMultiLineText(ctx, infoTextLines, 164, 128);
     }
 
     function drawCalendar(ctx)
@@ -294,13 +294,13 @@
     {
         // Draw the farm plots
         drawBox(ctx, 0, 4, 4, 152, 104);
-        drawSpriteText(ctx, "Farm plots", 8, 8);
+        mainFont.drawText(ctx, "Farm plots", 8, 8);
 
         drawPlots(ctx);
 
         // Draw the calendar
         drawBox(ctx, 0, 4, 112, 152, 84);
-        drawSpriteText(ctx, "Calendar", 8, 116);
+        mainFont.drawText(ctx, "Calendar", 8, 116);
         drawCalendar(ctx);
 
         // Draw the cash display
@@ -308,18 +308,18 @@
         ctx.drawImage(resources.data.cash, 160, 4);
         var s = cash.toString();
         var sx = 248 - 7 * s.length;
-        drawSpriteText(ctx, s, sx, 8);
+        mainFont.drawText(ctx, s, sx, 8);
 
         // Draw the energy display
         drawBox(ctx, 0, 256, 4, 60, 16);
         ctx.drawImage(resources.data.energy, 256, 4);
         var s = energy.toString();
         var sx = 312 - 7 * s.length;
-        drawSpriteText(ctx, s, sx, 8);
+        mainFont.drawText(ctx, s, sx, 8);
 
         // Draw the upgrades box
         drawBox(ctx, 0, 160, 24, 156, 96);
-        drawSpriteText(ctx, "Upgrades", 164, 28);
+        mainFont.drawText(ctx, "Upgrades", 164, 28);
 
         // Draw the info box
         drawBox(ctx, 0, 160, 124, 156, 72);
@@ -329,19 +329,19 @@
         drawButtons(ctx);
 
         // Draw text on buttons
-        drawSpriteText(ctx, "Particles", 168, 44);
-        drawSpriteText(ctx, "Shake", 244, 44);
-        drawSpriteText(ctx, "Details", 168, 64);
-        drawSpriteText(ctx, "Sound", 244, 64);
-        drawSpriteText(ctx, "Juiciness", 168, 84);
-        drawSpriteText(ctx, "Seeds", 244, 84);
-        drawSpriteText(ctx, "Tractor", 168, 104);
-        drawSpriteText(ctx, "Scarecrow", 244, 104);
+        mainFont.drawText(ctx, "Particles", 168, 44);
+        mainFont.drawText(ctx, "Shake", 244, 44);
+        mainFont.drawText(ctx, "Details", 168, 64);
+        mainFont.drawText(ctx, "Sound", 244, 64);
+        mainFont.drawText(ctx, "Juiciness", 168, 84);
+        mainFont.drawText(ctx, "Seeds", 244, 84);
+        mainFont.drawText(ctx, "Tractor", 168, 104);
+        mainFont.drawText(ctx, "Scarecrow", 244, 104);
 
-        drawSpriteText(ctx, "Debt:", 104, 118);
-        drawSpriteText(ctx, "$" + DEBT.toString(), 104, 134);
-        drawSpriteText(ctx, "Pay", 104, 150);
-        drawSpriteText(ctx, "Sleep", 104, 172);
+        mainFont.drawText(ctx, "Debt:", 104, 118);
+        mainFont.drawText(ctx, "$" + DEBT.toString(), 104, 134);
+        mainFont.drawText(ctx, "Pay", 104, 150);
+        mainFont.drawText(ctx, "Sleep", 104, 172);
 
         // draw anything that's being dragged
         if(mouseDragPlot !== null && lastMousePos !== null)

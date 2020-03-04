@@ -16,21 +16,14 @@
     
     var GAME_WIDTH = 320;
     var GAME_HEIGHT = 200;
-    var CURSOR_RADIUS = 7;
-    var FONT_WIDTH = 7;
-    var FONT_HEIGHT = 9;
-    var FONT_UNDERSHOOT = 0;
-    var FONT_START_CHAR = 32;
 
-    var resources;
+    let resources = new PH.Resources();
     window.lastMousePos = null;
-    var musicStarted = false;
-    var playlist = [];
     var outGameCanvas = null;
     var outCtx = null
     var mainGameCanvas = null;
     var mainCtx = null;
-    var mainFont = null;
+    window.mainFont = null;
     var drawScale = null;
     var drawtlx = null;
     var drawtly = null;
@@ -41,49 +34,30 @@
     
     function handleWindowLoad()
     {
-        setTimeout(startGameLoad, 100);
-    }
-
-    function startGameLoad()
-    {
-        resources = new Resources();
-        mainGameCanvas = document.createElement('canvas');
-        mainGameCanvas.width = 320;
-        mainGameCanvas.height = 200;
+        mainGameCanvas = PH.createCanvas(GAME_WIDTH, GAME_HEIGHT);
         
         outGameCanvas = document.getElementById('outGameCanvas');
         
-        if(outGameCanvas !== null) {handlePageLoaded();}
-        else {setTimeout(startGameLoad, 1000); }
-    }
-    
-    function handlePageLoaded()
-    {
-        mainFont = new Image();
-        mainFont.onload = handleFontLoaded;
-        mainFont.src = "cellphone.png";
+        // Load a pixel font first, before the rest of the content,
+        // so we can display progress.
+        let fontImg = new Image();
+        fontImg.onload = handleFontLoaded;
+        fontImg.src = "cellphone.png";
+        mainFont = new PH.FixedWidthPixelFont(fontImg, 7, 9, 0, 32);
 
-        // set up canvas contexts
+        // Set up canvas contexts
         mainCtx = mainGameCanvas.getContext('2d');
         outCtx = outGameCanvas.getContext('2d');
     }
     
     function handleFontLoaded()
     {
+        // Load the main contents of the game.
         resources.reqPackage('game');
+        resources.get(handleDownloaded);
         
-        // start requesting file sizes, then download
-        resources.getAllFileSizes(handleGotFileSizes);
-        
+        // Start animation frames.
         requestAnimationFrame(frame);
-    }
-    
-    function handleGotFileSizes()
-    {
-        // we got the file sizes
-        
-        // download the actual files
-        resources.downloadAll(handleDownloaded);
     }
     
     function handleDownloaded()
@@ -137,12 +111,7 @@
 
         mainCtx.fillstyle = "#154617";
         mainCtx.fillRect(0, 0, 320, 200);
-        drawSpriteText(mainCtx, loadingString, 0, 0);
-    }
-    
-    function visitReheatedSite()
-    {
-        window.open("https://reheated.org/", '_blank');
+        mainFont.drawText(mainCtx, loadingString, 0, 0);
     }
     
     function drawCursor()
@@ -153,32 +122,6 @@
             var tly = lastMousePos[1];
             
             mainCtx.drawImage(resources.data.cursor, tlx, tly);
-        }
-    }
-    
-    window.drawSpriteText = function(ctx, txt, tlx, tly)
-    {
-        var curX = tlx;
-        var curY = tly;
-        var modX = Math.floor(mainFont.width / FONT_WIDTH);
-        var newLineCode = "\n".charCodeAt(0) - FONT_START_CHAR;
-        for(var k = 0; k < txt.length; k++)
-        {
-            var cCode = txt.charCodeAt(k) - FONT_START_CHAR;
-            if(cCode === newLineCode)
-            {
-                curX = tlx;
-                curY += FONT_HEIGHT;
-            }
-            else
-            {
-                var srcX = (cCode % modX) * FONT_WIDTH;
-                var srcY = Math.floor(cCode / modX) * FONT_HEIGHT;
-                
-                ctx.drawImage(mainFont, srcX, srcY, FONT_WIDTH, FONT_HEIGHT,
-                    curX, curY, FONT_WIDTH, FONT_HEIGHT);
-                curX += FONT_WIDTH - FONT_UNDERSHOOT;
-            }
         }
     }
     
@@ -194,7 +137,7 @@
     function drawCenteredSpriteText(ctx, txt, midx, topy)
     {
         var leftx = Math.floor(midx - txt.length * 3.5);
-        drawSpriteText(ctx, txt, leftx, topy);
+        mainFont.drawText(ctx, txt, leftx, topy);
     }
     
     function frame() {
@@ -224,7 +167,6 @@
             outGameCanvas.width = window.innerWidth;
             outGameCanvas.height = window.innerHeight;
             // output canvas should pixellate
-            outCtx.mozImageSmoothingEnabled = false;
             outCtx.msImageSmoothingEnabled = false;
             outCtx.imageSmoothingEnabled = false;
         }
@@ -251,7 +193,7 @@
         {
             drawBox(mainCtx, 0, 40, 60, 240, 80);
             mainCtx.drawImage(resources.data.title, 47, 70);
-            drawSpriteText(mainCtx, "Click to start", 111, 120);
+            mainFont.drawText(mainCtx, "Click to start", 111, 120);
         }
         else if(gameState.mode == MODE_GAMEOVER)
         {
@@ -392,56 +334,7 @@
         return result;
     }
     
-    window.wordWrapByChars = function(text, maxw)
-    {
-        // Word-wrap, with a fixed maximum number of characters per line.
-        // Useful for fixed width fonts.
-        var outList = [];
-        var cLine = '';
-        var rem = text;
-        while(rem != '')
-        {
-            // get the next word
-            var nextSpace = rem.indexOf(' ');
-            var nextWord;
-            if(nextSpace < 0)
-            {
-                nextWord = rem;
-                rem = '';
-            }
-            else
-            {
-                nextWord = rem.slice(0, nextSpace);
-                rem = rem.slice(nextSpace + 1);
-            }
-            // test if the line is OK
-            var trialLine = cLine;
-            if(trialLine !== '') trialLine += ' ';
-            trialLine += nextWord;
-            if(cLine === '' || trialLine.length < maxw)
-            {
-                cLine = trialLine;
-            }
-            else
-            {
-                outList.push(cLine);
-                cLine = nextWord;
-            }
-        }
-        if(cLine != '') outList.push(cLine);
-        return outList;
-    }
-
-    window.drawMultiLineText = function(ctx, lines, l, t)
-    {
-        for(var k = 0; k < lines.length; k++)
-        {
-            var y = t + k * 9;
-            drawSpriteText(ctx, lines[k], l, y);
-        }
-    }
-
-    window.onload = handleWindowLoad();
+    window.onload = handleWindowLoad;
     
     ///////
     // FARM
