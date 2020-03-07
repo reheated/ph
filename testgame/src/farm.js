@@ -156,14 +156,14 @@
 
     function updateMouseOverButton()
     {
-        if(lastMousePos === null)
+        if(canvasui.mouseX === null)
         {
             mouseOverButton = null;
             mouseDownOverButton = null;
             return;
         }
-        var x = lastMousePos[0];
-        var y = lastMousePos[1];
+        var x = canvasui.mouseX;
+        var y = canvasui.mouseY;
         for(var k = 0; k < buttons.length; k++)
         {
             var b = buttons[k];
@@ -188,14 +188,14 @@
 
     function updateMouseOverPlot()
     {
-        if(lastMousePos === null)
+        if(canvasui.mouseX === null)
         {
             mouseOverPlot = null;
             mouseDownOverPlot = null;
             return;
         }
-        var x = lastMousePos[0];
-        var y = lastMousePos[1];
+        var x = canvasui.mouseX;
+        var y = canvasui.mouseY;
         for(var i = 0; i < GRID_H; i++)
         {
             for(var j = 0; j < GRID_W; j++)
@@ -261,7 +261,7 @@
         for(var k = 0; k < splitLines.length; k++)
         {
             // word-wrap each line
-            var wrapped = wordWrapByChars(splitLines[k], INFO_TEXT_WIDTH);
+            var wrapped = PH.wordWrapByChars(splitLines[k], INFO_TEXT_WIDTH);
             for(var l = 0; l < wrapped.length; l++)
             {
                 infoTextLines.push(wrapped[l]);
@@ -344,13 +344,13 @@
         mainFont.drawText(ctx, "Sleep", 104, 172);
 
         // draw anything that's being dragged
-        if(mouseDragPlot !== null && lastMousePos !== null)
+        if(mouseDragPlot !== null && canvasui.mouseX !== null)
         {
             var pcList = plotContents[mouseDragPlot[0]][mouseDragPlot[1]];
             if(pcList.length !== 0)
             {
                 var pc = pcList[0];
-                ctx.drawImage(plotImageDict[pc[0]], lastMousePos[0] - 11, lastMousePos[1] - 11);
+                ctx.drawImage(plotImageDict[pc[0]], canvasui.mouseX - 11, canvasui.mouseY - 11);
             }
         }
 
@@ -507,7 +507,7 @@
 
         if(mouseDragPlot !== null)
         {
-            handleDragPlot(mouseDragPlot, lastMousePos);
+            handleDragPlot(mouseDragPlot, [canvasui.mouseX, canvasui.mouseY]);
         }
         mouseDragPlot = null;
     }

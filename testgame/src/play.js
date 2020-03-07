@@ -18,15 +18,11 @@
     var GAME_HEIGHT = 200;
 
     let resources = new PH.Resources();
-    window.lastMousePos = null;
     var outGameCanvas = null;
     var outCtx = null
     var mainGameCanvas = null;
     var mainCtx = null;
     window.mainFont = null;
-    var drawScale = null;
-    var drawtlx = null;
-    var drawtly = null;
     
     var gameState = {
         mode: MODE_LOADING,
@@ -37,6 +33,7 @@
         mainGameCanvas = PH.createCanvas(GAME_WIDTH, GAME_HEIGHT);
         
         outGameCanvas = document.getElementById('outGameCanvas');
+        window.canvasui = new PH.CanvasUI(outGameCanvas, mainGameCanvas);
         
         // Load a pixel font first, before the rest of the content,
         // so we can display progress.
@@ -66,7 +63,6 @@
         outGameCanvas.addEventListener('click', handleClick);
         outGameCanvas.addEventListener('dblclick', handleDoubleClick);
         outGameCanvas.addEventListener('contextmenu', handleClick);
-        outGameCanvas.addEventListener('mousemove', handleMouseMove);
         outGameCanvas.addEventListener('mousedown', handleMouseDown);
         outGameCanvas.addEventListener('mouseup', handleMouseUp);
 
@@ -116,12 +112,9 @@
     
     function drawCursor()
     {
-        if(lastMousePos !== null)
+        if(canvasui.mouseX !== null)
         {
-            var tlx = lastMousePos[0];
-            var tly = lastMousePos[1];
-            
-            mainCtx.drawImage(resources.data.cursor, tlx, tly);
+            mainCtx.drawImage(resources.data.cursor, canvasui.mouseX, canvasui.mouseY);
         }
     }
     
@@ -134,12 +127,6 @@
     var frameCount = 0;
     var lastFrameTime = null;
 
-    function drawCenteredSpriteText(ctx, txt, midx, topy)
-    {
-        var leftx = Math.floor(midx - txt.length * 3.5);
-        mainFont.drawText(ctx, txt, leftx, topy);
-    }
-    
     function frame() {
         // keeping track of framerate
         var t = curTime();
@@ -157,6 +144,7 @@
         var deltat = t - lastFrameTime;
         
         // Common graphics stuff
+        updateCursor();
 
         var windowWidth = window.innerWidth;
         var windowHeight = window.innerHeight;
@@ -170,13 +158,7 @@
             outCtx.msImageSmoothingEnabled = false;
             outCtx.imageSmoothingEnabled = false;
         }
-        drawScale = Math.min(windowWidth / GAME_WIDTH, windowHeight / GAME_HEIGHT);
-        drawScale = Math.floor(drawScale);
-        if(drawScale < 1) drawScale = 1;
-        
-        drawtlx = Math.floor((windowWidth - drawScale * GAME_WIDTH) / 2);
-        drawtly = Math.floor((windowHeight - drawScale * GAME_HEIGHT) / 2);
-        
+
         //mainCtx.resetTransform();
         mainCtx.setTransform(1, 0, 0, 1, 0, 0);
         mainCtx.fillStyle = "#154617";
@@ -198,10 +180,10 @@
         else if(gameState.mode == MODE_GAMEOVER)
         {
             drawBox(mainCtx, 0, 60, 60, 200, 80);
-            drawCenteredSpriteText(mainCtx, "The End", 160, 68);
-            drawCenteredSpriteText(mainCtx, "A Game by Michael Pauley", 160, 85);
-            drawCenteredSpriteText(mainCtx, "Made for Ludum Dare 45", 160, 102);
-            drawCenteredSpriteText(mainCtx, "Thanks for playing!", 160, 119);
+            mainFont.drawCenteredText(mainCtx, "The End", 160, 73);
+            mainFont.drawCenteredText(mainCtx, "A Game by Michael Pauley", 160, 90);
+            mainFont.drawCenteredText(mainCtx, "Made for Ludum Dare 45", 160, 107);
+            mainFont.drawCenteredText(mainCtx, "Thanks for playing!", 160, 124);
         }
         else if(gameState.mode == MODE_FARM)
         {
@@ -220,8 +202,7 @@
         drawCursor();
         
         // draw the main game canvas onto the out game canvas
-        outCtx.drawImage(mainGameCanvas, 0, 0, GAME_WIDTH, GAME_HEIGHT,
-            drawtlx, drawtly, GAME_WIDTH * drawScale, GAME_HEIGHT * drawScale);
+        PH.drawScaledCanvas(mainGameCanvas, outCtx);
         
         // request to call this function again the next frame
         requestAnimationFrame(frame);
@@ -255,26 +236,11 @@
         return false;
     }
     
-    function getGameCoordsFromClientCoords(x, y)
-    {
-        var rect = outGameCanvas.getBoundingClientRect();
-        var resX = Math.floor((x - rect.left - drawtlx) / drawScale);
-        var resY = Math.floor((y - rect.top - drawtly) / drawScale);
-        if(resX < 0 || resX >= GAME_WIDTH || resY < 0 || resY >= GAME_HEIGHT)
-        {
-            return null;
-        }
-        else
-        {
-            return [resX, resY];
-        }
-    }
-    
     function updateCursor()
     {
         // hide or show the default cursor
         var newStyle;
-        if(lastMousePos === null)
+        if(canvasui.mouseX === null)
         {
             newStyle = "";
         }
@@ -285,16 +251,6 @@
         outGameCanvas.style.cursor = newStyle;
     }
     
-    function handleMouseMove(e)
-    {
-        var coords = getGameCoordsFromClientCoords(e.clientX, e.clientY);
-        lastMousePos = coords;
-        
-        var t = curTime();
-        
-        updateCursor();
-    }
-
     function handleKeyDown(e)
     {
         if(gameState.mode == MODE_MINIGAME && !convoGoing())

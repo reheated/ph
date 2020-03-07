@@ -263,7 +263,7 @@ namespace PH {
         // AUDIO
         ////////
 
-        public initAudio() {
+        initAudio() {
             window.AudioContext = window.AudioContext;
 
             this.audioContext = new AudioContext();
