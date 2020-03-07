@@ -37,4 +37,16 @@ namespace PH {
         targetCtx.drawImage(srcCanvas, 0, 0, w, h,
             tlx, tly, w * drawScale, h * drawScale);
     }
+
+    export async function quickImage(src: string): Promise<HTMLImageElement>
+    {
+        // Download an image. Runs as a promise.
+        let img = new Image();
+        let prom = new Promise<HTMLImageElement>((resolve, reject) => {
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error("Failed to load image."));
+            img.src = src;
+        });
+        return prom;
+    }
 }

@@ -81,6 +81,13 @@ namespace PH {
             }
         }
 
+        public drawCenteredText(ctx: CanvasRenderingContext2D, txt: string, midx: number, midy: number)
+        {
+            var leftx = Math.floor(midx - txt.length * this.w / 2);
+            var topy = Math.floor(midy - this.h / 2);
+            this.drawText(ctx, txt, leftx, topy);
+        }
+        
     }
 
 }

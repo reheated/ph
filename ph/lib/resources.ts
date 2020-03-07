@@ -18,7 +18,6 @@ namespace PH {
         public requests: PHRequest[] = [];
         public sizes: { [key: string]: number } = {};
 
-        loadedCallback: (() => void) | null = null;
         numSizesGot: number = 0;
         numRequests: number = 0;
         numToDecode: number = 0;
@@ -85,9 +84,10 @@ namespace PH {
             this.numPackagesRequested++;
         }
 
-        public get(loadedCallback: () => void) {
-            this.loadedCallback = loadedCallback;
-            this.getAllFileSizes();
+        public async get() {
+            await this.getAllFileSizes();
+            this.recomputeLoaded();
+            await this.downloadAll();
         }
 
         //////////////////////////////////////////////////////////////
@@ -100,45 +100,49 @@ namespace PH {
             this.numToDecode++;
         }
 
-        getAllFileSizes() {
+        async getAllFileSizes() {
             // start getting all the file sizes
+            let promises: Promise<void>[] = [];
             for (let i = 0; i < this.requests.length; i++) {
                 let r = this.requests[i];
                 let filename = r.name + r.ext;
-                this.getFileSize(name, filename, r.mime);
+                promises.push(this.getFileSize(name, filename, r.mime));
             }
+            await Promise.all(promises);
         }
 
-        getFileSize(name: string, filename: string, mime: string) {
+        async getFileSize(name: string, filename: string, mime: string) {
             let req = new XMLHttpRequest();
             req.open("HEAD", filename);
             if (req.overrideMimeType) req.overrideMimeType(mime);
-            req.onreadystatechange = () => this.handleFileSizeReadyStateChange(name, req);
-            req.send();
+            let prom = new Promise<void>((resolve, reject) => {
+                req.onreadystatechange = () => this.handleFileSizeReadyStateChange(name, req, resolve);
+                req.onerror = () => reject(new Error("Failed to get file size: " + filename));
+                req.send();
+            })
+            return prom;
         }
 
-        handleFileSizeReadyStateChange(name: string, req: XMLHttpRequest) {
+        handleFileSizeReadyStateChange(name: string, req: XMLHttpRequest, resolve: () => void) {
             // handle receiving a file size
             if (req.readyState == req.DONE) {
                 let bytes = parseInt(req.getResponseHeader("Content-Length")!);
                 this.sizes[name] = bytes;
                 this.numSizesGot++;
-                if (this.numSizesGot == this.numRequests) {
-                    // We got all the file sizes, time to start downloading the files for real.
-                    this.recomputeLoaded();
-                    this.downloadAll();
-                }
+                resolve();
             }
         }
 
-        downloadAll() {
+        async downloadAll() {
             // start getting all the files themselves
+            let promises: Promise<void>[] = [];
             for (let i = 0; i < this.requests.length; i++) {
                 let r = this.requests[i];
                 this.amtLoaded[r.name] = 0;
                 let filename = r.name + r.ext;
-                this.downloadFile(r.name, filename, r.mime);
+                promises.push(this.downloadFile(r.name, filename, r.mime));
             }
+            await Promise.all(promises);
         }
 
         updateAmtLoaded(name: string, evt: ProgressEvent<EventTarget>) {
@@ -170,41 +174,47 @@ namespace PH {
             if (req.overrideMimeType) req.overrideMimeType(mime);
             req.responseType = 'arraybuffer';
             req.onprogress = evt => this.updateAmtLoaded(name, evt);
-            req.onreadystatechange = () => this.handleDownloadFileReadyStateChange(name, mime, req);
-            req.send();
+            let prom = new Promise<void>((resolve, reject) => {
+                req.onreadystatechange = () => this.handleDownloadFileReadyStateChange(
+                    name, mime, req, resolve);
+                req.onerror = () => reject(new Error("Failed to download file: " + filename));
+                req.send();
+            });
+            return prom;
         }
 
-        handleDownloadFileReadyStateChange(name: string, mime: string, req: XMLHttpRequest) {
+        handleDownloadFileReadyStateChange(name: string, mime: string, req: XMLHttpRequest,
+            resolve: () => void) {
             if (req.readyState == req.DONE) {
                 this.numDownloaded++;
-                this.processDownloadedFile(name, mime, req.response);
+                this.processDownloadedFile(name, mime, req.response, resolve);
             }
         }
 
-        processDownloadedFile(name: string, mime: string, response: any) {
+        processDownloadedFile(name: string, mime: string, response: any, resolve: () => void) {
             if (mime == "image/png") {
                 let blob = new Blob([response], { type: mime });
                 let result = new Image();
                 result.src = URL.createObjectURL(blob);
-                result.onload = () => this.handleProcessedFile(name, result);
+                result.onload = () => this.handleProcessedFile(name, result, resolve);
             }
             else if (mime == "audio/mpeg") {
                 let me = this;
                 this.audioContext!.decodeAudioData(response,
-                    (buffer: AudioBuffer) => this.handleProcessedFile(name, buffer),
+                    (buffer: AudioBuffer) => this.handleProcessedFile(name, buffer, resolve),
                     function () { me.errorDecoding = true; throw new Error('Could not decode sound'); });
             }
             else if (mime == "text/plain") // ascii
             {
                 let decoder = new TextDecoder();
-                this.handleProcessedFile(name, decoder.decode(response));
+                this.handleProcessedFile(name, decoder.decode(response), resolve);
             }
             else if (mime == "image/svg+xml") // svg
             {
                 let decoder = new TextDecoder();
                 let txt = decoder.decode(response);
                 let svgElem = new DOMParser().parseFromString(txt, 'image/svg+xml');
-                this.handleProcessedFile(name, svgElem);
+                this.handleProcessedFile(name, svgElem, resolve);
             }
             else if (mime == "text/html") // html structure (create a DOM object)
             {
@@ -213,7 +223,7 @@ namespace PH {
                 let txt = decoder.decode(response);
                 let domObj = document.createElement('html');
                 domObj.innerHTML = txt;
-                this.handleProcessedFile(name, domObj);
+                this.handleProcessedFile(name, domObj, resolve);
             }
             else if (mime == "application/octet-stream") // using this mime type for packages
             {
@@ -233,28 +243,26 @@ namespace PH {
                 for (let k = 0; k < pack.length; k++) {
                     this.numToDecode++;
                     let thisData = response.slice(offset + pack[k].start, offset + pack[k].end);
-                    this.processDownloadedFile(pack[k].name, pack[k].type, thisData);
+                    this.processDownloadedFile(pack[k].name, pack[k].type, thisData, resolve);
                 }
                 this.numPackagesProcessed++;
-                this.checkDoneProcessing();
+                this.checkDoneProcessing(resolve);
             }
             else {
                 throw new Error("Don't know how to handle mime type " + mime);
             }
         }
 
-        handleProcessedFile(name: string, content: any) {
+        handleProcessedFile(name: string, content: any, resolve: () => void) {
             this.data[name] = content;
             this.numDecoded++;
-            this.checkDoneProcessing();
+            this.checkDoneProcessing(resolve);
         }
 
-        checkDoneProcessing() {
+        checkDoneProcessing(resolve: () => void) {
             if (this.numDecoded === this.numToDecode &&
                 this.numPackagesProcessed === this.numPackagesRequested) {
-                if (this.loadedCallback !== null) {
-                    this.loadedCallback();
-                }
+                resolve();
             }
         }
 
