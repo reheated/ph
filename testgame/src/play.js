@@ -23,6 +23,7 @@
     var mainGameCanvas = null;
     var mainCtx = null;
     window.mainFont = null;
+    window.boxDrawer = null;
 
     var gameState = {
         mode: MODE_LOADING,
@@ -61,7 +62,7 @@
         window.addEventListener('keyup', handleKeyUp);
 
         // Initialize subsystems.
-        boxesInit(resources);
+        window.boxDrawer = new PH.BoxDrawer(resources.data.boxes, 4);
         convoInit(resources);
 
         // Start the game.
@@ -148,12 +149,12 @@
             drawLoadingMode();
         }
         else if (gameState.mode == MODE_MENU) {
-            drawBox(mainCtx, 0, 40, 60, 240, 80);
+            boxDrawer.drawBox(mainCtx, 0, 40, 60, 240, 80);
             mainCtx.drawImage(resources.data.title, 47, 70);
             mainFont.drawText(mainCtx, "Click to start", 111, 120);
         }
         else if (gameState.mode == MODE_GAMEOVER) {
-            drawBox(mainCtx, 0, 60, 60, 200, 80);
+            boxDrawer.drawBox(mainCtx, 0, 60, 60, 200, 80);
             mainFont.drawCenteredText(mainCtx, "The End", 160, 73);
             mainFont.drawCenteredText(mainCtx, "A Game by Michael Pauley", 160, 90);
             mainFont.drawCenteredText(mainCtx, "Made for Ludum Dare 45", 160, 107);

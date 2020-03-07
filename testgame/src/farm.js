@@ -150,7 +150,7 @@
         {
             var b = buttons[k];
             var id = (k === mouseDownOverButton)? 2: 1; // select id of the box graphic
-            drawBox(ctx, id, b[0], b[1], b[2], b[3]);
+            boxDrawer.drawBox(ctx, id, b[0], b[1], b[2], b[3]);
         }
     }
 
@@ -228,7 +228,7 @@
             {
                 var x = j * 22 + FARM_LEFT;
                 var y = i * 22 + FARM_TOP;
-                drawBox(ctx, 3, x, y, 20, 20);
+                boxDrawer.drawBox(ctx, 3, x, y, 20, 20);
             }
         }
 
@@ -293,36 +293,36 @@
     function draw(ctx)
     {
         // Draw the farm plots
-        drawBox(ctx, 0, 4, 4, 152, 104);
+        boxDrawer.drawBox(ctx, 0, 4, 4, 152, 104);
         mainFont.drawText(ctx, "Farm plots", 8, 8);
 
         drawPlots(ctx);
 
         // Draw the calendar
-        drawBox(ctx, 0, 4, 112, 152, 84);
+        boxDrawer.drawBox(ctx, 0, 4, 112, 152, 84);
         mainFont.drawText(ctx, "Calendar", 8, 116);
         drawCalendar(ctx);
 
         // Draw the cash display
-        drawBox(ctx, 1, CASHRECT[0], CASHRECT[1], CASHRECT[2], CASHRECT[3]);
+        boxDrawer.drawBox(ctx, 1, CASHRECT[0], CASHRECT[1], CASHRECT[2], CASHRECT[3]);
         ctx.drawImage(resources.data.cash, 160, 4);
         var s = cash.toString();
         var sx = 248 - 7 * s.length;
         mainFont.drawText(ctx, s, sx, 8);
 
         // Draw the energy display
-        drawBox(ctx, 0, 256, 4, 60, 16);
+        boxDrawer.drawBox(ctx, 0, 256, 4, 60, 16);
         ctx.drawImage(resources.data.energy, 256, 4);
         var s = energy.toString();
         var sx = 312 - 7 * s.length;
         mainFont.drawText(ctx, s, sx, 8);
 
         // Draw the upgrades box
-        drawBox(ctx, 0, 160, 24, 156, 96);
+        boxDrawer.drawBox(ctx, 0, 160, 24, 156, 96);
         mainFont.drawText(ctx, "Upgrades", 164, 28);
 
         // Draw the info box
-        drawBox(ctx, 0, 160, 124, 156, 72);
+        boxDrawer.drawBox(ctx, 0, 160, 124, 156, 72);
         drawInfoText(ctx);
 
         // Draw all buttons
