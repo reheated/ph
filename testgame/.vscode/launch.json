@@ -7,10 +7,16 @@
             "request": "launch",
             "reAttach": true,
             "url": "http://localhost:8080/juicefruit/index.html",
-            "pathMappings": [{
-                "url": "http://localhost:8080",
-                "path": "${workspaceFolder}",
-            }]
+            "pathMappings": [
+                {
+                    "url": "http://localhost:8080/src",
+                    "path": "${workspaceFolder}/src",
+                },
+                {
+                    "url": "http://localhost:8080/ph/lib",
+                    "path": "${workspaceFolder:ph}/lib",
+                }
+            ]
         }
     ]
 }
