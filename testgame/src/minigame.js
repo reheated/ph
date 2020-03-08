@@ -661,7 +661,7 @@
         var isIntro = (timeSinceStarted < introTime);
         if(isIntro)
         {
-            drawSpriteText(ctx, "GET READY", 128, 32);
+            mainFont.drawText(ctx, "GET READY", 128, 32);
         }
     }
 

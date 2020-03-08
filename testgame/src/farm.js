@@ -252,7 +252,7 @@
         }
     }
 
-    var INFO_TEXT_WIDTH = 21; // 21-characters
+    var INFO_TEXT_WIDTH = 148;
     var infoTextLines = [];
     function setInfoText(text)
     {
@@ -261,7 +261,7 @@
         for(var k = 0; k < splitLines.length; k++)
         {
             // word-wrap each line
-            var wrapped = PH.wordWrapByChars(splitLines[k], INFO_TEXT_WIDTH);
+            var wrapped = mainFont.wordWrap(splitLines[k], INFO_TEXT_WIDTH);
             for(var l = 0; l < wrapped.length; l++)
             {
                 infoTextLines.push(wrapped[l]);

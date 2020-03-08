@@ -27,7 +27,7 @@
         // is first shown, and a bool representing whether it's been
         // shown yet.
         if(typeof(callback) === "undefined") callback = null;
-        var wrapped = (msg === null)? msg : PH.wordWrapByChars(msg, 33);
+        var wrapped = (msg === null)? msg : mainFont.wordWrap(msg, 272);
         convoQ.push([speaker, wrapped, callback, false]);
         
         if(convoQ.length === 1)

@@ -98,7 +98,7 @@ class PHWatcher {
 
     public rebundle() {
         // Repackage all the resources
-        console.log("Rebundling");
+        console.log((new Date()).toJSON() + ": Rebundling");
 
         // Check the settings
         let failed = false;

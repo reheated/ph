@@ -1,3 +1,14 @@
+declare class FontFace {
+    constructor(family: string, source: string);
+    load(): Promise<FontFace>;
+}
+
+declare interface FontFaceSet extends Set<FontFace> { };
+
+declare interface Document {
+    fonts: FontFaceSet;
+}
+
 namespace PH {
 
     export function createCanvas(w: number, h: number): HTMLCanvasElement {
@@ -38,8 +49,7 @@ namespace PH {
             tlx, tly, w * drawScale, h * drawScale);
     }
 
-    export async function quickImage(src: string): Promise<HTMLImageElement>
-    {
+    export async function quickImage(src: string): Promise<HTMLImageElement> {
         // Download an image. Runs as a promise.
         let img = new Image();
         let prom = new Promise<HTMLImageElement>((resolve, reject) => {
@@ -49,4 +59,11 @@ namespace PH {
         });
         return prom;
     }
+
+    export async function quickFont(name: string, url: string) {
+        let f = new FontFace(name, "url(" + url + ")");
+        await f.load();
+        document.fonts.add(f);
+    }
+
 }

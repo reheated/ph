@@ -39,10 +39,14 @@
         mainCtx = mainGameCanvas.getContext('2d');
         outCtx = outGameCanvas.getContext('2d');
 
+        // Load a TTF font
+        await PH.quickFont("m5x7", "m5x7.ttf");
+        mainFont = new PH.NormalFont("m5x7", 16, 7, 10, "#000000");
+
         // Load a pixel font first, before the rest of the content,
         // so we can display progress.
-        let fontImg = await PH.quickImage("cellphone.png");
-        mainFont = new PH.FixedWidthPixelFont(fontImg, 7, 9, 0, 32);
+        //let fontImg = await PH.quickImage("cellphone.png");
+        //mainFont = new PH.FixedWidthPixelFont(fontImg, 7, 9, 0, 32);
 
         // Start animation frames.
         requestAnimationFrame(frame);
@@ -92,7 +96,7 @@
 
         mainCtx.fillstyle = "#154617";
         mainCtx.fillRect(0, 0, 320, 200);
-        mainFont.drawText(mainCtx, loadingString, 0, 0);
+        mainFont.drawText(mainCtx, loadingString, 1, 1);
     }
 
     function drawCursor() {
@@ -151,7 +155,7 @@
         else if (gameState.mode == MODE_MENU) {
             boxDrawer.drawBox(mainCtx, 0, 40, 60, 240, 80);
             mainCtx.drawImage(resources.data.title, 47, 70);
-            mainFont.drawText(mainCtx, "Click to start", 111, 120);
+            mainFont.drawCenteredText(mainCtx, "Click to start", 160, 120);
         }
         else if (gameState.mode == MODE_GAMEOVER) {
             boxDrawer.drawBox(mainCtx, 0, 60, 60, 200, 80);
