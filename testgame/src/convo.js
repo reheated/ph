@@ -65,7 +65,7 @@
                 else
                 {
                     // draw the box
-                    boxDrawer.drawBox(ctx, 4, l, t, w, h);
+                    spriteBoxConvo.draw(ctx, l, t, w, h);
 
                     if(c[0] === null)
                     {

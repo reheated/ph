@@ -1,6 +1,6 @@
 namespace PH {
 
-    abstract class Font {
+    export abstract class Font {
 
         public abstract getLineHeight(): number;
         public abstract drawText(ctx: CanvasRenderingContext2D,

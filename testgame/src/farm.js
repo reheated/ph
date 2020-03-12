@@ -28,13 +28,13 @@
 
     var CASHRECT = [160, 4, 92, 16];
 
+    var ctx = null;
     var resources = null;
+    var uiLayer = null;
+    var hoverCallbacks = null;
 
     var cash = null;
     var energy = null;
-    var buttons = null;
-    var mouseOverButton = null;
-    var mouseDownOverButton = null;
     var mouseOverPlot = null;
     var mouseDownOverPlot = null;
     var mouseDragPlot = null;
@@ -90,29 +90,29 @@
         convoIntro();
     }
 
-    window.farmInit = function(resourcesObject)
+    window.farmInit = function(ctxObject, resourcesObject)
     {
         resources = resourcesObject;
-
-        // register all the buttons
-        buttons = [];
+        ctx = ctxObject;
+        uiLayer = new PH.CanvasUILayer(ctx.canvas);
+        hoverCallbacks = {};
 
         // Buttons for upgrades
-        registerButton(164, 40, 72, 16, clickParticles, hoverParticles); // particles
-        registerButton(240, 40, 72, 16, clickShake, hoverShake); // shake
+        registerButton(164, 40, 72, 16, clickParticles, hoverParticles, "Particles"); // particles
+        registerButton(240, 40, 72, 16, clickShake, hoverShake, "Shake"); // shake
 
-        registerButton(164, 60, 72, 16, clickDetails, hoverDetails); // details
-        registerButton(240, 60, 72, 16, clickSound, hoverSound); // sound
+        registerButton(164, 60, 72, 16, clickDetails, hoverDetails, "Details"); // details
+        registerButton(240, 60, 72, 16, clickSound, hoverSound, "Sound"); // sound
 
-        registerButton(164, 80, 72, 16, clickJuiciness, hoverJuiciness); // juiciness
-        registerButton(240, 80, 72, 16, clickSeeds, hoverSeeds); // seeds
+        registerButton(164, 80, 72, 16, clickJuiciness, hoverJuiciness, "Juiciness"); // juiciness
+        registerButton(240, 80, 72, 16, clickSeeds, hoverSeeds, "Seeds"); // seeds
 
-        registerButton(164, 100, 72, 16, clickTractor, hoverTractor); // tractor
-        registerButton(240, 100, 72, 16, clickScarecrow, hoverScarecrow); // scarecrow
+        registerButton(164, 100, 72, 16, clickTractor, hoverTractor, "Tractor"); // tractor
+        registerButton(240, 100, 72, 16, clickScarecrow, hoverScarecrow, "Scarecrow"); // scarecrow
 
         // Buttons for actions
-        registerButton(100, 146, 52, 16, clickPayDebt, hoverPayDebt); // pay debt
-        registerButton(100, 168, 52, 16, clickSleep, hoverSleep); // next day
+        registerButton(100, 146, 52, 16, clickPayDebt, hoverPayDebt, "Pay Debt"); // pay debt
+        registerButton(100, 168, 52, 16, clickSleep, hoverSleep, "Sleep"); // next day
             
         // set up image references
         plotImageDict = {
@@ -136,66 +136,23 @@
         farmMusic = null;
     }
 
-    function registerButton(l, t, w, h, callbackClick, callbackHover)
+    function registerButton(l, t, w, h, clickCallback, hoverCallback, text)
     {
-        // left, top, width, height, callback function for click,
-        // callback function for hover, and whether the function is depressed.
-        var b = [l, t, w, h, callbackClick, callbackHover];
-        buttons.push(b);
-    }
-
-    function drawButtons(ctx)
-    {
-        for(var k = 0; k < buttons.length; k++)
-        {
-            var b = buttons[k];
-            var id = (k === mouseDownOverButton)? 2: 1; // select id of the box graphic
-            boxDrawer.drawBox(ctx, id, b[0], b[1], b[2], b[3]);
-        }
-    }
-
-    function updateMouseOverButton()
-    {
-        if(canvasui.mouseX === null)
-        {
-            mouseOverButton = null;
-            mouseDownOverButton = null;
-            return;
-        }
-        var x = canvasui.mouseX;
-        var y = canvasui.mouseY;
-        for(var k = 0; k < buttons.length; k++)
-        {
-            var b = buttons[k];
-            if(x >= b[0] && x < b[0] + b[2] && y >= b[1] && y < b[1] + b[3])
-            {
-                mouseOverButton = k;
-                if(k !== mouseDownOverButton)
-                {
-                    mouseDownOverButton = null;
-                }
-                if(b[5] !== null)
-                {
-                    b[5]();
-                }
-                return;
-            }
-        }
-        mouseOverButton = null;
-        mouseDownOverButton = null;
-        return;
+        var b = new PH.CanvasButton(ctx, l, t, w, h, clickCallback, text, window.buttonDrawer);
+        uiLayer.addButton(b);
+        hoverCallbacks[text] = hoverCallback;
     }
 
     function updateMouseOverPlot()
     {
-        if(canvasui.mouseX === null)
+        if(canvasTransformer.mouseX === null)
         {
             mouseOverPlot = null;
             mouseDownOverPlot = null;
             return;
         }
-        var x = canvasui.mouseX;
-        var y = canvasui.mouseY;
+        var x = canvasTransformer.mouseX;
+        var y = canvasTransformer.mouseY;
         for(var i = 0; i < GRID_H; i++)
         {
             for(var j = 0; j < GRID_W; j++)
@@ -228,7 +185,7 @@
             {
                 var x = j * 22 + FARM_LEFT;
                 var y = i * 22 + FARM_TOP;
-                boxDrawer.drawBox(ctx, 3, x, y, 20, 20);
+                spriteBoxPlot.draw(ctx, x, y, 20, 20);
             }
         }
 
@@ -293,64 +250,53 @@
     function draw(ctx)
     {
         // Draw the farm plots
-        boxDrawer.drawBox(ctx, 0, 4, 4, 152, 104);
+        spriteBoxNormal.draw(ctx, 4, 4, 152, 104);
         mainFont.drawText(ctx, "Farm plots", 8, 8);
 
         drawPlots(ctx);
 
         // Draw the calendar
-        boxDrawer.drawBox(ctx, 0, 4, 112, 152, 84);
+        spriteBoxNormal.draw(ctx, 4, 112, 152, 84);
         mainFont.drawText(ctx, "Calendar", 8, 116);
         drawCalendar(ctx);
 
         // Draw the cash display
-        boxDrawer.drawBox(ctx, 1, CASHRECT[0], CASHRECT[1], CASHRECT[2], CASHRECT[3]);
+        spriteBoxButton.draw(ctx, CASHRECT[0], CASHRECT[1], CASHRECT[2], CASHRECT[3]);
         ctx.drawImage(resources.data.cash, 160, 4);
         var s = cash.toString();
         var sx = 248 - 7 * s.length;
         mainFont.drawText(ctx, s, sx, 8);
 
         // Draw the energy display
-        boxDrawer.drawBox(ctx, 0, 256, 4, 60, 16);
+        spriteBoxNormal.draw(ctx, 256, 4, 60, 16);
         ctx.drawImage(resources.data.energy, 256, 4);
         var s = energy.toString();
         var sx = 312 - 7 * s.length;
         mainFont.drawText(ctx, s, sx, 8);
 
         // Draw the upgrades box
-        boxDrawer.drawBox(ctx, 0, 160, 24, 156, 96);
+        spriteBoxNormal.draw(ctx, 160, 24, 156, 96);
         mainFont.drawText(ctx, "Upgrades", 164, 28);
 
         // Draw the info box
-        boxDrawer.drawBox(ctx, 0, 160, 124, 156, 72);
+        spriteBoxNormal.draw(ctx, 160, 124, 156, 72);
         drawInfoText(ctx);
 
         // Draw all buttons
-        drawButtons(ctx);
+        uiLayer.drawButtons();
 
-        // Draw text on buttons
-        mainFont.drawText(ctx, "Particles", 168, 44);
-        mainFont.drawText(ctx, "Shake", 244, 44);
-        mainFont.drawText(ctx, "Details", 168, 64);
-        mainFont.drawText(ctx, "Sound", 244, 64);
-        mainFont.drawText(ctx, "Juiciness", 168, 84);
-        mainFont.drawText(ctx, "Seeds", 244, 84);
-        mainFont.drawText(ctx, "Tractor", 168, 104);
-        mainFont.drawText(ctx, "Scarecrow", 244, 104);
-
+        // Draw text
         mainFont.drawText(ctx, "Debt:", 104, 118);
         mainFont.drawText(ctx, "$" + DEBT.toString(), 104, 134);
-        mainFont.drawText(ctx, "Pay", 104, 150);
-        mainFont.drawText(ctx, "Sleep", 104, 172);
 
         // draw anything that's being dragged
-        if(mouseDragPlot !== null && canvasui.mouseX !== null)
+        if(mouseDragPlot !== null && canvasTransformer.mouseX !== null)
         {
             var pcList = plotContents[mouseDragPlot[0]][mouseDragPlot[1]];
             if(pcList.length !== 0)
             {
                 var pc = pcList[0];
-                ctx.drawImage(plotImageDict[pc[0]], canvasui.mouseX - 11, canvasui.mouseY - 11);
+                ctx.drawImage(plotImageDict[pc[0]], canvasTransformer.mouseX - 11, canvasTransformer.mouseY - 11);
             }
         }
 
@@ -359,18 +305,23 @@
     window.farmUpdate = function(deltat)
     {
         infoTextLines = [];
-        updateMouseOverButton();
         updateMouseOverPlot();
+        
+        let b = uiLayer.mouseOverButton;
+        if(b !== null) {
+            let callback = hoverCallbacks[b.text];
+            if(callback !== null) callback();
+        }
     }
 
-    window.farmDraw = function(ctx)
+    window.farmDraw = function()
     {
         draw(ctx);
     }
 
     window.farmHandleMouseDown = function()
     {
-        mouseDownOverButton = mouseOverButton; // if we're not over a button, this is null anyway.
+        uiLayer.handleMouseDown();
         mouseDownOverPlot = mouseOverPlot; // ditto.
 
         if(mouseOverPlot !== null)
@@ -493,23 +444,18 @@
 
     window.farmHandleMouseUp = function()
     {
-        if(mouseDownOverButton !== null)
-        {
-            var b = buttons[mouseDownOverButton];
-            var callbackClick = b[4];
-            if(callbackClick !== null)
-            {
-                callbackClick();
-                mouseDragPlot = null;
-            }
-        }
-        mouseDownOverButton = null;
+        uiLayer.handleMouseUp();
 
         if(mouseDragPlot !== null)
         {
-            handleDragPlot(mouseDragPlot, [canvasui.mouseX, canvasui.mouseY]);
+            handleDragPlot(mouseDragPlot, [canvasTransformer.mouseX, canvasTransformer.mouseY]);
         }
         mouseDragPlot = null;
+    }
+
+    window.farmHandleMouseMove = function()
+    {
+        uiLayer.handleMouseMove(canvasTransformer.mouseX, canvasTransformer.mouseY);
     }
 
     ///////////////////////////////

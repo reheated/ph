@@ -23,7 +23,12 @@
     var mainGameCanvas = null;
     var mainCtx = null;
     window.mainFont = null;
-    window.boxDrawer = null;
+    window.spriteBoxNormal = null;
+    window.spriteBoxButton = null;
+    window.spriteBoxPressed = null;
+    window.spriteBoxPlot = null;
+    window.spriteBoxConvo = null;
+    window.buttonDrawer = null;
 
     var gameState = {
         mode: MODE_LOADING,
@@ -33,7 +38,7 @@
         mainGameCanvas = PH.createCanvas(GAME_WIDTH, GAME_HEIGHT);
 
         outGameCanvas = document.getElementById('outGameCanvas');
-        window.canvasui = new PH.CanvasUI(outGameCanvas, mainGameCanvas);
+        window.canvasTransformer = new PH.CanvasTransformer(outGameCanvas, mainGameCanvas);
 
         // Set up canvas contexts
         mainCtx = mainGameCanvas.getContext('2d');
@@ -42,12 +47,7 @@
         // Load a TTF font
         await PH.quickFont("m5x7", "m5x7.ttf");
         mainFont = new PH.NormalFont("m5x7", 16, 7, 10, "#000000");
-
-        // Load a pixel font first, before the rest of the content,
-        // so we can display progress.
-        //let fontImg = await PH.quickImage("cellphone.png");
-        //mainFont = new PH.FixedWidthPixelFont(fontImg, 7, 9, 0, 32);
-
+        
         // Start animation frames.
         requestAnimationFrame(frame);
 
@@ -61,12 +61,20 @@
         outGameCanvas.addEventListener('contextmenu', handleClick);
         outGameCanvas.addEventListener('mousedown', handleMouseDown);
         outGameCanvas.addEventListener('mouseup', handleMouseUp);
+        outGameCanvas.addEventListener('mousemove', handleMouseMove);
 
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
 
         // Initialize subsystems.
-        window.boxDrawer = new PH.BoxDrawer(resources.data.boxes, 4);
+        window.spriteBoxNormal = new PH.SpriteBox(resources.data.boxes, 4, 0);
+        window.spriteBoxButton = new PH.SpriteBox(resources.data.boxes, 4, 1);
+        window.spriteBoxPressed = new PH.SpriteBox(resources.data.boxes, 4, 2);
+        window.spriteBoxPlot = new PH.SpriteBox(resources.data.boxes, 4, 3);
+        window.spriteBoxConvo = new PH.SpriteBox(resources.data.boxes, 4, 4);
+
+        window.buttonDrawer = new PH.CanvasButtonSpriteDrawer(
+            spriteBoxButton, spriteBoxPressed, mainFont);
         convoInit(resources);
 
         // Start the game.
@@ -100,8 +108,9 @@
     }
 
     function drawCursor() {
-        if (canvasui.mouseX !== null) {
-            mainCtx.drawImage(resources.data.cursor, canvasui.mouseX, canvasui.mouseY);
+        if (canvasTransformer.mouseX !== null) {
+            mainCtx.drawImage(resources.data.cursor,
+                canvasTransformer.mouseX, canvasTransformer.mouseY);
         }
     }
 
@@ -153,12 +162,12 @@
             drawLoadingMode();
         }
         else if (gameState.mode == MODE_MENU) {
-            boxDrawer.drawBox(mainCtx, 0, 40, 60, 240, 80);
+            spriteBoxNormal.draw(mainCtx, 40, 60, 240, 80);
             mainCtx.drawImage(resources.data.title, 47, 70);
             mainFont.drawCenteredText(mainCtx, "Click to start", 160, 120);
         }
         else if (gameState.mode == MODE_GAMEOVER) {
-            boxDrawer.drawBox(mainCtx, 0, 60, 60, 200, 80);
+            spriteBoxNormal.draw(mainCtx, 60, 60, 200, 80);
             mainFont.drawCenteredText(mainCtx, "The End", 160, 73);
             mainFont.drawCenteredText(mainCtx, "A Game by Michael Pauley", 160, 90);
             mainFont.drawCenteredText(mainCtx, "Made for Ludum Dare 45", 160, 107);
@@ -166,7 +175,7 @@
         }
         else if (gameState.mode == MODE_FARM) {
             if (!cg) farmUpdate(deltat);
-            farmDraw(mainCtx);
+            farmDraw();
         }
         else if (gameState.mode == MODE_MINIGAME) {
             if (!cg) minigameUpdate(deltat);
@@ -214,7 +223,7 @@
     function updateCursor() {
         // hide or show the default cursor
         var newStyle;
-        if (canvasui.mouseX === null) {
+        if (canvasTransformer.mouseX === null) {
             newStyle = "";
         }
         else {
@@ -236,14 +245,23 @@
     }
 
     function handleMouseDown(e) {
+        handleMouseMove(e);
         if (gameState.mode == MODE_FARM && !convoGoing()) {
             farmHandleMouseDown(e);
         }
     }
 
     function handleMouseUp(e) {
+        handleMouseMove(e);
         if (gameState.mode == MODE_FARM && !convoGoing()) {
             farmHandleMouseUp(e);
+        }
+    }
+
+    function handleMouseMove(e) {
+        canvasTransformer.handleMouseMove(e.clientX, e.clientY);
+        if (gameState.mode == MODE_FARM && !convoGoing()) {
+            farmHandleMouseMove();
         }
     }
 
@@ -261,7 +279,7 @@
 
     function startFarm() {
         setMode(MODE_FARM);
-        farmInit(resources);
+        farmInit(mainCtx, resources);
     }
 
     window.doGameOver = function () {
