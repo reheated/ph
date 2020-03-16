@@ -17,6 +17,9 @@
     var GAME_WIDTH = 320;
     var GAME_HEIGHT = 200;
 
+    let frameRateReporting = false;
+    let frameRateInterval = 5.0;
+
     let resources = new PH.Resources();
     var outGameCanvas = null;
     var outCtx = null
@@ -33,6 +36,7 @@
     var gameState = {
         mode: MODE_LOADING,
     }
+    let farmScene = null;
 
     async function handleWindowLoad() {
         mainGameCanvas = PH.createCanvas(GAME_WIDTH, GAME_HEIGHT);
@@ -127,10 +131,13 @@
         if (frameResetTime === null) {
             frameResetTime = t;
         }
-        else if (t > frameResetTime + 1) {
-            window.frameRate = frameCount;
+        else if (t > frameResetTime + frameRateInterval) {
+            window.frameRate = frameCount / (t - frameResetTime);
             frameCount = 0;
-            frameResetTime = t;
+            frameResetTime += frameRateInterval;
+            if(frameRateReporting) {
+                console.log("Framerate: " + window.frameRate.toFixed(1));
+            }
         }
         frameCount++;
         var deltat = t - lastFrameTime;
@@ -173,8 +180,8 @@
             mainFont.drawCenteredText(mainCtx, "Thanks for playing!", 160, 124);
         }
         else if (gameState.mode == MODE_FARM) {
-            if (!cg) farmUpdate(deltat);
-            farmDraw();
+            if (!cg) farmScene.update(deltat);
+            farmScene.draw();
         }
         else if (gameState.mode == MODE_MINIGAME) {
             if (!cg) minigameUpdate(deltat);
@@ -203,12 +210,11 @@
             convoHandleClick();
         }
         else if (gameState.mode === MODE_MENU) {
-            //resources.initAudio();
-            newFarm();
+            farmScene = new FarmScene(mainCtx, resources);
             startFarm();
         }
         else if (gameState.mode === MODE_FARM) {
-            farmHandleClick();
+            farmScene.handleClick();
         }
     }
 
@@ -246,21 +252,21 @@
     function handleMouseDown(e) {
         handleMouseMove(e);
         if (gameState.mode == MODE_FARM && !convoGoing()) {
-            farmHandleMouseDown(e);
+            farmScene.handleMouseDown();
         }
     }
 
     function handleMouseUp(e) {
         handleMouseMove(e);
         if (gameState.mode == MODE_FARM && !convoGoing()) {
-            farmHandleMouseUp(e);
+            farmScene.handleMouseUp();
         }
     }
 
     function handleMouseMove(e) {
         canvasTransformer.handleMouseMove(e.clientX, e.clientY);
         if (gameState.mode == MODE_FARM && !convoGoing()) {
-            farmHandleMouseMove();
+            farmScene.handleMouseMove();
         }
     }
 
@@ -278,7 +284,7 @@
 
     function startFarm() {
         setMode(MODE_FARM);
-        farmInit(mainCtx, resources);
+        farmScene.init();
     }
 
     window.doGameOver = function () {
@@ -297,8 +303,8 @@
 
     window.endMinigame = function (won) {
         setMode(MODE_FARM);
-        farmInit(mainCtx, resources);
-        farmContinue(won);
+        farmScene.init();
+        farmScene.continue(won);
     }
 })();
 

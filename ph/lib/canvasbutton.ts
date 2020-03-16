@@ -63,7 +63,7 @@ namespace PH {
         }
     }
 
-    abstract class CanvasButtonDrawer {
+    export abstract class CanvasButtonDrawer {
         public abstract draw(ctx: CanvasRenderingContext2D, b: CanvasButton): void;
     }
 

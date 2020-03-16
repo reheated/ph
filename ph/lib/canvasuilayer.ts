@@ -8,16 +8,18 @@ namespace PH {
             this.canvas = canvas;
         }
 
-        public handleMouseMove(x: number, y: number) {
+        public handleMouseMove(mousePos: [number, number] | null) {
             // Process buttons
             this.mouseOverButton = null;
-            for (let b of this.buttons) {
-                if (b.handleNewMouseCoords(x, y)) {
-                    this.mouseOverButton = b;
+            if (mousePos !== null) {
+                for (let b of this.buttons) {
+                    if (b.handleNewMouseCoords(...mousePos)) {
+                        this.mouseOverButton = b;
+                    }
                 }
             }
         }
-        
+
         public handleMouseDown() {
             for (let b of this.buttons) {
                 b.handleMouseDown();
@@ -25,7 +27,7 @@ namespace PH {
         }
 
         public handleMouseUp() {
-            for(let b of this.buttons) {
+            for (let b of this.buttons) {
                 b.handleMouseUp();
             }
         }
@@ -35,7 +37,7 @@ namespace PH {
         }
 
         public drawButtons() {
-            for(let b of this.buttons) {
+            for (let b of this.buttons) {
                 b.draw();
             }
         }
