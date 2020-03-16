@@ -4,8 +4,7 @@ namespace PH {
         canvas: HTMLCanvasElement;
         srcCanvas: HTMLCanvasElement | null;
 
-        mouseX: number | null = null;
-        mouseY: number | null = null;
+        mousePos: [number, number] | null = null;
 
         constructor(canvas: HTMLCanvasElement, srcCanvas: HTMLCanvasElement | null = null) {
             // "canvas" should be the canvas that is being displayed in the HTML
@@ -18,7 +17,8 @@ namespace PH {
             this.srcCanvas = srcCanvas;
         }
 
-        public getGameCoordsFromClientCoords(x: number, y: number) {
+        public getGameCoordsFromClientCoords(x: number, y: number):
+            [number, number] | null {
             var rect = this.canvas.getBoundingClientRect();
             // Convert into canvas coordinates.
             // Apply a transformation if the canvas is scaled up
@@ -39,7 +39,7 @@ namespace PH {
             var resX = Math.floor((x - rect.left - tlx) / drawScale);
             var resY = Math.floor((y - rect.top - tly) / drawScale);
             if (resX < 0 || resX >= w || resY < 0 || resY >= h) {
-                return [null, null];
+                return null;
             }
             else {
                 return [resX, resY];
@@ -47,8 +47,7 @@ namespace PH {
         }
 
         public handleMouseMove(clientX: number, clientY: number) {
-            [this.mouseX, this.mouseY] = this.getGameCoordsFromClientCoords(
-                clientX, clientY);
+            this.mousePos = this.getGameCoordsFromClientCoords(clientX, clientY);
         }
 
     }

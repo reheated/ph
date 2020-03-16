@@ -108,9 +108,8 @@
     }
 
     function drawCursor() {
-        if (canvasTransformer.mouseX !== null) {
-            mainCtx.drawImage(resources.data.cursor,
-                canvasTransformer.mouseX, canvasTransformer.mouseY);
+        if (canvasTransformer.mousePos !== null) {
+            mainCtx.drawImage(resources.data.cursor, ...canvasTransformer.mousePos);
         }
     }
 
@@ -223,7 +222,7 @@
     function updateCursor() {
         // hide or show the default cursor
         var newStyle;
-        if (canvasTransformer.mouseX === null) {
+        if (canvasTransformer.mousePos === null) {
             newStyle = "";
         }
         else {
@@ -298,7 +297,7 @@
 
     window.endMinigame = function (won) {
         setMode(MODE_FARM);
-        farmInit(resources);
+        farmInit(mainCtx, resources);
         farmContinue(won);
     }
 })();

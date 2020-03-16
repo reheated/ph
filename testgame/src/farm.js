@@ -145,14 +145,13 @@
 
     function updateMouseOverPlot()
     {
-        if(canvasTransformer.mouseX === null)
+        if(canvasTransformer.mousePos === null)
         {
             mouseOverPlot = null;
             mouseDownOverPlot = null;
             return;
         }
-        var x = canvasTransformer.mouseX;
-        var y = canvasTransformer.mouseY;
+        let [x, y] = canvasTransformer.mousePos;
         for(var i = 0; i < GRID_H; i++)
         {
             for(var j = 0; j < GRID_W; j++)
@@ -290,13 +289,13 @@
         mainFont.drawText(ctx, "$" + DEBT.toString(), 104, 134);
 
         // draw anything that's being dragged
-        if(mouseDragPlot !== null && canvasTransformer.mouseX !== null)
+        if(mouseDragPlot !== null && canvasTransformer.mousePos !== null)
         {
             var pcList = plotContents[mouseDragPlot[0]][mouseDragPlot[1]];
             if(pcList.length !== 0)
             {
                 var pc = pcList[0];
-                ctx.drawImage(plotImageDict[pc[0]], canvasTransformer.mouseX - 11, canvasTransformer.mouseY - 11);
+                ctx.drawImage(plotImageDict[pc[0]], canvasTransformer.mousePos[0] - 11, canvasTransformer.mousePos[1] - 11);
             }
         }
 
@@ -448,14 +447,14 @@
 
         if(mouseDragPlot !== null)
         {
-            handleDragPlot(mouseDragPlot, [canvasTransformer.mouseX, canvasTransformer.mouseY]);
+            handleDragPlot(mouseDragPlot, canvasTransformer.mousePos);
         }
         mouseDragPlot = null;
     }
 
     window.farmHandleMouseMove = function()
     {
-        uiLayer.handleMouseMove(canvasTransformer.mouseX, canvasTransformer.mouseY);
+        uiLayer.handleMouseMove(...canvasTransformer.mousePos);
     }
 
     ///////////////////////////////
