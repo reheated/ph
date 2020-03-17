@@ -8,6 +8,7 @@ declare interface Window {
     mainFont: PH.Font;
     convoEnqueue: (speaker: string | null, msg: string | null, callback: (() => void) | void) => void;
     startMinigame: (shakeLevel: number, particleLevel: number, detailLevel: number, soundLevel: number, difficultyLevel: number) => void;
+    endMinigame: (won: boolean) => void;
     doGameOver: () => void;
     curTime: () => number;
     convoScene: ConvoScene;

@@ -37,6 +37,7 @@
         mode: MODE_LOADING,
     }
     let farmScene = null;
+    let minigameScene = null;
     window.convoScene = null;
 
     async function handleWindowLoad() {
@@ -185,8 +186,8 @@
             farmScene.draw();
         }
         else if (gameState.mode == MODE_MINIGAME) {
-            if (!cg) minigameUpdate(deltat);
-            minigameDraw(mainCtx);
+            if (!cg) minigameScene.update(deltat);
+            minigameScene.draw();
         }
 
         if(convoScene !== null) convoScene.draw(mainCtx);
@@ -240,13 +241,13 @@
 
     function handleKeyDown(e) {
         if (gameState.mode == MODE_MINIGAME && !convoScene.convoGoing()) {
-            minigameHandleKeyDown(e.keyCode);
+            minigameScene.handleKeyDown(e.keyCode);
         }
     }
 
     function handleKeyUp(e) {
         if (gameState.mode == MODE_MINIGAME && !convoScene.convoGoing()) {
-            minigameHandleKeyUp(e.keyCode);
+            minigameScene.handleKeyUp(e.keyCode);
         }
     }
 
@@ -271,12 +272,6 @@
         }
     }
 
-    window.quickSound = function (soundName, loop) {
-        if (soundName === null) return null;
-        var result = resources.playSound(resources.data[soundName], loop);
-        return result;
-    }
-
     window.onload = handleWindowLoad;
 
     ///////
@@ -297,9 +292,11 @@
     // MINIGAME
     ///////////
 
+    let minigamePlayedTimes = 0;
     window.startMinigame = function (shakeLevel, particleLevel, detailLevel, soundLevel, difficultyLevel) {
         setMode(MODE_MINIGAME);
-        minigameInit(resources, shakeLevel, particleLevel, detailLevel, soundLevel, difficultyLevel);
+        minigameScene = new MinigameScene(mainCtx, resources, shakeLevel, particleLevel, detailLevel, soundLevel, difficultyLevel, minigamePlayedTimes);
+        minigamePlayedTimes++;
     }
 
     window.endMinigame = function (won) {
