@@ -690,9 +690,9 @@
 
     function convoFirstMinigame()
     {
-        convoEnqueue("s", "OK - I'm going to try to harvest some juicefruit.");
-        convoEnqueue("s", "It looks like I have to use the left and right arrow keys to collect all the fruit.");
-        convoEnqueue("s", "There are a lot of birds around. I'd better try not to crash into them.");
+        window.convoScene.convoEnqueue("s", "OK - I'm going to try to harvest some juicefruit.");
+        window.convoScene.convoEnqueue("s", "It looks like I have to use the left and right arrow keys to collect all the fruit.");
+        window.convoScene.convoEnqueue("s", "There are a lot of birds around. I'd better try not to crash into them.");
     }
 
 })();

@@ -4,10 +4,13 @@ declare interface Window {
     spriteBoxNormal: PH.SpriteBox;
     spriteBoxButton: PH.SpriteBox;
     spriteBoxPlot: PH.SpriteBox;
+    spriteBoxConvo: PH.SpriteBox;
     mainFont: PH.Font;
     convoEnqueue: (speaker: string | null, msg: string | null, callback: (() => void) | void) => void;
     startMinigame: (shakeLevel: number, particleLevel: number, detailLevel: number, soundLevel: number, difficultyLevel: number) => void;
     doGameOver: () => void;
+    curTime: () => number;
+    convoScene: ConvoScene;
 }
 
 type Cell = [number, number];
@@ -17,8 +20,7 @@ class PlotContents {
     count: number;
     value: number;
 
-    constructor(desc: string, count: number, value: number)
-    {
+    constructor(desc: string, count: number, value: number) {
         this.desc = desc;
         this.count = count;
         this.value = value;
@@ -35,7 +37,7 @@ class FarmScene {
     MAXLEVEL: number = 5;
     DEFAULT_ENERGY: number = 3;
     END_DAY: number = 28;
-    
+
     UPGRADECOST_PARTICLES: number = 100;
     UPGRADECOST_SHAKE: number = 100;
     UPGRADECOST_DETAILS: number = 100;
@@ -57,7 +59,7 @@ class FarmScene {
     ctx: CanvasRenderingContext2D;
     resources: PH.Resources;
     uiLayer: PH.CanvasUILayer | null = null;
-    hoverCallbacks: {[key: string]: () => void} = {};
+    hoverCallbacks: { [key: string]: () => void } = {};
 
     cash: number = 2000;
     energy: number;
@@ -65,7 +67,7 @@ class FarmScene {
     mouseDownOverPlot: Cell | null = null;
     mouseDragPlot: Cell | null = null;
     plotContents: PlotContents[][][];
-    plotImageDict: {[key: string]: any} | null = null;
+    plotImageDict: { [key: string]: any } | null = null;
     harvestingCell: Cell | null = null;
 
     // current stats
@@ -82,19 +84,17 @@ class FarmScene {
     timesMinigameWon: number = 0;
 
     farmMusic: AudioBufferSourceNode | null = null;
-    
+
     INFO_TEXT_WIDTH: number = 148;
     infoTextLines: string[] = [];
 
-    constructor(ctxObject: CanvasRenderingContext2D, resourcesObject: PH.Resources) {
+    constructor(ctx: CanvasRenderingContext2D, resources: PH.Resources) {
         this.energy = this.DEFAULT_ENERGY;
-        
+
         this.plotContents = [];
-        for(var i = 0; i < this.GRID_H; i++)
-        {
+        for (var i = 0; i < this.GRID_H; i++) {
             this.plotContents[i] = [];
-            for(var j = 0; j < this.GRID_W; j++)
-            {
+            for (var j = 0; j < this.GRID_W; j++) {
                 this.plotContents[i][j] = [];
             }
         }
@@ -102,13 +102,12 @@ class FarmScene {
 
         this.convoIntro();
 
-        
-        this.resources = resourcesObject;
-        this.ctx = ctxObject;
+
+        this.resources = resources;
+        this.ctx = ctx;
     }
 
-    public init()
-    {
+    public init() {
         this.uiLayer = new PH.CanvasUILayer(this.ctx.canvas);
         this.hoverCallbacks = {};
 
@@ -128,7 +127,7 @@ class FarmScene {
         // Buttons for actions
         this.registerButton(100, 146, 52, 16, () => this.clickPayDebt(), () => this.hoverPayDebt(), "Pay Debt"); // pay debt
         this.registerButton(100, 168, 52, 16, () => this.clickSleep(), () => this.hoverSleep(), "Sleep"); // next day
-            
+
         // set up image references
         this.plotImageDict = {
             SEED: this.resources.data.seed,
@@ -140,50 +139,41 @@ class FarmScene {
         this.startMusic();
     }
 
-    startMusic()
-    {
+    startMusic() {
         this.farmMusic = this.resources.playSound(this.resources.data['ld45_farm'], true);
     }
 
-    stopMusic()
-    {
-        if(this.farmMusic !== null) {
+    stopMusic() {
+        if (this.farmMusic !== null) {
             this.resources.stopSound(this.farmMusic);
             this.farmMusic = null;
         }
     }
 
     registerButton(l: number, t: number, w: number, h: number,
-        clickCallback: () => void, hoverCallback: () => void, text: string)
-    {
+        clickCallback: () => void, hoverCallback: () => void, text: string) {
         var b = new PH.CanvasButton(this.ctx, l, t, w, h,
             clickCallback, text, window.buttonDrawer);
         this.uiLayer!.addButton(b);
         this.hoverCallbacks[text] = hoverCallback;
     }
 
-    updateMouseOverPlot()
-    {
-        if(window.canvasTransformer.mousePos === null)
-        {
+    updateMouseOverPlot() {
+        if (window.canvasTransformer.mousePos === null) {
             this.mouseOverPlot = null;
             this.mouseDownOverPlot = null;
             return;
         }
         let [x, y] = window.canvasTransformer.mousePos;
-        for(var i = 0; i < this.GRID_H; i++)
-        {
-            for(var j = 0; j < this.GRID_W; j++)
-            {
+        for (var i = 0; i < this.GRID_H; i++) {
+            for (var j = 0; j < this.GRID_W; j++) {
                 var l = j * 22 + this.FARM_LEFT;
                 var t = i * 22 + this.FARM_TOP;
-                if(x >= l && x < l + 18 && y >= t && y < t + 18)
-                {
+                if (x >= l && x < l + 18 && y >= t && y < t + 18) {
                     this.mouseOverPlot = [i, j];
                     this.handleHoverPlot(this.mouseOverPlot);
-                    if(this.mouseDownOverPlot !== null &&
-                        (i !== this.mouseDownOverPlot[0] || j !== this.mouseDownOverPlot[1]))
-                    {
+                    if (this.mouseDownOverPlot !== null &&
+                        (i !== this.mouseDownOverPlot[0] || j !== this.mouseDownOverPlot[1])) {
                         this.mouseDownOverPlot = null;
                     }
                     return;
@@ -195,13 +185,10 @@ class FarmScene {
         return;
     }
 
-    drawPlots()
-    {
+    drawPlots() {
         // draw the underlying plot rectangles
-        for(var i = 0; i < this.GRID_H; i++)
-        {
-            for(var j = 0; j < this.GRID_W; j++)
-            {
+        for (var i = 0; i < this.GRID_H; i++) {
+            for (var j = 0; j < this.GRID_W; j++) {
                 var x = j * 22 + this.FARM_LEFT;
                 var y = i * 22 + this.FARM_TOP;
                 window.spriteBoxPlot.draw(this.ctx, x, y, 20, 20);
@@ -209,54 +196,45 @@ class FarmScene {
         }
 
         // draw the first contents on every cell
-        for(var i = 0; i < this.GRID_H; i++)
-        {
-            for(var j = 0; j < this.GRID_W; j++)
-            {
+        for (var i = 0; i < this.GRID_H; i++) {
+            for (var j = 0; j < this.GRID_W; j++) {
                 var pcList = this.plotContents[i][j];
-                if(pcList.length == 0) continue;
+                if (pcList.length == 0) continue;
                 var pc = pcList[0];
                 var x = j * 22 + this.FARM_LEFT + 2;
                 var y = i * 22 + this.FARM_TOP + 2;
                 this.ctx.drawImage(this.plotImageDict![pc.desc], x, y);
                 // if the count is more than 1, draw it
-                if(pc.count > 1)
-                {
+                if (pc.count > 1) {
                     window.mainFont.drawText(this.ctx, pc.count.toString(), x + 10, y);
                 }
             }
         }
     }
 
-    setInfoText(text: string)
-    {
+    setInfoText(text: string) {
         var splitLines = text.split("\n");
         this.infoTextLines = [];
-        for(var k = 0; k < splitLines.length; k++)
-        {
+        for (var k = 0; k < splitLines.length; k++) {
             // word-wrap each line
             var wrapped = window.mainFont.wordWrap(splitLines[k], this.INFO_TEXT_WIDTH);
-            for(var l = 0; l < wrapped.length; l++)
-            {
+            for (var l = 0; l < wrapped.length; l++) {
                 this.infoTextLines.push(wrapped[l]);
             }
-            if(wrapped.length == 0)
-            {
+            if (wrapped.length == 0) {
                 this.infoTextLines.push("");
             }
         }
     }
 
-    drawInfoText()
-    {
+    drawInfoText() {
         window.mainFont.drawMultiLineText(this.ctx, this.infoTextLines, 164, 128);
     }
 
-    drawCalendar()
-    {
+    drawCalendar() {
         var l = 10;
         var t = 136;
-        
+
         this.ctx.drawImage(this.resources.data.calendar, l, t);
 
         var week = Math.floor((this.today - 1) / 7);
@@ -264,8 +242,7 @@ class FarmScene {
         this.ctx.drawImage(this.resources.data.calendarhighlight, l + 12 * dow, t + 12 * week);
     }
 
-    public draw()
-    {
+    public draw() {
         // Draw the farm plots
         window.spriteBoxNormal.draw(this.ctx, 4, 4, 152, 104);
         window.mainFont.drawText(this.ctx, "Farm plots", 8, 8);
@@ -307,11 +284,9 @@ class FarmScene {
         window.mainFont.drawText(this.ctx, "$" + this.DEBT.toString(), 104, 134);
 
         // draw anything that's being dragged
-        if(this.mouseDragPlot !== null && window.canvasTransformer.mousePos !== null)
-        {
+        if (this.mouseDragPlot !== null && window.canvasTransformer.mousePos !== null) {
             var pcList = this.plotContents[this.mouseDragPlot[0]][this.mouseDragPlot[1]];
-            if(pcList.length !== 0)
-            {
+            if (pcList.length !== 0) {
                 var pc = pcList[0];
                 this.ctx.drawImage(this.plotImageDict![pc.desc],
                     window.canvasTransformer.mousePos[0] - 11, window.canvasTransformer.mousePos[1] - 11);
@@ -320,55 +295,44 @@ class FarmScene {
 
     }
 
-    public update(deltat: number)
-    {
+    public update(deltat: number) {
         this.infoTextLines = [];
         this.updateMouseOverPlot();
-        
+
         let b = this.uiLayer!.mouseOverButton;
-        if(b !== null) {
+        if (b !== null) {
             let callback = this.hoverCallbacks[b.text];
-            if(callback !== null) callback();
+            if (callback !== null) callback();
         }
     }
 
-    public handleMouseDown()
-    {
+    public handleMouseDown() {
         this.uiLayer!.handleMouseDown();
         this.mouseDownOverPlot = this.mouseOverPlot; // ditto.
 
-        if(this.mouseOverPlot !== null)
-        {
+        if (this.mouseOverPlot !== null) {
             var pcList = this.plotContents[this.mouseOverPlot[0]][this.mouseOverPlot[1]];
-            if(pcList.length !== 0)
-            {
+            if (pcList.length !== 0) {
                 var pc = pcList[0];
-                if(this.DRAGGABLE.indexOf(pc.desc) >= 0)
-                {
+                if (this.DRAGGABLE.indexOf(pc.desc) >= 0) {
                     this.mouseDragPlot = this.mouseOverPlot;
                 }
-                else
-                {
+                else {
                     this.mouseDragPlot = null;
                 }
             }
         }
     }
 
-    getSeedTreeCount()
-    {
+    getSeedTreeCount() {
         var count = 0;
-        for(var i = 0; i < this.GRID_H; i++)
-        {
-            for(var j = 0; j < this.GRID_W; j++)
-            {
+        for (var i = 0; i < this.GRID_H; i++) {
+            for (var j = 0; j < this.GRID_W; j++) {
                 var pcList = this.plotContents[i][j];
-                for(var k = 0; k < pcList.length; k++)
-                {
+                for (var k = 0; k < pcList.length; k++) {
                     var pc = pcList[k];
-                    if(pc.desc == this.SEED || pc.desc == this.PLANTEDSEED ||
-                        pc.desc == this.SAPLING || pc.desc == this.TREE)
-                    {
+                    if (pc.desc == this.SEED || pc.desc == this.PLANTEDSEED ||
+                        pc.desc == this.SAPLING || pc.desc == this.TREE) {
                         count += pc.count;
                     }
                 }
@@ -377,24 +341,20 @@ class FarmScene {
         return count;
     }
 
-    trySell(plotCell: Cell)
-    {
+    trySell(plotCell: Cell) {
         // try to sell the contents of the plot
         var pcList = this.plotContents[plotCell[0]][plotCell[1]];
-        if(pcList.length === 0)
-        {
+        if (pcList.length === 0) {
             return;
         }
         var pc = pcList[0];
-        
+
         // if this is a seed, check that we aren't selling our last seed/sapling/tree.
         // return early and let the player know
-        if(pc.desc === this.SEED)
-        {
+        if (pc.desc === this.SEED) {
             var stc = this.getSeedTreeCount();
-            if(stc <= 1)
-            {
-                window.convoEnqueue("s", "I don't have any trees - I won't sell my last seed!");
+            if (stc <= 1) {
+                window.convoScene.convoEnqueue("s", "I don't have any trees - I won't sell my last seed!");
                 return;
             }
         }
@@ -402,35 +362,31 @@ class FarmScene {
         // make the sale
         this.cash += pc.value;
         pc.count -= 1;
-        if(pc.count <= 0)
-        {
+        if (pc.count <= 0) {
             pcList.splice(0, 1);
         }
         this.resources.playSound(this.resources.data['ld45_cash'], false);
     }
 
-    tryPlant(srcPlot: Cell, destPlot: Cell)
-    {
+    tryPlant(srcPlot: Cell, destPlot: Cell) {
         // first check the conditions:
         // - must be planting a seed
         // - must plant it in an empty plot
         var srcPcList = this.plotContents[srcPlot[0]][srcPlot[1]];
-        if(srcPcList.length === 0)
-        {
+        if (srcPcList.length === 0) {
             return;
         }
         var srcPc = srcPcList[0];
-        
-        if(srcPc.desc !== this.SEED) return; // can only plant seeds
-        
+
+        if (srcPc.desc !== this.SEED) return; // can only plant seeds
+
         var destPcList = this.plotContents[destPlot[0]][destPlot[1]];
-        if(destPcList.length > 0) return; // can only plant in an empty plot
+        if (destPcList.length > 0) return; // can only plant in an empty plot
 
         // all our conditions are met - let's do it
         // remove a seed from the source plot
         srcPc.count -= 1;
-        if(srcPc.count <= 0)
-        {
+        if (srcPc.count <= 0) {
             srcPcList.splice(0, 1);
         }
         // put a planted seed in the destination
@@ -439,38 +395,32 @@ class FarmScene {
         this.resources.playSound(this.resources.data['ld45_plant'], false);
     }
 
-    handleDragPlot(srcPlot: Cell, mouseReleaseCoords: [number, number])
-    {
+    handleDragPlot(srcPlot: Cell, mouseReleaseCoords: [number, number]) {
         let [x, y] = mouseReleaseCoords;
 
         // coords of the box where you can drop things to sell them
         let [l, t, w, h] = this.CASHRECT;
-        if(x >= l && x < l + w && y >= t && y < t + h)
-        {
+        if (x >= l && x < l + w && y >= t && y < t + h) {
             // trying to sell a seed or juice
             this.trySell(srcPlot);
         }
-        else if(this.mouseOverPlot !== null)
-        {
+        else if (this.mouseOverPlot !== null) {
             // trying to plant a seed?
             this.tryPlant(srcPlot, this.mouseOverPlot);
         }
     }
 
-    handleMouseUp()
-    {
+    handleMouseUp() {
         this.uiLayer!.handleMouseUp();
 
         let mp = window.canvasTransformer.mousePos;
-        if(this.mouseDragPlot !== null && mp !== null)
-        {
+        if (this.mouseDragPlot !== null && mp !== null) {
             this.handleDragPlot(this.mouseDragPlot, mp);
         }
         this.mouseDragPlot = null;
     }
 
-    handleMouseMove()
-    {
+    handleMouseMove() {
         this.uiLayer!.handleMouseMove(window.canvasTransformer.mousePos);
     }
 
@@ -478,37 +428,30 @@ class FarmScene {
     // HANDLING CLICKS ON THE PLOTS
     ///////////////////////////////
 
-    public handleClick()
-    {
-        if(this.mouseOverPlot !== null)
-        {
+    public handleClick() {
+        if (this.mouseOverPlot !== null) {
             // avoid triggering this when we moused down somewhere else and moused up here
-            if(this.mouseDownOverPlot === null ||
+            if (this.mouseDownOverPlot === null ||
                 this.mouseDownOverPlot[0] !== this.mouseOverPlot[0] ||
-                this.mouseDownOverPlot[1] !== this.mouseOverPlot[1])
-            {
+                this.mouseDownOverPlot[1] !== this.mouseOverPlot[1]) {
                 return;
             }
             // check if this is a tree that we can harvest
             var pcList = this.plotContents[this.mouseOverPlot[0]][this.mouseOverPlot[1]];
-            if(pcList.length === 0)
-            {
+            if (pcList.length === 0) {
                 return;
             }
             var pc = pcList[0];
-            if(pc.desc === this.TREE)
-            {
+            if (pc.desc === this.TREE) {
                 this.tryHarvest(this.mouseOverPlot)
             }
         }
     }
 
-    tryHarvest(plotCell: Cell)
-    {
+    tryHarvest(plotCell: Cell) {
         // check that we have enough energy
-        if(this.energy <= 0)
-        {
-            window.convoEnqueue("s", "I haven't got enough energy. I need to sleep.");
+        if (this.energy <= 0) {
+            window.convoScene.convoEnqueue("s", "I haven't got enough energy. I need to sleep.");
             return;
         }
 
@@ -524,11 +467,9 @@ class FarmScene {
         window.startMinigame(this.levelShake, this.levelParticles, this.levelDetails, this.levelSound, difficulty);
     }
 
-    public continue(won: boolean)
-    {
+    public continue(won: boolean) {
         // Continue farm mode, after a minigame. won is set to true if the player won.
-        if(won)
-        {
+        if (won) {
             // remove the tree, put in the seeds, and put in the juices.
             var numSeeds = 2 + this.levelSeeds;
             var seedValue = 5;
@@ -538,21 +479,17 @@ class FarmScene {
             this.plotContents[this.harvestingCell![0]][this.harvestingCell![1]] = pcList;
 
             this.timesMinigameWon += 1;
-            if(this.timesMinigameWon === 1)
-            {
+            if (this.timesMinigameWon === 1) {
                 this.convoFirstWonMinigame();
             }
-            else if(this.timesMinigameWon === 2)
-            {
+            else if (this.timesMinigameWon === 2) {
                 this.convoSecondWonMinigame();
             }
-            else
-            {
+            else {
                 this.convoWonMinigame();
             }
         }
-        else
-        {
+        else {
             this.convoLostMinigame();
         }
 
@@ -563,16 +500,13 @@ class FarmScene {
     // BUTTON PRESS HANDLERS
     ////////////////////////
 
-    payUpgradeCost(level: number, cost: number)
-    {
-        if(level >= this.MAXLEVEL)
-        {
-            window.convoEnqueue("s", "I can't upgrade this any further.");
+    payUpgradeCost(level: number, cost: number) {
+        if (level >= this.MAXLEVEL) {
+            window.convoScene.convoEnqueue("s", "I can't upgrade this any further.");
             return false;
         }
-        else if (cost > this.cash)
-        {
-            window.convoEnqueue("s", "I haven't got enough money for that upgrade.");
+        else if (cost > this.cash) {
+            window.convoScene.convoEnqueue("s", "I haven't got enough money for that upgrade.");
             return false;
         }
         else {
@@ -582,72 +516,59 @@ class FarmScene {
         }
     }
 
-    clickParticles()
-    {
-        if(this.payUpgradeCost(this.levelParticles, this.UPGRADECOST_PARTICLES))
+    clickParticles() {
+        if (this.payUpgradeCost(this.levelParticles, this.UPGRADECOST_PARTICLES))
             this.levelParticles += 1;
     }
 
-    clickShake()
-    {
-        if(this.payUpgradeCost(this.levelShake, this.UPGRADECOST_SHAKE))
+    clickShake() {
+        if (this.payUpgradeCost(this.levelShake, this.UPGRADECOST_SHAKE))
             this.levelShake += 1;
     }
 
-    clickDetails()
-    {
-        if(this.payUpgradeCost(this.levelDetails, this.UPGRADECOST_DETAILS))
+    clickDetails() {
+        if (this.payUpgradeCost(this.levelDetails, this.UPGRADECOST_DETAILS))
             this.levelDetails += 1;
     }
 
-    clickSound()
-    {
-        if(this.payUpgradeCost(this.levelSound, this.UPGRADECOST_SOUND))
+    clickSound() {
+        if (this.payUpgradeCost(this.levelSound, this.UPGRADECOST_SOUND))
             this.levelSound += 1;
     }
 
-    clickJuiciness()
-    {
-        if(this.payUpgradeCost(this.levelJuiciness, this.UPGRADECOST_JUICINESS))
+    clickJuiciness() {
+        if (this.payUpgradeCost(this.levelJuiciness, this.UPGRADECOST_JUICINESS))
             this.levelJuiciness += 1;
     }
 
-    clickSeeds()
-    {
-        if(this.payUpgradeCost(this.levelSeeds, this.UPGRADECOST_SEEDS))
+    clickSeeds() {
+        if (this.payUpgradeCost(this.levelSeeds, this.UPGRADECOST_SEEDS))
             this.levelSeeds += 1;
     }
 
-    clickTractor()
-    {
-        if(this.payUpgradeCost(this.levelTractor, this.UPGRADECOST_TRACTOR))
+    clickTractor() {
+        if (this.payUpgradeCost(this.levelTractor, this.UPGRADECOST_TRACTOR))
             this.levelTractor += 1;
     }
 
-    clickScarecrow()
-    {
-        if(this.payUpgradeCost(this.levelScarecrow, this.UPGRADECOST_SCARECROW))
+    clickScarecrow() {
+        if (this.payUpgradeCost(this.levelScarecrow, this.UPGRADECOST_SCARECROW))
             this.levelScarecrow += 1;
     }
 
-    clickPayDebt()
-    {
-        if(this.cash < this.DEBT)
-        {
-            window.convoEnqueue("s", "I haven't got enough money to pay off my debt yet...");
+    clickPayDebt() {
+        if (this.cash < this.DEBT) {
+            window.convoScene.convoEnqueue("s", "I haven't got enough money to pay off my debt yet...");
         }
-        else
-        {
+        else {
             this.convoPayDebtEarly();
         }
     }
 
-    clickSleep()
-    {
+    clickSleep() {
         // sleep until the next day
 
-        if(this.today === this.END_DAY)
-        {
+        if (this.today === this.END_DAY) {
             this.convoEndDay();
             return;
         }
@@ -659,27 +580,22 @@ class FarmScene {
         this.energy = this.DEFAULT_ENERGY + this.levelTractor;
 
         // grow all saplings into trees, and seeds into saplings
-        for(var i = 0; i < this.GRID_H; i++)
-        {
-            for(var j = 0; j < this.GRID_W; j++)
-            {
+        for (var i = 0; i < this.GRID_H; i++) {
+            for (var j = 0; j < this.GRID_W; j++) {
                 var pcList = this.plotContents[i][j];
-                if(pcList.length > 0)
-                {
+                if (pcList.length > 0) {
                     var pc = pcList[0];
-                    if(pc.desc === this.SAPLING) pc.desc = this.TREE;
-                    else if(pc.desc === this.PLANTEDSEED) pc.desc = this.SAPLING;
+                    if (pc.desc === this.SAPLING) pc.desc = this.TREE;
+                    else if (pc.desc === this.PLANTEDSEED) pc.desc = this.SAPLING;
                 }
             }
         }
 
-        if(this.today === 2)
-        {
+        if (this.today === 2) {
             this.convoSecondDay();
         }
-        else if(this.today > 2)
-        {
-            window.convoEnqueue(null, "A new day. Energy restored.");
+        else if (this.today > 2) {
+            window.convoScene.convoEnqueue(null, "A new day. Energy restored.");
         }
     }
 
@@ -687,90 +603,72 @@ class FarmScene {
     // BUTTON HOVER HANDLERS
     ////////////////////////
 
-    quickHoverText(level: number, cost: number, msg: string)
-    {
+    quickHoverText(level: number, cost: number, msg: string) {
         var s = "Level " + level.toString() + "/" + this.MAXLEVEL.toString() + " Cost $" + cost.toString() + "\n\n" + msg;
         this.setInfoText(s);
     }
 
-    hoverParticles()
-    {
+    hoverParticles() {
         this.quickHoverText(this.levelParticles, this.UPGRADECOST_PARTICLES, "Adds particles to your juice, and increases value and difficulty.");
     }
 
-    hoverShake()
-    {
+    hoverShake() {
         this.quickHoverText(this.levelShake, this.UPGRADECOST_SHAKE, "Adds screen shake to your juice, and increases value and difficulty.");
     }
 
-    hoverDetails()
-    {
+    hoverDetails() {
         this.quickHoverText(this.levelDetails, this.UPGRADECOST_DETAILS, "Adds graphical details to your juice, and increases value and difficulty.");
     }
 
-    hoverSound()
-    {
+    hoverSound() {
         this.quickHoverText(this.levelSound, this.UPGRADECOST_SOUND, "Adds sound and music to your juice, and increases value and difficulty.");
     }
 
-    hoverJuiciness()
-    {
+    hoverJuiciness() {
         this.quickHoverText(this.levelJuiciness, this.UPGRADECOST_JUICINESS, "Increases juice yield from each tree.");
     }
 
-    hoverSeeds()
-    {
+    hoverSeeds() {
         this.quickHoverText(this.levelSeeds, this.UPGRADECOST_SEEDS, "Increases seeds from each tree.");
     }
 
-    hoverTractor()
-    {
+    hoverTractor() {
         this.quickHoverText(this.levelTractor, this.UPGRADECOST_TRACTOR, "Increases energy reserve.");
     }
 
-    hoverScarecrow()
-    {
+    hoverScarecrow() {
         this.quickHoverText(this.levelScarecrow, this.UPGRADECOST_SCARECROW, "Reduces difficulty.");
     }
 
-    hoverPayDebt()
-    {
+    hoverPayDebt() {
         this.setInfoText("Pay your debt.");
     }
 
-    hoverSleep()
-    {
+    hoverSleep() {
         this.setInfoText("Sleep until the next day.");
     }
 
-    handleHoverPlot(plotCell: Cell)
-    {
+    handleHoverPlot(plotCell: Cell) {
         var pcList = this.plotContents[plotCell[0]][plotCell[1]];
-        if(pcList.length === 0)
-        {
+        if (pcList.length === 0) {
             return;
         }
         var pc = pcList[0];
         var name = pc.desc;
-        if(name === this.SEED)
-        {
+        if (name === this.SEED) {
             var s = "A seed. Drag it to an empty plot to plant it, or to your funds to sell it.\n\n" + "Sell value: $" + pc.value.toString();
             this.setInfoText(s);
         }
-        else if(name === this.PLANTEDSEED)
-        {
+        else if (name === this.PLANTEDSEED) {
             this.setInfoText("A planted seed. A juicefruit tree will grow here.");
         }
-        else if(name === this.SAPLING)
-        {
+        else if (name === this.SAPLING) {
             this.setInfoText("A sapling of a juicefruit tree. It is not ready to harvest.");
         }
-        else if(name === this.TREE)
-        {
+        else if (name === this.TREE) {
             this.setInfoText("A juicefruit tree. Click it to harvest.");
         }
-        else if(name === this.JUICE)
-        {
+        else if (name === this.JUICE) {
             var s = "Juice. Drag it to your funds to sell it.\n\n" + "Sell value: $" + pc.value.toString();
             this.setInfoText(s);
         }
@@ -780,113 +678,100 @@ class FarmScene {
     // CONVERSATIONS
     ////////////////
 
-    convoIntro()
-    {
-        window.convoEnqueue("s", "Well, here I am! I'm finally free of the rat race. I'm going to turn this place into the best farm anyone's seen.");
-        window.convoEnqueue("s", "I mean, I know life won't be perfect. But it's going to be a hell of a lot more satisfying than the crap I used to put up with.");
-        window.convoEnqueue("r", "Hello, hello! You're the new owner of this farm land, aren't you? Welcome! This land you've got is very special!");
-        window.convoEnqueue("s", "Hello! That's me! I'm Souviette. What's so special about this place?");
-        window.convoEnqueue("r", "The ground here is very strange - normal fruits and vegetables won't grow on it.");
-        window.convoEnqueue("s", "Wait, so I got ripped off? What am I supposed to do with farm land that won't grow anything? It's useless.");
-        window.convoEnqueue("r", "Not useless at all! It might not support normal plants, but this soil has just the right ingredients to grow a very special tree...");
-        window.convoEnqueue("r", "... the juicefruit tree.");
-        window.convoEnqueue("s", "I've never heard of it. Are you telling porkies?");
-        window.convoEnqueue("r", "Nope! Juicefruit trees are very lucrative - they produce juice - a crucial ingredient in computer games.");
-        window.convoEnqueue("s", "It all sounds suss to me. Anyway, you never introduced yourself!");
-        window.convoEnqueue("r", "Oh, that's right! I'm Rip, the Home Loan Gnome.");
-        window.convoEnqueue("s", "A Home Loan Gnome? What does that mean?");
-        window.convoEnqueue("r", "That means it's my job to pull your fingernails off if you don't pay your mortgage. Speaking of which...");
-        window.convoEnqueue("r", "Your first payment is due. $2000. I'll just be taking that.");
-        window.convoEnqueue("s", "!", () =>
-        {
+    convoIntro() {
+        window.convoScene.convoEnqueue("s", "Well, here I am! I'm finally free of the rat race. I'm going to turn this place into the best farm anyone's seen.");
+        window.convoScene.convoEnqueue("s", "I mean, I know life won't be perfect. But it's going to be a hell of a lot more satisfying than the crap I used to put up with.");
+        window.convoScene.convoEnqueue("r", "Hello, hello! You're the new owner of this farm land, aren't you? Welcome! This land you've got is very special!");
+        window.convoScene.convoEnqueue("s", "Hello! That's me! I'm Souviette. What's so special about this place?");
+        window.convoScene.convoEnqueue("r", "The ground here is very strange - normal fruits and vegetables won't grow on it.");
+        window.convoScene.convoEnqueue("s", "Wait, so I got ripped off? What am I supposed to do with farm land that won't grow anything? It's useless.");
+        window.convoScene.convoEnqueue("r", "Not useless at all! It might not support normal plants, but this soil has just the right ingredients to grow a very special tree...");
+        window.convoScene.convoEnqueue("r", "... the juicefruit tree.");
+        window.convoScene.convoEnqueue("s", "I've never heard of it. Are you telling porkies?");
+        window.convoScene.convoEnqueue("r", "Nope! Juicefruit trees are very lucrative - they produce juice - a crucial ingredient in computer games.");
+        window.convoScene.convoEnqueue("s", "It all sounds suss to me. Anyway, you never introduced yourself!");
+        window.convoScene.convoEnqueue("r", "Oh, that's right! I'm Rip, the Home Loan Gnome.");
+        window.convoScene.convoEnqueue("s", "A Home Loan Gnome? What does that mean?");
+        window.convoScene.convoEnqueue("r", "That means it's my job to pull your fingernails off if you don't pay your mortgage. Speaking of which...");
+        window.convoScene.convoEnqueue("r", "Your first payment is due. $2000. I'll just be taking that.");
+        window.convoScene.convoEnqueue("s", "!", () => {
             this.cash -= 2000;
             this.resources.playSound(this.resources.data['ld45_cash'], false);
         })
-        window.convoEnqueue("r", "I'll be back at the end of the month for the remaining $" + this.DEBT + ".");
-        window.convoEnqueue("s", "What! You took all my money! How am I supposed to build my farm now? I have nothing!");
-        window.convoEnqueue("r", "Ah! You may have nothing today, but see that sapling out on your farm?");
-        window.convoEnqueue("r", "Soon that will be a juicefruit tree - and you'll be on your way to a fortune. Farewell.");
-        window.convoEnqueue("s", "...");
-        window.convoEnqueue("s", "It's just a sapling... how am I supposed to pay my debt in one month?");
-        window.convoEnqueue("s", "...");
-        window.convoEnqueue("s", "There's nothing to do today. I haven't got any money, and there's no farming to do. I may as well go to sleep.");
+        window.convoScene.convoEnqueue("r", "I'll be back at the end of the month for the remaining $" + this.DEBT + ".");
+        window.convoScene.convoEnqueue("s", "What! You took all my money! How am I supposed to build my farm now? I have nothing!");
+        window.convoScene.convoEnqueue("r", "Ah! You may have nothing today, but see that sapling out on your farm?");
+        window.convoScene.convoEnqueue("r", "Soon that will be a juicefruit tree - and you'll be on your way to a fortune. Farewell.");
+        window.convoScene.convoEnqueue("s", "...");
+        window.convoScene.convoEnqueue("s", "It's just a sapling... how am I supposed to pay my debt in one month?");
+        window.convoScene.convoEnqueue("s", "...");
+        window.convoScene.convoEnqueue("s", "There's nothing to do today. I haven't got any money, and there's no farming to do. I may as well go to sleep.");
     }
 
-    convoSecondDay()
-    {
-        window.convoEnqueue("s", "Hey, there's a huge tree on my farm! It was just a tiny sapling yesterday, and now it's enormous... and there's fruit!");
-        window.convoEnqueue("s", "It's a pretty strange looking fruit. I might be able to harvest it.");
+    convoSecondDay() {
+        window.convoScene.convoEnqueue("s", "Hey, there's a huge tree on my farm! It was just a tiny sapling yesterday, and now it's enormous... and there's fruit!");
+        window.convoScene.convoEnqueue("s", "It's a pretty strange looking fruit. I might be able to harvest it.");
     }
 
-    convoFirstWonMinigame()
-    {
-        window.convoEnqueue("s", "I did it!");
-        window.convoEnqueue("s", "It seems that the tree was destroyed in the harvesting process. But there is juice in its place.");
-        window.convoEnqueue("s", "I should sell the juice by dragging it onto my funds.");
-        window.convoEnqueue("s", "After I do that, I'll be able to access the seeds, and plant them by dragging them into new plots.");
+    convoFirstWonMinigame() {
+        window.convoScene.convoEnqueue("s", "I did it!");
+        window.convoScene.convoEnqueue("s", "It seems that the tree was destroyed in the harvesting process. But there is juice in its place.");
+        window.convoScene.convoEnqueue("s", "I should sell the juice by dragging it onto my funds.");
+        window.convoScene.convoEnqueue("s", "After I do that, I'll be able to access the seeds, and plant them by dragging them into new plots.");
     }
 
-    convoSecondWonMinigame()
-    {
-        window.convoEnqueue("s", "It was a successful harvest. The tree has been destroyed and there is juice and seeds in its place.");
-        window.convoEnqueue("s", "If I sell enough juice, I'll be able to upgrade my farm. I should investigate those upgrades.");
+    convoSecondWonMinigame() {
+        window.convoScene.convoEnqueue("s", "It was a successful harvest. The tree has been destroyed and there is juice and seeds in its place.");
+        window.convoScene.convoEnqueue("s", "If I sell enough juice, I'll be able to upgrade my farm. I should investigate those upgrades.");
     }
 
-    convoWonMinigame()
-    {
-        window.convoEnqueue("s", "It was a successful harvest. The tree has been destroyed and there is juice and seeds in its place.");
+    convoWonMinigame() {
+        window.convoScene.convoEnqueue("s", "It was a successful harvest. The tree has been destroyed and there is juice and seeds in its place.");
     }
 
-    convoLostMinigame()
-    {
-        window.convoEnqueue("s", "The harvest failed. Fortunately, the tree is still standing, so I can try again until I run out of energy.");
+    convoLostMinigame() {
+        window.convoScene.convoEnqueue("s", "The harvest failed. Fortunately, the tree is still standing, so I can try again until I run out of energy.");
     }
 
-    convoPayDebtEarly()
-    {
-        window.convoEnqueue("r", "Yes... you wanted to speak to me?");
-        window.convoEnqueue("s", "I'm ready to pay off my debt. Here.");
-        window.convoEnqueue("r", "Let's see here...");
+    convoPayDebtEarly() {
+        window.convoScene.convoEnqueue("r", "Yes... you wanted to speak to me?");
+        window.convoScene.convoEnqueue("s", "I'm ready to pay off my debt. Here.");
+        window.convoScene.convoEnqueue("r", "Let's see here...");
         this.convoWinGame();
     }
 
-    convoEndDay()
-    {
-        window.convoEnqueue("r", "Hello again, Souviette!");
-        window.convoEnqueue("s", "Ah! It's the last day of the month...");
-        window.convoEnqueue("r", "That means your debt is due!");
-        window.convoEnqueue("r", "Let's see if you have enough...");
-        if(this.cash >= this.DEBT)
-        {
+    convoEndDay() {
+        window.convoScene.convoEnqueue("r", "Hello again, Souviette!");
+        window.convoScene.convoEnqueue("s", "Ah! It's the last day of the month...");
+        window.convoScene.convoEnqueue("r", "That means your debt is due!");
+        window.convoScene.convoEnqueue("r", "Let's see if you have enough...");
+        if (this.cash >= this.DEBT) {
             this.convoWinGame();
         }
-        else
-        {
-            window.convoEnqueue("r", "It's not enough! That means you failed.");
-            window.convoEnqueue("s", "Oh no... now I'll lose my fingernails... and the farm!");
-            window.convoEnqueue(null, null, () => window.doGameOver);
+        else {
+            window.convoScene.convoEnqueue("r", "It's not enough! That means you failed.");
+            window.convoScene.convoEnqueue("s", "Oh no... now I'll lose my fingernails... and the farm!");
+            window.convoScene.convoEnqueue(null, null, () => window.doGameOver);
         }
     }
 
-    convoWinGame()
-    {
-        window.convoEnqueue("r", "Yes - I think that's everything!", () =>
-        {
+    convoWinGame() {
+        window.convoScene.convoEnqueue("r", "Yes - I think that's everything!", () => {
             this.cash -= this.DEBT;
             this.resources.playSound(this.resources.data['ld45_cash'], false);
         })
-        window.convoEnqueue("r", "Looks like you're a talented juicefruit farmer! I think your farm will be extremely distinguished in the years to come.");
-        window.convoEnqueue("s", "...");
-        window.convoEnqueue("s", "Actually... I think I might not do this for much longer. I will probably sell the farm.");
-        window.convoEnqueue("s", "It hasn't been the idyllic experience I was imagining.");
-        window.convoEnqueue("r", "Oh no! That's a shame to hear. Of course, it's understandable. Running a juicefruit farm can be exhausting.");
-        window.convoEnqueue("r", "Of course, it was much easier in the old days.");
-        window.convoEnqueue("s", "You mean... before the apocalypse when we all got turned into disembodied heads?");
-        window.convoEnqueue("r", "Yes. Back then if you wanted some fruit, you'd just walk over and pick it up. None of this bouncing around.");
-        window.convoEnqueue("s", "I suppose it must have been. Well, it's been an enriching experience, anyway.");
-        window.convoEnqueue("r", "Lovely to hear. Thanks for all the money!");
+        window.convoScene.convoEnqueue("r", "Looks like you're a talented juicefruit farmer! I think your farm will be extremely distinguished in the years to come.");
+        window.convoScene.convoEnqueue("s", "...");
+        window.convoScene.convoEnqueue("s", "Actually... I think I might not do this for much longer. I will probably sell the farm.");
+        window.convoScene.convoEnqueue("s", "It hasn't been the idyllic experience I was imagining.");
+        window.convoScene.convoEnqueue("r", "Oh no! That's a shame to hear. Of course, it's understandable. Running a juicefruit farm can be exhausting.");
+        window.convoScene.convoEnqueue("r", "Of course, it was much easier in the old days.");
+        window.convoScene.convoEnqueue("s", "You mean... before the apocalypse when we all got turned into disembodied heads?");
+        window.convoScene.convoEnqueue("r", "Yes. Back then if you wanted some fruit, you'd just walk over and pick it up. None of this bouncing around.");
+        window.convoScene.convoEnqueue("s", "I suppose it must have been. Well, it's been an enriching experience, anyway.");
+        window.convoScene.convoEnqueue("r", "Lovely to hear. Thanks for all the money!");
 
-        window.convoEnqueue(null, null, () => window.doGameOver);
+        window.convoScene.convoEnqueue(null, null, () => window.doGameOver);
     }
 
 }

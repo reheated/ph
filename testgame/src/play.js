@@ -37,6 +37,7 @@
         mode: MODE_LOADING,
     }
     let farmScene = null;
+    window.convoScene = null;
 
     async function handleWindowLoad() {
         mainGameCanvas = PH.createCanvas(GAME_WIDTH, GAME_HEIGHT);
@@ -79,7 +80,7 @@
 
         window.buttonDrawer = new PH.CanvasButtonSpriteDrawer(
             spriteBoxButton, spriteBoxPressed, mainFont);
-        convoInit(resources);
+        convoScene = new ConvoScene(mainCtx, resources);
 
         // Start the game.
         setMode(MODE_MENU);
@@ -161,7 +162,7 @@
         mainCtx.fillStyle = "#154617";
         mainCtx.fillRect(0, 0, outGameCanvas.width, outGameCanvas.height);
 
-        var cg = convoGoing();
+        var cg = (convoScene !== null && convoScene.convoGoing());
 
         // specific graphics stuff
         if (gameState.mode == MODE_LOADING) {
@@ -188,7 +189,7 @@
             minigameDraw(mainCtx);
         }
 
-        convoDraw(mainCtx);
+        if(convoScene !== null) convoScene.draw(mainCtx);
 
         // Final drawing stuff
         if (gameState.mode != MODE_LOADING) {
@@ -206,8 +207,8 @@
     }
 
     function handleClick(e) {
-        if (convoGoing()) {
-            convoHandleClick();
+        if (convoScene.convoGoing()) {
+            convoScene.convoHandleClick();
         }
         else if (gameState.mode === MODE_MENU) {
             farmScene = new FarmScene(mainCtx, resources);
@@ -238,34 +239,34 @@
     }
 
     function handleKeyDown(e) {
-        if (gameState.mode == MODE_MINIGAME && !convoGoing()) {
+        if (gameState.mode == MODE_MINIGAME && !convoScene.convoGoing()) {
             minigameHandleKeyDown(e.keyCode);
         }
     }
 
     function handleKeyUp(e) {
-        if (gameState.mode == MODE_MINIGAME && !convoGoing()) {
+        if (gameState.mode == MODE_MINIGAME && !convoScene.convoGoing()) {
             minigameHandleKeyUp(e.keyCode);
         }
     }
 
     function handleMouseDown(e) {
         handleMouseMove(e);
-        if (gameState.mode == MODE_FARM && !convoGoing()) {
+        if (gameState.mode == MODE_FARM && !convoScene.convoGoing()) {
             farmScene.handleMouseDown();
         }
     }
 
     function handleMouseUp(e) {
         handleMouseMove(e);
-        if (gameState.mode == MODE_FARM && !convoGoing()) {
+        if (gameState.mode == MODE_FARM && !convoScene.convoGoing()) {
             farmScene.handleMouseUp();
         }
     }
 
     function handleMouseMove(e) {
         canvasTransformer.handleMouseMove(e.clientX, e.clientY);
-        if (gameState.mode == MODE_FARM && !convoGoing()) {
+        if (gameState.mode == MODE_FARM && !convoScene.convoGoing()) {
             farmScene.handleMouseMove();
         }
     }
