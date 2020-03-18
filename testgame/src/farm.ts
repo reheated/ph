@@ -7,6 +7,7 @@ declare interface Window {
     spriteBoxConvo: PH.SpriteBox;
     mainFont: PH.Font;
     convoEnqueue: (speaker: string | null, msg: string | null, callback: (() => void) | void) => void;
+    startFarm: () => void;
     startMinigame: (shakeLevel: number, particleLevel: number, detailLevel: number, soundLevel: number, difficultyLevel: number) => void;
     endMinigame: (won: boolean) => void;
     doGameOver: () => void;
@@ -28,7 +29,7 @@ class PlotContents {
     }
 }
 
-class FarmScene {
+class FarmScene extends PH.Scene {
 
     GRID_H: number = 4;
     GRID_W: number = 4;
@@ -90,6 +91,7 @@ class FarmScene {
     infoTextLines: string[] = [];
 
     constructor(ctx: CanvasRenderingContext2D, resources: PH.Resources) {
+        super();
         this.energy = this.DEFAULT_ENERGY;
 
         this.plotContents = [];
@@ -296,7 +298,7 @@ class FarmScene {
 
     }
 
-    public update(deltat: number) {
+    public update(deltat: number): boolean {
         this.infoTextLines = [];
         this.updateMouseOverPlot();
 
@@ -305,9 +307,10 @@ class FarmScene {
             let callback = this.hoverCallbacks[b.text];
             if (callback !== null) callback();
         }
+        return true;
     }
 
-    public handleMouseDown() {
+    public handleMouseDown(): boolean {
         this.uiLayer!.handleMouseDown();
         this.mouseDownOverPlot = this.mouseOverPlot; // ditto.
 
@@ -323,6 +326,7 @@ class FarmScene {
                 }
             }
         }
+        return false;
     }
 
     getSeedTreeCount() {
@@ -411,7 +415,7 @@ class FarmScene {
         }
     }
 
-    handleMouseUp() {
+    handleMouseUp(): boolean {
         this.uiLayer!.handleMouseUp();
 
         let mp = window.canvasTransformer.mousePos;
@@ -419,34 +423,37 @@ class FarmScene {
             this.handleDragPlot(this.mouseDragPlot, mp);
         }
         this.mouseDragPlot = null;
+        return false;
     }
 
     handleMouseMove() {
         this.uiLayer!.handleMouseMove(window.canvasTransformer.mousePos);
+        return true;
     }
 
     ///////////////////////////////
     // HANDLING CLICKS ON THE PLOTS
     ///////////////////////////////
 
-    public handleClick() {
+    public handleClick(): boolean {
         if (this.mouseOverPlot !== null) {
             // avoid triggering this when we moused down somewhere else and moused up here
             if (this.mouseDownOverPlot === null ||
                 this.mouseDownOverPlot[0] !== this.mouseOverPlot[0] ||
                 this.mouseDownOverPlot[1] !== this.mouseOverPlot[1]) {
-                return;
+                return false;
             }
             // check if this is a tree that we can harvest
             var pcList = this.plotContents[this.mouseOverPlot[0]][this.mouseOverPlot[1]];
             if (pcList.length === 0) {
-                return;
+                return false;
             }
             var pc = pcList[0];
             if (pc.desc === this.TREE) {
                 this.tryHarvest(this.mouseOverPlot)
             }
         }
+        return false;
     }
 
     tryHarvest(plotCell: Cell) {

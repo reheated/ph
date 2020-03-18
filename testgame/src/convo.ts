@@ -12,7 +12,7 @@ class ConvoItem {
     }
 }
 
-class ConvoScene {
+class ConvoScene extends PH.Scene {
     TIME_BEFORE_DISPLAY = 0.25; // time before displaying the convo.
     MINCLICKDELAY = 0.1;
 
@@ -29,6 +29,7 @@ class ConvoScene {
     }
 
     constructor(ctx: CanvasRenderingContext2D, resources: PH.Resources) {
+        super();
         this.resources = resources;
         this.ctx = ctx;
     }
@@ -103,13 +104,22 @@ class ConvoScene {
         if (this.convoQ.length == 0) this.convoStartedTime = null;
     }
 
-    convoHandleClick() {
+    handleClick(): boolean {
         var t = window.curTime();
+        let cg = this.convoGoing();
         if (this.convoStartedTime !== null &&
             t > this.convoStartedTime + this.TIME_BEFORE_DISPLAY &&
             (this.lastClickTime === null || t > this.lastClickTime + this.MINCLICKDELAY)) {
             this.dequeue();
             this.lastClickTime = t;
         }
+        return !cg;
+    }
+
+    handleMouseDown(): boolean { return !this.convoGoing(); }
+    handleMouseUp(): boolean { return !this.convoGoing(); }
+
+    update(deltat: number) {
+        return !this.convoGoing();
     }
 }

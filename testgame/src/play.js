@@ -5,12 +5,6 @@
     // BASIC STUFF
     //////////////
 
-    window.MODE_LOADING = 'MODE_LOADING';
-    window.MODE_MENU = 'MODE_MENU';
-    window.MODE_FARM = 'MODE_FARM';
-    window.MODE_MINIGAME = 'MODE_MINIGAME';
-    window.MODE_GAMEOVER = 'MODE_GAMEOVER';
-
     var GAME_ID = "ld45";
     var GAME_TITLE = "Juicefruit Orchard";
 
@@ -33,11 +27,12 @@
     window.spriteBoxConvo = null;
     window.buttonDrawer = null;
 
-    var gameState = {
-        mode: MODE_LOADING,
-    }
     let farmScene = null;
     let minigameScene = null;
+    let loadingScene = null;
+    let menuScene = null;
+    let gameOverScene = null;
+    let sceneList = new PH.SceneList();
     window.convoScene = null;
 
     async function handleWindowLoad() {
@@ -50,18 +45,6 @@
         mainCtx = mainGameCanvas.getContext('2d');
         outCtx = outGameCanvas.getContext('2d');
 
-        // Load a TTF font
-        await PH.quickFont("m5x7", "m5x7.ttf");
-        mainFont = new PH.NormalFont("m5x7", 16, 7, 10, "#000000");
-        
-        // Start animation frames.
-        requestAnimationFrame(frame);
-
-        // Load the main contents of the game.
-        resources.reqPackage('game');
-        await resources.get();
-
-        // Set up input handlers.
         outGameCanvas.addEventListener('click', handleClick);
         outGameCanvas.addEventListener('dblclick', handleDoubleClick);
         outGameCanvas.addEventListener('contextmenu', handleClick);
@@ -71,6 +54,20 @@
 
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
+
+        loadingScene = new LoadingScene(mainCtx, resources);
+        sceneList.scenes = [loadingScene];
+
+        // Load a TTF font
+        await PH.quickFont("m5x7", "m5x7.ttf");
+        mainFont = new PH.NormalFont("m5x7", 16, 7, 10, "#000000");
+
+        // Start animation frames.
+        requestAnimationFrame(frame);
+
+        // Load the main contents of the game.
+        resources.reqPackage('game');
+        await resources.get();
 
         // Initialize subsystems.
         window.spriteBoxNormal = new PH.SpriteBox(resources.data.boxes, 4, 0);
@@ -84,33 +81,8 @@
         convoScene = new ConvoScene(mainCtx, resources);
 
         // Start the game.
-        setMode(MODE_MENU);
-    }
-
-    function setMode(mode) {
-        gameState.mode = mode;
-        gameState.modeStartTime = curTime();
-    }
-
-    function drawLoadingMode(errorDecoding) {
-        var mbToLoad = (resources.totalToLoad / 1e6).toFixed(1);
-        var mbLoaded = (resources.totalLoaded / 1e6).toFixed(1);
-
-        var loadingString = "Loading";
-        if (errorDecoding) {
-            loadingString = "There was an error decoding the audio";
-            subLoadingString = "maybe the connection was lost or there is a problem with your browser?";
-        }
-        else if (mbToLoad > 0) {
-            loadingString += " " + mbLoaded + "/" + mbToLoad + "MB";
-        }
-        if (resources.numDownloaded === resources.numRequests) {
-            loadingString = "Decoding audio\n(this could take a minute)";
-        }
-
-        mainCtx.fillstyle = "#154617";
-        mainCtx.fillRect(0, 0, 320, 200);
-        mainFont.drawText(mainCtx, loadingString, 1, 1);
+        menuScene = new MenuScene(mainCtx, resources);
+        sceneList.scenes = [menuScene];
     }
 
     function drawCursor() {
@@ -137,7 +109,7 @@
             window.frameRate = frameCount / (t - frameResetTime);
             frameCount = 0;
             frameResetTime += frameRateInterval;
-            if(frameRateReporting) {
+            if (frameRateReporting) {
                 console.log("Framerate: " + window.frameRate.toFixed(1));
             }
         }
@@ -163,37 +135,13 @@
         mainCtx.fillStyle = "#154617";
         mainCtx.fillRect(0, 0, outGameCanvas.width, outGameCanvas.height);
 
-        var cg = (convoScene !== null && convoScene.convoGoing());
+        sceneList.update(deltat);
+        sceneList.draw();
 
-        // specific graphics stuff
-        if (gameState.mode == MODE_LOADING) {
-            drawLoadingMode();
-        }
-        else if (gameState.mode == MODE_MENU) {
-            spriteBoxNormal.draw(mainCtx, 40, 60, 240, 80);
-            mainCtx.drawImage(resources.data.title, 47, 70);
-            mainFont.drawCenteredText(mainCtx, "Click to start", 160, 120);
-        }
-        else if (gameState.mode == MODE_GAMEOVER) {
-            spriteBoxNormal.draw(mainCtx, 60, 60, 200, 80);
-            mainFont.drawCenteredText(mainCtx, "The End", 160, 73);
-            mainFont.drawCenteredText(mainCtx, "A Game by Michael Pauley", 160, 90);
-            mainFont.drawCenteredText(mainCtx, "Made for Ludum Dare 45", 160, 107);
-            mainFont.drawCenteredText(mainCtx, "Thanks for playing!", 160, 124);
-        }
-        else if (gameState.mode == MODE_FARM) {
-            if (!cg) farmScene.update(deltat);
-            farmScene.draw();
-        }
-        else if (gameState.mode == MODE_MINIGAME) {
-            if (!cg) minigameScene.update(deltat);
-            minigameScene.draw();
-        }
-
-        if(convoScene !== null) convoScene.draw(mainCtx);
+        if (convoScene !== null) convoScene.draw(mainCtx);
 
         // Final drawing stuff
-        if (gameState.mode != MODE_LOADING) {
+        if (sceneList.scenes[0] !== loadingScene) {
             updateCursor();
             drawCursor();
         }
@@ -205,19 +153,6 @@
         requestAnimationFrame(frame);
 
         lastFrameTime = t;
-    }
-
-    function handleClick(e) {
-        if (convoScene.convoGoing()) {
-            convoScene.convoHandleClick();
-        }
-        else if (gameState.mode === MODE_MENU) {
-            farmScene = new FarmScene(mainCtx, resources);
-            startFarm();
-        }
-        else if (gameState.mode === MODE_FARM) {
-            farmScene.handleClick();
-        }
     }
 
     function handleDoubleClick(e) {
@@ -239,36 +174,49 @@
         outGameCanvas.style.cursor = newStyle;
     }
 
-    function handleKeyDown(e) {
-        if (gameState.mode == MODE_MINIGAME && !convoScene.convoGoing()) {
-            minigameScene.handleKeyDown(e.keyCode);
-        }
-    }
-
-    function handleKeyUp(e) {
-        if (gameState.mode == MODE_MINIGAME && !convoScene.convoGoing()) {
-            minigameScene.handleKeyUp(e.keyCode);
+    function handleClick(e) {
+        handleMouseMove(e);
+        for (let k = sceneList.scenes.length - 1; k >= 0; k--) {
+            let res = sceneList.scenes[k].handleClick();
+            if (!res) return;
         }
     }
 
     function handleMouseDown(e) {
         handleMouseMove(e);
-        if (gameState.mode == MODE_FARM && !convoScene.convoGoing()) {
-            farmScene.handleMouseDown();
+        for (let k = sceneList.scenes.length - 1; k >= 0; k--) {
+            let res = sceneList.scenes[k].handleMouseDown();
+            if (!res) return;
         }
     }
 
     function handleMouseUp(e) {
         handleMouseMove(e);
-        if (gameState.mode == MODE_FARM && !convoScene.convoGoing()) {
-            farmScene.handleMouseUp();
+        for (let k = sceneList.scenes.length - 1; k >= 0; k--) {
+            let res = sceneList.scenes[k].handleMouseUp();
+            if (!res) return;
         }
     }
 
     function handleMouseMove(e) {
         canvasTransformer.handleMouseMove(e.clientX, e.clientY);
-        if (gameState.mode == MODE_FARM && !convoScene.convoGoing()) {
-            farmScene.handleMouseMove();
+        for (let k = sceneList.scenes.length - 1; k >= 0; k--) {
+            let res = sceneList.scenes[k].handleMouseMove();
+            if (!res) return;
+        }
+    }
+
+    function handleKeyDown(e) {
+        for (let k = sceneList.scenes.length - 1; k >= 0; k--) {
+            let res = sceneList.scenes[k].handleKeyDown(e.keyCode);
+            if (!res) return;
+        }
+    }
+
+    function handleKeyUp(e) {
+        for (let k = sceneList.scenes.length - 1; k >= 0; k--) {
+            let res = sceneList.scenes[k].handleKeyUp(e.keyCode);
+            if (!res) return;
         }
     }
 
@@ -278,13 +226,15 @@
     // FARM
     ///////
 
-    function startFarm() {
-        setMode(MODE_FARM);
+    window.startFarm = function () {
+        farmScene = new FarmScene(mainCtx, resources);
+        sceneList.scenes = [farmScene, convoScene];
         farmScene.init();
     }
 
     window.doGameOver = function () {
-        setMode(MODE_GAMEOVER);
+        gameOverScene = new GameOverScene(mainCtx, resources);
+        sceneList.scenes = [gameOverScene];
     }
 
 
@@ -294,13 +244,13 @@
 
     let minigamePlayedTimes = 0;
     window.startMinigame = function (shakeLevel, particleLevel, detailLevel, soundLevel, difficultyLevel) {
-        setMode(MODE_MINIGAME);
         minigameScene = new MinigameScene(mainCtx, resources, shakeLevel, particleLevel, detailLevel, soundLevel, difficultyLevel, minigamePlayedTimes);
+        sceneList.scenes = [minigameScene, convoScene];
         minigamePlayedTimes++;
     }
 
     window.endMinigame = function (won) {
-        setMode(MODE_FARM);
+        sceneList.scenes = [farmScene, convoScene];
         farmScene.init();
         farmScene.continue(won);
     }

@@ -35,7 +35,7 @@ class Particle {
     fill: string = "#000000";
 }
 
-class MinigameScene {
+class MinigameScene extends PH.Scene {
     
     MAX_DELTAT = 1.0 / 30; // Maximum time step the game simulation is allowed to make.
     REST_TIME = 2.0; // Seconds after winning/losing that the minigame still displays
@@ -163,6 +163,7 @@ class MinigameScene {
         shake: number, particle: number, detail: number, sound: number,
         difficulty: number, minigamePlayedTimes: number)
     {
+        super();
         this.ctx = ctx;
         this.resources = resources;
         this.shakeSettings = this.shakeMap[shake];
@@ -689,6 +690,8 @@ class MinigameScene {
         this.updateBackground(deltat);
 
         this.updateMusic();
+
+        return true;
     }
 
     draw()
@@ -720,14 +723,16 @@ class MinigameScene {
         return d;
     }
 
-    handleKeyDown(keyCode: number)
+    handleKeyDown(keyCode: number): boolean
     {
         this.keysDown[this.keymap[keyCode]] = true;
+        return false;
     }
     
-    handleKeyUp(keyCode: number)
+    handleKeyUp(keyCode: number): boolean
     {
         this.keysDown[this.keymap[keyCode]] = false;
+        return false;
     }
 
     ////////////////
