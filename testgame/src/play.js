@@ -45,15 +45,8 @@
         mainCtx = mainGameCanvas.getContext('2d');
         outCtx = outGameCanvas.getContext('2d');
 
-        outGameCanvas.addEventListener('click', handleClick);
-        outGameCanvas.addEventListener('dblclick', handleDoubleClick);
-        outGameCanvas.addEventListener('contextmenu', handleClick);
-        outGameCanvas.addEventListener('mousedown', handleMouseDown);
-        outGameCanvas.addEventListener('mouseup', handleMouseUp);
-        outGameCanvas.addEventListener('mousemove', handleMouseMove);
-
-        window.addEventListener('keydown', handleKeyDown);
-        window.addEventListener('keyup', handleKeyUp);
+        sceneList.setupMouseListeners(outGameCanvas, (x, y) => window.canvasTransformer.handleMouseMove(x, y));
+        sceneList.setupKeyboardListeners(window);
 
         loadingScene = new LoadingScene(mainCtx, resources);
         sceneList.scenes = [loadingScene];
@@ -155,13 +148,6 @@
         lastFrameTime = t;
     }
 
-    function handleDoubleClick(e) {
-        // don't let event bubble up
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-    }
-
     function updateCursor() {
         // hide or show the default cursor
         var newStyle;
@@ -172,52 +158,6 @@
             newStyle = "none";
         }
         outGameCanvas.style.cursor = newStyle;
-    }
-
-    function handleClick(e) {
-        handleMouseMove(e);
-        for (let k = sceneList.scenes.length - 1; k >= 0; k--) {
-            let res = sceneList.scenes[k].handleClick();
-            if (!res) return;
-        }
-    }
-
-    function handleMouseDown(e) {
-        handleMouseMove(e);
-        for (let k = sceneList.scenes.length - 1; k >= 0; k--) {
-            let res = sceneList.scenes[k].handleMouseDown();
-            if (!res) return;
-        }
-    }
-
-    function handleMouseUp(e) {
-        handleMouseMove(e);
-        for (let k = sceneList.scenes.length - 1; k >= 0; k--) {
-            let res = sceneList.scenes[k].handleMouseUp();
-            if (!res) return;
-        }
-    }
-
-    function handleMouseMove(e) {
-        canvasTransformer.handleMouseMove(e.clientX, e.clientY);
-        for (let k = sceneList.scenes.length - 1; k >= 0; k--) {
-            let res = sceneList.scenes[k].handleMouseMove();
-            if (!res) return;
-        }
-    }
-
-    function handleKeyDown(e) {
-        for (let k = sceneList.scenes.length - 1; k >= 0; k--) {
-            let res = sceneList.scenes[k].handleKeyDown(e.keyCode);
-            if (!res) return;
-        }
-    }
-
-    function handleKeyUp(e) {
-        for (let k = sceneList.scenes.length - 1; k >= 0; k--) {
-            let res = sceneList.scenes[k].handleKeyUp(e.keyCode);
-            if (!res) return;
-        }
     }
 
     window.onload = handleWindowLoad;

@@ -155,7 +155,6 @@ class MinigameScene extends PH.Scene {
     }
 
     // keyboard setup
-    keymap: {[key: number]: string} = {37: 'left', 39: 'right'};
     keysDown: {[key: string]: boolean};
 
 
@@ -227,7 +226,7 @@ class MinigameScene extends PH.Scene {
 
         this.endedTime = null;
         this.won = false;
-        this.keysDown = {'left': false, 'right': false};
+        this.keysDown = {'ArrowLeft': false, 'ArrowRight': false};
 
         if(minigamePlayedTimes == 0)
         {
@@ -260,11 +259,11 @@ class MinigameScene extends PH.Scene {
         this.ballvy += this.GRAVITY * deltat;
 
         // apply player inputs to ball velocity
-        if(this.keysDown.right && !this.keysDown.left)
+        if(this.keysDown.ArrowRight && !this.keysDown.ArrowLeft)
         {
             this.ballvx = this.ballvx + this.XACCEL * deltat;
         }
-        if(this.keysDown.left && !this.keysDown.right)
+        if(this.keysDown.ArrowLeft && !this.keysDown.ArrowRight)
         {
             this.ballvx = this.ballvx - this.XACCEL * deltat;
         }
@@ -723,15 +722,15 @@ class MinigameScene extends PH.Scene {
         return d;
     }
 
-    handleKeyDown(keyCode: number): boolean
+    handleKeyDown(e: KeyboardEvent): boolean
     {
-        this.keysDown[this.keymap[keyCode]] = true;
+        this.keysDown[e.code] = true;
         return false;
     }
     
-    handleKeyUp(keyCode: number): boolean
+    handleKeyUp(e: KeyboardEvent): boolean
     {
-        this.keysDown[this.keymap[keyCode]] = false;
+        this.keysDown[e.code] = false;
         return false;
     }
 
