@@ -87,41 +87,6 @@ namespace PH {
         return (new Date()).getTime() / 1000;
     }
 
-    export class FrameCounter {
-        resetTime: number | null = null;
-        frameCount: number = 0;
-        lastFrameTime: number;
-        public frameRate: number | null = null;
-        reporting: boolean;
-        interval: number;
-
-        constructor(reporting: boolean, interval: number) {
-            this.reporting = reporting;
-            this.interval = interval;
-            this.lastFrameTime = curTime();
-        }
-
-        public update() {
-            var t = PH.curTime();
-            let deltat = t - this.lastFrameTime;
-            if (this.resetTime === null) {
-                this.resetTime = t;
-            }
-            else if (t > this.resetTime + this.interval) {
-                this.frameRate = this.frameCount / (t - this.resetTime);
-                this.frameCount = 0;
-                this.resetTime += this.interval;
-                if (this.reporting) {
-                    console.log("Framerate: " + this.frameRate.toFixed(1));
-                }
-            }
-            this.frameCount++;
-
-            this.lastFrameTime = t;
-            return deltat;
-        }
-    }
-
     export function resizeCanvasToFullWindow(canvas: HTMLCanvasElement) {
         var windowWidth = window.innerWidth;
         var windowHeight = window.innerHeight;

@@ -456,7 +456,8 @@ class FarmScene extends PH.Scene {
         this.game.startMinigame(this.levelShake, this.levelParticles, this.levelDetails, this.levelSound, difficulty);
     }
 
-    public continue(won: boolean) {
+    public continueFromMinigame(won: boolean) {
+        this.init(false);
         // Continue farm mode, after a minigame. won is set to true if the player won.
         if (won) {
             // remove the tree, put in the seeds, and put in the juices.
@@ -677,7 +678,7 @@ class FarmScene extends PH.Scene {
         this.game.convoEnqueue("r", "Not useless at all! It might not support normal plants, but this soil has just the right ingredients to grow a very special tree...");
         this.game.convoEnqueue("r", "... the juicefruit tree.");
         this.game.convoEnqueue("s", "I've never heard of it. Are you telling porkies?");
-        this.game.convoEnqueue("r", "Nope! Juicefruit trees are very lucrative - they produce juice - a crucial ingredient in computer this.games.");
+        this.game.convoEnqueue("r", "Nope! Juicefruit trees are very lucrative - they produce juice - a crucial ingredient in computer games.");
         this.game.convoEnqueue("s", "It all sounds suss to me. Anyway, you never introduced yourself!");
         this.game.convoEnqueue("r", "Oh, that's right! I'm Rip, the Home Loan Gnome.");
         this.game.convoEnqueue("s", "A Home Loan Gnome? What does that mean?");

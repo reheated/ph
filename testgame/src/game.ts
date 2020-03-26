@@ -1,11 +1,11 @@
+let GAME_WIDTH = 320;
+let GAME_HEIGHT = 200;
+
 class Game {
 
     //////////////
     // BASIC STUFF
     //////////////
-
-    GAME_WIDTH = 320;
-    GAME_HEIGHT = 200;
 
     public resources: PH.Resources;
     public canvasTransformer: PH.CanvasTransformer;
@@ -22,12 +22,9 @@ class Game {
 
     sceneList = new PH.SceneList();
     farmScene: FarmScene;
-    menuScene: MenuScene;
-    public convoScene: ConvoScene;
-    gameOverScene: GameOverScene;
+    convoScene: ConvoScene;
     cursorScene: PH.CanvasCursorScene;
     minigamePlayedTimes = 0;
-    fc: PH.FrameCounter;
 
     constructor(resources: PH.Resources, outCtx: CanvasRenderingContext2D, ctx: CanvasRenderingContext2D,
         mainFont: PH.Font) {
@@ -39,8 +36,6 @@ class Game {
         this.canvasTransformer = new PH.CanvasTransformer(this.outCtx.canvas, this.ctx.canvas);
 
         // Initialize subsystems.
-        this.fc = new PH.FrameCounter(false, 5.0);
-
         this.spriteBoxNormal = new PH.SpriteBox(this.resources.data.boxes, 4, 0);
         this.spriteBoxButton = new PH.SpriteBox(this.resources.data.boxes, 4, 1);
         this.spriteBoxPressed = new PH.SpriteBox(this.resources.data.boxes, 4, 2);
@@ -52,66 +47,45 @@ class Game {
 
         this.sceneList.setupMouseListeners(this.outCtx.canvas, (x, y) => this.canvasTransformer.handleMouseMove(x, y));
         this.sceneList.setupKeyboardListeners(window);
-            
+
         this.convoScene = new ConvoScene(this);
-        this.menuScene = new MenuScene(this);
         this.farmScene = new FarmScene(this);
-        this.gameOverScene = new GameOverScene(this);
         this.cursorScene = new PH.CanvasCursorScene(this.ctx, this.outCtx.canvas,
             this.canvasTransformer, this.resources.data.cursor, [0, 0]);
 
         // Start the game.
-        this.sceneList.scenes = [this.menuScene, this.cursorScene];
-        
+        this.sceneList.scenes = [new MenuScene(this), this.cursorScene];
+
         // Start animation frames.
-        requestAnimationFrame(() => this.frame());
+        let fm = new PH.FrameManager({
+            frameCallback: (deltat) => this.frame(deltat),
+            pixelArtMode: [this.ctx, this.outCtx]
+        });
+        fm.start();
     }
 
-    frame() {
-        // Keep track of framerate, and get the time step since the last frame.
-        var deltat = this.fc.update();
-        
+    frame(deltat: number) {
         // Update step.
         this.sceneList.update(deltat);
 
         // Graphics step.
         PH.resizeCanvasToFullWindow(this.outCtx.canvas);
-        this.outCtx.imageSmoothingEnabled = false;
         PH.resetDrawing(this.ctx, "#154617");
         this.sceneList.draw();
-
-        // draw the main game canvas onto the out game canvas
-        PH.drawScaledCanvas(this.ctx.canvas, this.outCtx);
-
-        // request to call this function again the next frame
-        requestAnimationFrame(() => this.frame());
     }
-
-    ////////
-    // CONVO
-    ////////
 
     public convoEnqueue(speaker: string | null, msg: string | null, callback: (() => void) | void) {
-        this.convoScene!.convoEnqueue(speaker, msg, callback);
+        this.convoScene.convoEnqueue(speaker, msg, callback);
     }
 
-    ///////
-    // FARM
-    ///////
-
     public startFarm(firstTime: boolean) {
-        this.sceneList.scenes = [this.farmScene!, this.convoScene!, this.cursorScene!];
-        this.farmScene!.init(firstTime);
+        this.sceneList.scenes = [this.farmScene, this.convoScene, this.cursorScene];
+        this.farmScene.init(firstTime);
     }
 
     public doGameOver() {
-        this.sceneList.scenes = [this.gameOverScene!, this.cursorScene!];
+        this.sceneList.scenes = [new GameOverScene(this), this.cursorScene!];
     }
-
-
-    ///////////
-    // MINIGAME
-    ///////////
 
     public startMinigame(shakeLevel: number, particleLevel: number, detailLevel: number,
         soundLevel: number, difficultyLevel: number) {
@@ -123,64 +97,42 @@ class Game {
 
     public endMinigame(won: boolean) {
         this.sceneList.scenes = [this.farmScene!, this.convoScene!, this.cursorScene!];
-        this.farmScene!.init(false);
-        this.farmScene!.continue(won);
+        this.farmScene.continueFromMinigame(won);
     }
 }
 
-class Startup {
-    GAME_WIDTH = 320;
-    GAME_HEIGHT = 200;
+async function start() {
+    let mainGameCanvas = PH.createCanvas(GAME_WIDTH, GAME_HEIGHT);
+    let outGameCanvas = <HTMLCanvasElement>document.getElementById('outGameCanvas')!;
+    let resources = new PH.Resources();
 
-    ctx: CanvasRenderingContext2D | null = null;
-    outCtx: CanvasRenderingContext2D | null = null;
-    loadingScene: LoadingScene | null = null;
-    loaded: boolean = false;
+    // Set up canvas contexts
+    let outCtx = outGameCanvas.getContext('2d')!;
+    let ctx = mainGameCanvas.getContext('2d')!;
 
-    frame() {
-        if(this.loaded) return; // Done loading. Don't draw, or request another frame
+    // Load a TTF font
+    await PH.quickFont("m5x7", "m5x7.ttf");
+    let mainFont = new PH.NormalFont("m5x7", 16, 7, 10, "#000000");
 
-        PH.resizeCanvasToFullWindow(this.outCtx!.canvas);
-        this.outCtx!.imageSmoothingEnabled = false;
-        if(this.loadingScene !== null) {
-            this.loadingScene.draw();
-        }
-        PH.drawScaledCanvas(this.ctx!.canvas, this.outCtx!);
+    // Set up loading scene
+    let loadingScene = new LoadingScene(resources, ctx, mainFont);
 
-        // request to call this function again the next frame
-        requestAnimationFrame(() => this.frame());
-    }
+    // Start animation frames for while the game is loading.
+    let fm = new PH.FrameManager({
+        frameCallback: (deltat) => {
+            PH.resizeCanvasToFullWindow(outCtx.canvas);
+            loadingScene.draw();
+        },
+        pixelArtMode: [ctx, outCtx]
+    });
+    fm.start();
 
-    async start() {
-        let mainGameCanvas = PH.createCanvas(this.GAME_WIDTH, this.GAME_HEIGHT);
-        let outGameCanvas = <HTMLCanvasElement>document.getElementById('outGameCanvas')!;
-        let resources = new PH.Resources();
-        
-        // Set up canvas contexts
-        this.outCtx = outGameCanvas.getContext('2d')!;
-        this.ctx = mainGameCanvas.getContext('2d')!;
+    // Load the main contents of the game.
+    resources.reqPackage('game');
+    await resources.get();
 
-        // Load a TTF font
-        await PH.quickFont("m5x7", "m5x7.ttf");
-        let mainFont = new PH.NormalFont("m5x7", 16, 7, 10, "#000000");
-        
-        // Set up loading scene
-        this.loadingScene = new LoadingScene(resources, this.ctx, mainFont);
-
-        // Start animation frames.
-        requestAnimationFrame(() => this.frame());
-
-        // Load the main contents of the game.
-        resources.reqPackage('game');
-        await resources.get();
-
-        this.loaded = true;
-        new Game(resources, this.outCtx, this.ctx, mainFont);
-    }
-
+    fm.stop();
+    new Game(resources, outCtx, ctx, mainFont);
 }
 
-window.onload = () => {
-    let startup = new Startup();
-    startup.start();
-}
+window.onload = start;
