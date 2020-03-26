@@ -11,6 +11,8 @@ declare interface Document {
 
 namespace PH {
 
+    export type FillStyle = string | CanvasGradient | CanvasPattern;
+
     export function createCanvas(w: number, h: number): HTMLCanvasElement {
         let c = document.createElement('canvas');
         c.width = w;
@@ -67,8 +69,7 @@ namespace PH {
     }
 
     export function partImage(img: HTMLImageElement, l: number, t: number,
-        w: number, h: number, scale: number): HTMLImageElement
-    {
+        w: number, h: number, scale: number): HTMLImageElement {
         // Create a new image by extracting the specified rectangle
         // from an existing image.
         let canv = document.createElement("canvas");
@@ -81,4 +82,61 @@ namespace PH {
         result.src = canv.toDataURL();
         return result;
     }
+
+    export function curTime() {
+        return (new Date()).getTime() / 1000;
+    }
+
+    export class FrameCounter {
+        resetTime: number | null = null;
+        frameCount: number = 0;
+        lastFrameTime: number;
+        public frameRate: number | null = null;
+        reporting: boolean;
+        interval: number;
+
+        constructor(reporting: boolean, interval: number) {
+            this.reporting = reporting;
+            this.interval = interval;
+            this.lastFrameTime = curTime();
+        }
+
+        public update() {
+            var t = PH.curTime();
+            let deltat = t - this.lastFrameTime;
+            if (this.resetTime === null) {
+                this.resetTime = t;
+            }
+            else if (t > this.resetTime + this.interval) {
+                this.frameRate = this.frameCount / (t - this.resetTime);
+                this.frameCount = 0;
+                this.resetTime += this.interval;
+                if (this.reporting) {
+                    console.log("Framerate: " + this.frameRate.toFixed(1));
+                }
+            }
+            this.frameCount++;
+
+            this.lastFrameTime = t;
+            return deltat;
+        }
+    }
+
+    export function resizeCanvasToFullWindow(canvas: HTMLCanvasElement) {
+        var windowWidth = window.innerWidth;
+        var windowHeight = window.innerHeight;
+        if (windowWidth !== canvas.width ||
+            windowHeight !== canvas.height) {
+            // make sure canvas is the right size
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+    }
+
+    export function resetDrawing(ctx: CanvasRenderingContext2D, fillStyle: FillStyle) {
+        let canvas = ctx.canvas;
+        ctx.fillStyle = fillStyle;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
 }

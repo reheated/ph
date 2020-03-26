@@ -86,8 +86,8 @@ class MinigameScene extends PH.Scene {
     INTRO_BEATS = 4;
     SONG_BEATS = 16 * 4; // 16 bars
 
-    ctx: CanvasRenderingContext2D;
-    resources: PH.Resources;
+    game: Game;
+
     ballx: number;
     bally: number;
     ballvx: number;
@@ -158,13 +158,11 @@ class MinigameScene extends PH.Scene {
     keysDown: {[key: string]: boolean};
 
 
-    constructor(ctx: CanvasRenderingContext2D, resources: PH.Resources,
-        shake: number, particle: number, detail: number, sound: number,
+    constructor(game: Game, shake: number, particle: number, detail: number, sound: number,
         difficulty: number, minigamePlayedTimes: number)
     {
         super();
-        this.ctx = ctx;
-        this.resources = resources;
+        this.game = game;
         this.shakeSettings = this.shakeMap[shake];
         this.particleSettings = this.particleMap[particle];
         this.detailSettings = this.detailMap[detail];
@@ -240,14 +238,14 @@ class MinigameScene extends PH.Scene {
     startPlaying()
     {
         this.quickSound(this.soundSettings.intro, false);
-        var t = window.curTime()
+        var t = PH.curTime()
         this.minigameStartedTime = t;
         this.nextSongPlay = t + this.introTime;
     }
 
     quickSound(soundName: string | null, loop: boolean) {
         if (soundName === null) return null;
-        var result = this.resources.playSound(this.resources.data[soundName], loop);
+        var result = this.game.resources.playSound(this.game.resources.data[soundName], loop);
         return result;
     }
 
@@ -372,14 +370,14 @@ class MinigameScene extends PH.Scene {
         if(this.numGotSeeds >= this.NUM_SEEDS)
         {
             this.won = true;
-            this.endedTime = window.curTime();
+            this.endedTime = PH.curTime();
             this.stopMusic();
             this.quickSound(this.soundSettings.won, false);
         }
         else if(this.lives <= 0)
         {
             this.won = false;
-            this.endedTime = window.curTime();
+            this.endedTime = PH.curTime();
             this.particleExplosion(this.ballx, this.bally, this.particleSettings.loseCount, "#cc0044");
             this.stopMusic();
         }
@@ -388,47 +386,47 @@ class MinigameScene extends PH.Scene {
     seedCollisionEffect(x: number, y: number)
     {
         this.particleExplosion(x, y, this.particleSettings.count, "#461093");
-        this.lastShake = window.curTime();
+        this.lastShake = PH.curTime();
         this.quickSound(this.soundSettings.get, false);
     }
 
     birdCollisionEffect(x: number, y: number)
     {
         this.particleExplosion(x, y, this.particleSettings.count, "#222222");
-        this.lastShake = window.curTime();
+        this.lastShake = PH.curTime();
         this.quickSound(this.soundSettings.bird, false);
     }
 
     drawObjects()
     {
         // DRAW STEP
-        var t = window.curTime();
+        var t = PH.curTime();
         
         // Draw walls
-        this.ctx.fillStyle = "#000000";
+        this.game.ctx.fillStyle = "#000000";
         var b = 1000;
-        this.ctx.fillRect(-b, -b, this.WALLWIDTH + b, this.HEIGHT + 2*b);
-        this.ctx.fillRect(this.WIDTH - this.WALLWIDTH, -b, this.WALLWIDTH + b, this.HEIGHT + 2*b);
-        this.ctx.fillStyle = this.GROUNDCOLOR;
-        this.ctx.fillRect(0, this.HEIGHT - this.WALLWIDTH, this.WIDTH, this.WALLWIDTH + b);
+        this.game.ctx.fillRect(-b, -b, this.WALLWIDTH + b, this.HEIGHT + 2*b);
+        this.game.ctx.fillRect(this.WIDTH - this.WALLWIDTH, -b, this.WALLWIDTH + b, this.HEIGHT + 2*b);
+        this.game.ctx.fillStyle = this.GROUNDCOLOR;
+        this.game.ctx.fillRect(0, this.HEIGHT - this.WALLWIDTH, this.WIDTH, this.WALLWIDTH + b);
 
         // Draw birds
-        this.ctx.fillStyle = "#aaaaaa";
+        this.game.ctx.fillStyle = "#aaaaaa";
         for(var k = 0; k < this.birdPositions.length; k++)
         {
             var pos = this.birdPositions[k];
             var x = Math.floor(pos[0] - this.BIRDRAD + 0.5);
             var y = Math.floor(pos[1] - this.BIRDRAD + 0.5);
             var flip = this.birdVels[k][0] < 0;
-            this.ctx.save();
-            this.ctx.translate(x, y);
+            this.game.ctx.save();
+            this.game.ctx.translate(x, y);
             if(flip)
             {
-                this.ctx.translate(this.BIRDRAD * 2, 0);
-                this.ctx.scale(-1, 1);
+                this.game.ctx.translate(this.BIRDRAD * 2, 0);
+                this.game.ctx.scale(-1, 1);
             }
-            this.ctx.drawImage(this.resources.data.bird, 0, 0);
-            this.ctx.restore();
+            this.game.ctx.drawImage(this.game.resources.data.bird, 0, 0);
+            this.game.ctx.restore();
         }
 
         // Draw seeds
@@ -437,7 +435,7 @@ class MinigameScene extends PH.Scene {
             var pos = this.seedPositions[k];
             var x = Math.floor(pos[0] - this.SEEDRAD + 0.5);
             var y = Math.floor(pos[1] - this.SEEDRAD + 0.5);
-            this.ctx.drawImage(this.resources.data.fruit, x, y);
+            this.game.ctx.drawImage(this.game.resources.data.fruit, x, y);
         }
 
         // Draw player, if we haven't died
@@ -446,7 +444,7 @@ class MinigameScene extends PH.Scene {
         {
             var x = Math.floor(this.ballx - this.BALLRAD + 0.5);
             var y = Math.floor(this.bally - this.BALLRAD + 0.5);
-            this.ctx.drawImage(this.resources.data.playerface, x, y);
+            this.game.ctx.drawImage(this.game.resources.data.playerface, x, y);
         }
 
         // Draw health
@@ -454,7 +452,7 @@ class MinigameScene extends PH.Scene {
         var y = 4;
         for(var k = 0; k < this.lives; k++)
         {
-            this.ctx.drawImage(this.resources.data.health, x, y);
+            this.game.ctx.drawImage(this.game.resources.data.health, x, y);
             x -= 10;
         }
     }
@@ -493,8 +491,8 @@ class MinigameScene extends PH.Scene {
             {
                 var x = Math.floor(p.x + 0.5);
                 var y = Math.floor(p.y + 0.5);
-                this.ctx.fillStyle = p.fill;
-                this.ctx.fillRect(x, y, 1, 1);
+                this.game.ctx.fillStyle = p.fill;
+                this.game.ctx.fillRect(x, y, 1, 1);
             }
         }
     }
@@ -536,53 +534,53 @@ class MinigameScene extends PH.Scene {
 
     drawBackground()
     {
-        var t = window.curTime();
+        var t = PH.curTime();
 
         // draw dusk
         if(this.detailSettings.dusk)
         {
-            this.ctx.drawImage(this.resources.data.dusk, 0, this.SKY_Y_OFFSET);
+            this.game.ctx.drawImage(this.game.resources.data.dusk, 0, this.SKY_Y_OFFSET);
         }
 
         // draw floodlight
         if(this.detailSettings.floodlight)
         {
-            this.ctx.globalAlpha = 0.4;
-            this.ctx.globalCompositeOperation = 'multiply';
-            this.ctx.drawImage(this.resources.data.floodlight, 0, this.SKY_Y_OFFSET);
-            this.ctx.globalCompositeOperation = 'source-over';
-            this.ctx.globalAlpha = 1;
+            this.game.ctx.globalAlpha = 0.4;
+            this.game.ctx.globalCompositeOperation = 'multiply';
+            this.game.ctx.drawImage(this.game.resources.data.floodlight, 0, this.SKY_Y_OFFSET);
+            this.game.ctx.globalCompositeOperation = 'source-over';
+            this.game.ctx.globalAlpha = 1;
         }
         
         // draw disco lights
         if(this.detailSettings.disco)
         {
-            this.ctx.globalAlpha = 0.4;
-            this.ctx.globalCompositeOperation = 'multiply';
+            this.game.ctx.globalAlpha = 0.4;
+            this.game.ctx.globalCompositeOperation = 'multiply';
             
             var z = Math.floor(t / 0.5) % 3;
-            this.ctx.fillStyle = "#000000";
+            this.game.ctx.fillStyle = "#000000";
             var r = 300;
             var N = 7;
             for(var k = z-2; k < N; k+=3)
             {
                 var a1 = (k / N) * Math.PI; // cut semicircle, so only 1pi
                 var a2 = ((k + 2) / N) * Math.PI; // cut semicircle, so only 1pi
-                this.ctx.beginPath();
-                this.ctx.moveTo(160, 220);
-                this.ctx.lineTo(160 + r * Math.cos(a1), 220 - r * Math.sin(a1));
-                this.ctx.lineTo(160 + r * Math.cos(a2), 220 - r * Math.sin(a2));
-                this.ctx.closePath();
-                this.ctx.fill();
+                this.game.ctx.beginPath();
+                this.game.ctx.moveTo(160, 220);
+                this.game.ctx.lineTo(160 + r * Math.cos(a1), 220 - r * Math.sin(a1));
+                this.game.ctx.lineTo(160 + r * Math.cos(a2), 220 - r * Math.sin(a2));
+                this.game.ctx.closePath();
+                this.game.ctx.fill();
             }
-            this.ctx.globalCompositeOperation = 'source-over';
-            this.ctx.globalAlpha = 1;
+            this.game.ctx.globalCompositeOperation = 'source-over';
+            this.game.ctx.globalAlpha = 1;
         }
 
         // draw clouds
         if(this.detailSettings.clouds)
         {
-            if(this.detailSettings.dusk) this.ctx.globalAlpha = 0.4;
+            if(this.detailSettings.dusk) this.game.ctx.globalAlpha = 0.4;
             for(var k = 0; k < this.CLOUD_COUNT; k++)
             {
                 var imgName = 'cloud' + k.toString();
@@ -591,15 +589,15 @@ class MinigameScene extends PH.Scene {
                 // It's nicer with the AA on!
                 var x = pos[0];
                 var y = pos[1];
-                this.ctx.drawImage(this.resources.data[imgName], x, y);
+                this.game.ctx.drawImage(this.game.resources.data[imgName], x, y);
             }
-            this.ctx.globalAlpha = 1;
+            this.game.ctx.globalAlpha = 1;
         }
 
         // draw long grass
         if(this.detailSettings.grass)
         {
-            this.ctx.drawImage(this.resources.data.longgrass, 0, this.HEIGHT - this.WALLWIDTH - this.GRASSHEIGHT);
+            this.game.ctx.drawImage(this.game.resources.data.longgrass, 0, this.HEIGHT - this.WALLWIDTH - this.GRASSHEIGHT);
         }
     }
 
@@ -608,14 +606,14 @@ class MinigameScene extends PH.Scene {
         // draw short grass
         if(this.detailSettings.grass)
         {
-            this.ctx.drawImage(this.resources.data.shortgrass, 0, this.HEIGHT - this.WALLWIDTH - this.GRASSHEIGHT + 1);
+            this.game.ctx.drawImage(this.game.resources.data.shortgrass, 0, this.HEIGHT - this.WALLWIDTH - this.GRASSHEIGHT + 1);
         }
     }
 
     setScreenTransform()
     {
         // Set the transform
-        var t = window.curTime();
+        var t = PH.curTime();
 
         var shakeAmt = this.shakeSettings.always;
         var shakeHappening = (this.lastShake !== null) && (t < this.lastShake + this.SCREEN_SHAKE_DURATION);
@@ -629,21 +627,21 @@ class MinigameScene extends PH.Scene {
         {
             var transx = (Math.random() * 2 - 1) * shakeAmt;
             var transy = (Math.random() * 2 - 1) * shakeAmt;
-            this.ctx.translate(transx, transy);
+            this.game.ctx.translate(transx, transy);
         }
 
         if(shakeHappening && this.shakeSettings.rotate > 0)
         {
             var rot = (Math.random() * 2 - 1) * this.shakeSettings.rotate * 2 * Math.PI / 360;
-            this.ctx.translate(this.WIDTH/2, this.HEIGHT/2);
-            this.ctx.rotate(rot);
-            this.ctx.translate(-this.WIDTH/2, -this.HEIGHT/2);
+            this.game.ctx.translate(this.WIDTH/2, this.HEIGHT/2);
+            this.game.ctx.rotate(rot);
+            this.game.ctx.translate(-this.WIDTH/2, -this.HEIGHT/2);
         }
     }
 
     updateMusic()
     {
-        var t = window.curTime();
+        var t = PH.curTime();
         if(this.nextSongPlay !== null && t > this.nextSongPlay)
         {
             this.curSong = this.quickSound(this.soundSettings.music, false);
@@ -655,7 +653,7 @@ class MinigameScene extends PH.Scene {
     {
         if(this.curSong !== null)
         {
-            this.resources.stopSound(this.curSong);
+            this.game.resources.stopSound(this.curSong);
             this.curSong = null;
         }
         this.nextSongPlay = null;
@@ -667,7 +665,7 @@ class MinigameScene extends PH.Scene {
         {
             this.startPlaying();
         }
-        var timeSinceStarted = window.curTime() - this.minigameStartedTime!;
+        var timeSinceStarted = PH.curTime() - this.minigameStartedTime!;
         var isIntro = (timeSinceStarted < this.introTime);
 
         deltat = Math.min(deltat, this.MAX_DELTAT);
@@ -675,10 +673,10 @@ class MinigameScene extends PH.Scene {
         if(this.endedTime !== null)
         {
             // don't update the game step, so we can't die
-            if(window.curTime() > this.endedTime + this.REST_TIME)
+            if(PH.curTime() > this.endedTime + this.REST_TIME)
             {
                 this.minigameStartedTime = null;
-                window.endMinigame(this.won);
+                this.game.endMinigame(this.won);
             }
         }
         else if(!isIntro) // haven't won or lost yet, and not in intro
@@ -696,8 +694,8 @@ class MinigameScene extends PH.Scene {
     draw()
     {
         // Draw basic sky
-        this.ctx.fillStyle = "#78cfe3";
-        this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+        this.game.ctx.fillStyle = "#78cfe3";
+        this.game.ctx.fillRect(0, 0, this.game.ctx.canvas.width, this.game.ctx.canvas.height);
 
         this.setScreenTransform();
         this.drawBackground();
@@ -706,10 +704,10 @@ class MinigameScene extends PH.Scene {
         this.drawForeground();
         
         var isIntro = (this.minigameStartedTime != null &&
-            window.curTime() - this.minigameStartedTime < this.introTime);
+            PH.curTime() - this.minigameStartedTime < this.introTime);
         if(isIntro)
         {
-            window.mainFont.drawText(this.ctx, "GET READY", 128, 32);
+            this.game.mainFont!.drawText(this.game.ctx, "GET READY", 128, 32);
         }
     }
 
@@ -740,9 +738,9 @@ class MinigameScene extends PH.Scene {
 
     convoFirstMinigame()
     {
-        window.convoScene.convoEnqueue("s", "OK - I'm going to try to harvest some juicefruit.");
-        window.convoScene.convoEnqueue("s", "It looks like I have to use the left and right arrow keys to collect all the fruit.");
-        window.convoScene.convoEnqueue("s", "There are a lot of birds around. I'd better try not to crash into them.");
+        this.game.convoEnqueue("s", "OK - I'm going to try to harvest some juicefruit.");
+        this.game.convoEnqueue("s", "It looks like I have to use the left and right arrow keys to collect all the fruit.");
+        this.game.convoEnqueue("s", "There are a lot of birds around. I'd better try not to crash into them.");
     }
 
 }

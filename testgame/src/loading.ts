@@ -1,11 +1,13 @@
 class LoadingScene extends PH.Scene {
-    ctx: CanvasRenderingContext2D;
     resources: PH.Resources;
+    ctx: CanvasRenderingContext2D;
+    font: PH.Font;
 
-    constructor(ctx: CanvasRenderingContext2D, resources: PH.Resources) {
+    constructor(resources: PH.Resources, ctx: CanvasRenderingContext2D, font: PH.Font) {
         super();
-        this.ctx = ctx;
         this.resources = resources;
+        this.ctx = ctx;
+        this.font = font;
     }
 
     draw() {
@@ -20,11 +22,11 @@ class LoadingScene extends PH.Scene {
             loadingString += " " + mbLoaded + "/" + mbToLoad.toFixed(1) + "MB";
         }
         if (this.resources.numDownloaded === this.resources.numRequests) {
-            loadingString = "Decoding audio\n(this could take a minute)";
+            loadingString = "Decoding audio (this could take a minute)";
         }
 
         this.ctx.fillStyle = "#154617";
         this.ctx.fillRect(0, 0, 320, 200);
-        window.mainFont.drawText(this.ctx, loadingString, 1, 1);
+        this.font.drawText(this.ctx, loadingString, 1, 1);
     }
 }

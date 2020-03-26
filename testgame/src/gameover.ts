@@ -1,18 +1,16 @@
 class GameOverScene extends PH.Scene {
-    ctx: CanvasRenderingContext2D;
-    resources: PH.Resources;
+    game: Game;
 
-    constructor(ctx: CanvasRenderingContext2D, resources: PH.Resources) {
+    constructor(game: Game) {
         super();
-        this.ctx = ctx;
-        this.resources = resources;
+        this.game = game;
     }
 
     draw() {
-        window.spriteBoxNormal.draw(this.ctx, 60, 60, 200, 80);
-        window.mainFont.drawCenteredText(this.ctx, "The End", 160, 73);
-        window.mainFont.drawCenteredText(this.ctx, "A Game by Michael Pauley", 160, 90);
-        window.mainFont.drawCenteredText(this.ctx, "Made for Ludum Dare 45", 160, 107);
-        window.mainFont.drawCenteredText(this.ctx, "Thanks for playing!", 160, 124);
+        this.game.spriteBoxNormal!.draw(this.game.ctx, 60, 60, 200, 80);
+        this.game.mainFont!.drawCenteredText(this.game.ctx, "The End", 160, 73);
+        this.game.mainFont!.drawCenteredText(this.game.ctx, "A game by Michael Pauley", 160, 90);
+        this.game.mainFont!.drawCenteredText(this.game.ctx, "Made for Ludum Dare 45", 160, 107);
+        this.game.mainFont!.drawCenteredText(this.game.ctx, "Thanks for playing!", 160, 124);
     }
 }

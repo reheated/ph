@@ -21,19 +21,19 @@ namespace PH {
 
         constructor() { }
 
-        public setupMouseListeners(elt: HTMLElement, coordinateHandler: CoordinateHandler) {
+        public setupMouseListeners(target: HTMLElement | Window, coordinateHandler: CoordinateHandler) {
             this.coordinateHandler = coordinateHandler;
-            elt.addEventListener('click', (e) => this.handleClick(e));
-            elt.addEventListener('dblclick', (e) => this.handleDoubleClick(e));
-            elt.addEventListener('contextmenu', (e) => this.handleClick(e));
-            elt.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-            elt.addEventListener('mouseup', (e) => this.handleMouseUp(e));
-            elt.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+            target.addEventListener('click', (e) => this.handleClick(<MouseEvent>e));
+            target.addEventListener('dblclick', (e) => this.handleDoubleClick(<MouseEvent>e));
+            target.addEventListener('contextmenu', (e) => this.handleClick(<MouseEvent>e));
+            target.addEventListener('mousedown', (e) => this.handleMouseDown(<MouseEvent>e));
+            target.addEventListener('mouseup', (e) => this.handleMouseUp(<MouseEvent>e));
+            target.addEventListener('mousemove', (e) => this.handleMouseMove(<MouseEvent>e));
         }
 
-        public setupKeyboardListeners(elt: HTMLElement) {
-            elt.addEventListener('keydown', (e) => this.handleKeyDown(e));
-            elt.addEventListener('keyup', (e) => this.handleKeyUp(e));
+        public setupKeyboardListeners(target: HTMLElement | Window) {
+            target.addEventListener('keydown', (e) => this.handleKeyDown(<KeyboardEvent>e));
+            target.addEventListener('keyup', (e) => this.handleKeyUp(<KeyboardEvent>e));
         }
 
         public draw() {
@@ -47,8 +47,8 @@ namespace PH {
             // Update all the scenes, from last to first, stopping if we get
             // a false return value.
             for (let k = this.scenes.length - 1; k >= 0; k--) {
-                let res = this.scenes[k].update(deltat);
-                if (!res) break;
+                let passThrough = this.scenes[k].update(deltat);
+                if (!passThrough) break;
             }
         }
 
@@ -62,8 +62,8 @@ namespace PH {
         handleClick(e: MouseEvent) {
             this.handleMouseMove(e);
             for (let k = this.scenes.length - 1; k >= 0; k--) {
-                let res = this.scenes[k].handleClick();
-                if (!res) break;
+                let passThrough = this.scenes[k].handleClick();
+                if (!passThrough) break;
             }
             return this.stopBubble(e);
         }
@@ -71,8 +71,8 @@ namespace PH {
         handleDoubleClick(e: MouseEvent) {
             this.handleMouseMove(e);
             for (let k = this.scenes.length - 1; k >= 0; k--) {
-                let res = this.scenes[k].handleDoubleClick();
-                if (!res) break;
+                let passThrough = this.scenes[k].handleDoubleClick();
+                if (!passThrough) break;
             }
             return this.stopBubble(e);
         }
@@ -80,8 +80,8 @@ namespace PH {
         handleMouseDown(e: MouseEvent) {
             this.handleMouseMove(e);
             for (let k = this.scenes.length - 1; k >= 0; k--) {
-                let res = this.scenes[k].handleMouseDown();
-                if (!res) break;
+                let passThrough = this.scenes[k].handleMouseDown();
+                if (!passThrough) break;
             }
             return this.stopBubble(e);
         }
@@ -89,8 +89,8 @@ namespace PH {
         handleMouseUp(e: MouseEvent) {
             this.handleMouseMove(e);
             for (let k = this.scenes.length - 1; k >= 0; k--) {
-                let res = this.scenes[k].handleMouseUp();
-                if (!res) break;
+                let passThrough = this.scenes[k].handleMouseUp();
+                if (!passThrough) break;
             }
             return this.stopBubble(e);
         }
@@ -98,24 +98,24 @@ namespace PH {
         handleMouseMove(e: MouseEvent) {
             if(this.coordinateHandler) this.coordinateHandler(e.clientX, e.clientY);
             for (let k = this.scenes.length - 1; k >= 0; k--) {
-                let res = this.scenes[k].handleMouseMove();
-                if (!res) break;
+                let passThrough = this.scenes[k].handleMouseMove();
+                if (!passThrough) break;
             }
             return this.stopBubble(e);
         }
         
         handleKeyDown(e: KeyboardEvent) {
             for (let k = this.scenes.length - 1; k >= 0; k--) {
-                let res = this.scenes[k].handleKeyDown(e);
-                if (!res) return;
+                let passThrough = this.scenes[k].handleKeyDown(e);
+                if (!passThrough) return;
             }
             return this.stopBubble(e);
         }
 
         handleKeyUp(e: KeyboardEvent) {
             for (let k = this.scenes.length - 1; k >= 0; k--) {
-                let res = this.scenes[k].handleKeyUp(e);
-                if (!res) return;
+                let passThrough = this.scenes[k].handleKeyUp(e);
+                if (!passThrough) return;
             }
             return this.stopBubble(e);
         }

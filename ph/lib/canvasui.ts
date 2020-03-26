@@ -1,5 +1,5 @@
 namespace PH {
-    export class CanvasUILayer {
+    export class CanvasUI {
         canvas: HTMLCanvasElement;
         buttons: CanvasButton[] = [];
         mouseOverButton: CanvasButton | null = null;

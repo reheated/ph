@@ -1,21 +1,19 @@
 class MenuScene extends PH.Scene {
-    ctx: CanvasRenderingContext2D;
-    resources: PH.Resources;
+    game: Game;
 
-    constructor(ctx: CanvasRenderingContext2D, resources: PH.Resources) {
+    constructor(game: Game) {
         super();
-        this.ctx = ctx;
-        this.resources = resources;
+        this.game = game;
     }
 
     draw() {
-        window.spriteBoxNormal.draw(this.ctx, 40, 60, 240, 80);
-        this.ctx.drawImage(this.resources.data.title, 47, 70);
-        window.mainFont.drawCenteredText(this.ctx, "Click to start", 160, 120);
+        this.game.spriteBoxNormal!.draw(this.game.ctx, 40, 60, 240, 80);
+        this.game.ctx.drawImage(this.game.resources.data.title, 47, 70);
+        this.game.mainFont!.drawCenteredText(this.game.ctx, "Click to start", 160, 120);
     }
 
     handleClick(): boolean {
-        window.startFarm();
+        this.game.startFarm(true);
         return false;
     }
 }

@@ -1,12 +1,14 @@
 class ConvoItem {
+    game: Game;
     public speaker: string | null;
     public wrappedText: string[] | null;
     public callback: (() => void) | null;
     public seen: boolean;
 
-    constructor(speaker: string | null, msg: string | null, callback: (() => void) | null) {
+    constructor(game: Game, speaker: string | null, msg: string | null, callback: (() => void) | null) {
+        this.game = game;
         this.speaker = speaker;
-        this.wrappedText = (msg === null) ? msg : window.mainFont.wordWrap(msg, 272);
+        this.wrappedText = (msg === null) ? msg : this.game.mainFont!.wordWrap(msg, 272);
         this.callback = callback;
         this.seen = false;
     }
@@ -16,9 +18,7 @@ class ConvoScene extends PH.Scene {
     TIME_BEFORE_DISPLAY = 0.25; // time before displaying the convo.
     MINCLICKDELAY = 0.1;
 
-    resources: PH.Resources;
-    ctx: CanvasRenderingContext2D;
-
+    game: Game;
     convoQ: ConvoItem[] = [];
     convoStartedTime: number | null = null;
     lastClickTime: number | null = null;
@@ -28,10 +28,9 @@ class ConvoScene extends PH.Scene {
         "r": "Rip"
     }
 
-    constructor(ctx: CanvasRenderingContext2D, resources: PH.Resources) {
+    constructor(game: Game) {
         super();
-        this.resources = resources;
-        this.ctx = ctx;
+        this.game = game;
     }
 
     convoEnqueue(speaker: string | null, msg: string | null, callback: (() => void) | void) {
@@ -42,10 +41,10 @@ class ConvoScene extends PH.Scene {
         let c: (() => void) | null;
         if (typeof (callback) === "undefined") c = null;
         else c = callback;
-        this.convoQ.push(new ConvoItem(speaker, msg, c));
+        this.convoQ.push(new ConvoItem(this.game, speaker, msg, c));
 
         if (this.convoQ.length === 1) {
-            this.convoStartedTime = window.curTime();
+            this.convoStartedTime = PH.curTime();
         }
 
     }
@@ -60,7 +59,7 @@ class ConvoScene extends PH.Scene {
 
         if (this.convoQ.length > 0) {
             if (this.convoStartedTime !== null &&
-                window.curTime() > this.convoStartedTime + this.TIME_BEFORE_DISPLAY) {
+                PH.curTime() > this.convoStartedTime + this.TIME_BEFORE_DISPLAY) {
                 var c = this.convoQ[0];
                 if (!c.seen) {
                     // haven't seen this message before - call its callback
@@ -74,21 +73,21 @@ class ConvoScene extends PH.Scene {
                 }
                 else {
                     // draw the box
-                    window.spriteBoxConvo.draw(this.ctx, l, t, w, h);
+                    this.game.spriteBoxConvo!.draw(this.game.ctx, l, t, w, h);
 
                     if (c.speaker === null) {
                         // no speaker - just draw text
-                        window.mainFont.drawMultiLineText(this.ctx, c.wrappedText, l + 4, t + 4);
+                        this.game.mainFont!.drawMultiLineText(this.game.ctx, c.wrappedText, l + 4, t + 4);
                     }
                     else {
                         // character portrait
-                        this.ctx.drawImage(this.resources.data[c.speaker], l + 4, t + 4);
+                        this.game.ctx.drawImage(this.game.resources.data[c.speaker], l + 4, t + 4);
 
                         // character name
-                        window.mainFont.drawText(this.ctx, this.nameDict[c.speaker], l + 28, t + 4);
+                        this.game.mainFont!.drawText(this.game.ctx, this.nameDict[c.speaker], l + 28, t + 4);
 
                         // message
-                        window.mainFont.drawMultiLineText(this.ctx, c.wrappedText, l + 28, t + 20);
+                        this.game.mainFont!.drawMultiLineText(this.game.ctx, c.wrappedText, l + 28, t + 20);
                     }
                 }
             }
@@ -105,7 +104,7 @@ class ConvoScene extends PH.Scene {
     }
 
     handleClick(): boolean {
-        var t = window.curTime();
+        var t = PH.curTime();
         let cg = this.convoGoing();
         if (this.convoStartedTime !== null &&
             t > this.convoStartedTime + this.TIME_BEFORE_DISPLAY &&
