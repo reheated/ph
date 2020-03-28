@@ -9,6 +9,7 @@ namespace PH {
         handleDoubleClick(): boolean { return true; }
         handleMouseDown(): boolean { return true; }
         handleMouseUp(): boolean { return true; }
+        handleMouseMoveClientCoords(clientX: number, clientY: number): void { }
         handleMouseMove(): boolean { return true; }
 
         handleKeyDown(e: KeyboardEvent): boolean { return true; }
@@ -19,7 +20,6 @@ namespace PH {
 
     export class LayerManager {
         private layers: Layer[] = [];
-        private coordinateHandler: CoordinateHandler | null = null;
 
         constructor() { }
 
@@ -42,8 +42,7 @@ namespace PH {
             this.layers = layers;
         }
 
-        setupMouseListeners(target: HTMLElement | Window, coordinateHandler: CoordinateHandler) {
-            this.coordinateHandler = coordinateHandler;
+        setupMouseListeners(target: HTMLElement | Window) {
             target.addEventListener('click', (e) => this.handleClick(<MouseEvent>e));
             target.addEventListener('dblclick', (e) => this.handleDoubleClick(<MouseEvent>e));
             target.addEventListener('contextmenu', (e) => this.handleClick(<MouseEvent>e));
@@ -117,8 +116,8 @@ namespace PH {
         }
 
         handleMouseMove(e: MouseEvent) {
-            if (this.coordinateHandler) this.coordinateHandler(e.clientX, e.clientY);
             for (let k = this.layers.length - 1; k >= 0; k--) {
+                this.layers[k].handleMouseMoveClientCoords(e.clientX, e.clientY);
                 let passThrough = this.layers[k].handleMouseMove();
                 if (!passThrough) break;
             }

@@ -1,10 +1,10 @@
 namespace PH {
     export class CanvasUILayer extends Layer {
-        canvasTransformer: CanvasTransformer;
+        canvasTransformer: CanvasTransformerLayer;
         buttons: CanvasButton[] = [];
         mouseOverButton: CanvasButton | null = null;
 
-        constructor(canvasTransformer: CanvasTransformer) {
+        constructor(canvasTransformer: CanvasTransformerLayer) {
             super();
             this.canvasTransformer = canvasTransformer;
         }

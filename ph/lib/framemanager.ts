@@ -5,7 +5,6 @@ namespace PH {
         frameCallback?: (deltat: number) => void;
         frameRateReporting?: boolean;
         frameRateInterval?: number;
-        pixelArtMode?: [CanvasRenderingContext2D, CanvasRenderingContext2D];
     }
 
     export class FrameManager {
@@ -55,18 +54,8 @@ namespace PH {
             this.frameCount++;
             this.lastFrameTime = t;
 
-            if(this.settings.pixelArtMode !== undefined) {
-                let [src, dest] = this.settings.pixelArtMode;
-                dest.imageSmoothingEnabled = false;
-            }
-
             if(this.settings.frameCallback !== undefined) {
                 this.settings.frameCallback(deltat);
-            }
-
-            if(this.settings.pixelArtMode !== undefined) {
-                let [src, dest] = this.settings.pixelArtMode;
-                PH.drawScaledCanvas(src.canvas, dest);
             }
 
             requestAnimationFrame(() => this.frame());

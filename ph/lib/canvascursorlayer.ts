@@ -4,13 +4,13 @@ namespace PH {
     export class CanvasCursorLayer extends Layer {
         drawCtx: CanvasRenderingContext2D;
         cursorElt: HTMLElement;
-        transformer: CanvasTransformer;
+        transformer: CanvasTransformerLayer;
         img: HTMLImageElement;
         offset: [number, number];
 
         constructor(ctx: CanvasRenderingContext2D,
             cursorElt: HTMLElement,
-            transformer: CanvasTransformer,
+            transformer: CanvasTransformerLayer,
             img: HTMLImageElement,
             offset: [number, number]) {
             super();

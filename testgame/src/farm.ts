@@ -86,7 +86,7 @@ class FarmLayer extends PH.Layer {
         }
         this.plotContents[1][1].push(new PlotContents(this.SAPLING, 1, 0));
 
-        this.uiLayer = new PH.CanvasUILayer(this.game.canvasTransformer);
+        this.uiLayer = new PH.CanvasUILayer(this.game.pixelationLayer);
         this.hoverCallbacks = {};
 
         // Buttons for upgrades
@@ -144,12 +144,12 @@ class FarmLayer extends PH.Layer {
     }
 
     updateMouseOverPlot() {
-        if (this.game.canvasTransformer.mousePos === null) {
+        if (this.game.pixelationLayer.mousePos === null) {
             this.mouseOverPlot = null;
             this.mouseDownOverPlot = null;
             return;
         }
-        let [x, y] = this.game.canvasTransformer.mousePos;
+        let [x, y] = this.game.pixelationLayer.mousePos;
         for (var i = 0; i < this.GRID_H; i++) {
             for (var j = 0; j < this.GRID_W; j++) {
                 var l = j * 22 + this.FARM_LEFT;
@@ -266,12 +266,12 @@ class FarmLayer extends PH.Layer {
         this.game.mainFont!.drawText(this.game.ctx, "$" + this.DEBT.toString(), 104, 134);
 
         // draw anything that's being dragged
-        if (this.mouseDragPlot !== null && this.game.canvasTransformer.mousePos !== null) {
+        if (this.mouseDragPlot !== null && this.game.pixelationLayer.mousePos !== null) {
             var pcList = this.plotContents[this.mouseDragPlot[0]][this.mouseDragPlot[1]];
             if (pcList.length !== 0) {
                 var pc = pcList[0];
                 this.game.ctx.drawImage(this.plotImageDict![pc.desc],
-                    this.game.canvasTransformer.mousePos[0] - 11, this.game.canvasTransformer.mousePos[1] - 11);
+                    this.game.pixelationLayer.mousePos[0] - 11, this.game.pixelationLayer.mousePos[1] - 11);
             }
         }
 
@@ -394,7 +394,7 @@ class FarmLayer extends PH.Layer {
     }
 
     handleMouseUp(): boolean {
-        let mp = this.game.canvasTransformer.mousePos;
+        let mp = this.game.pixelationLayer.mousePos;
         if (this.mouseDragPlot !== null && mp !== null) {
             this.handleDragPlot(this.mouseDragPlot, mp);
         }

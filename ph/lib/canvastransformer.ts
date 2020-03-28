@@ -1,43 +1,41 @@
 namespace PH {
 
-    export class CanvasTransformer {
-        canvas: HTMLCanvasElement;
-        srcCanvas: HTMLCanvasElement | null;
+    export abstract class CanvasTransformerLayer extends Layer {
+        mousePos: [number, number] | null = null;
+    }
 
+    export class PixelationLayer extends Layer {
+        srcCtx: CanvasRenderingContext2D;
+        destCtx: CanvasRenderingContext2D;
         mousePos: [number, number] | null = null;
 
-        constructor(canvas: HTMLCanvasElement, srcCanvas: HTMLCanvasElement | null = null) {
-            // "canvas" should be the canvas that is being displayed in the HTML
-            // document. If there is another canvas being drawn offscreen and then
-            // scaled up using drawScaledCanvas, you can pass it in as the second
-            // parameter, and this class will transform mouse coordinates back to
-            // that canvas.
-
-            this.canvas = canvas;
-            this.srcCanvas = srcCanvas;
+        constructor(srcCtx: CanvasRenderingContext2D, destCtx: CanvasRenderingContext2D) {
+            super();
+            this.srcCtx = srcCtx;
+            this.destCtx = destCtx;
         }
 
-        public getGameCoordsFromClientCoords(x: number, y: number):
+        getGameCoordsFromClientCoords(clientX: number, clientY: number):
             [number, number] | null {
-            var rect = this.canvas.getBoundingClientRect();
+            var rect = this.destCtx.canvas.getBoundingClientRect();
             // Convert into canvas coordinates.
             // Apply a transformation if the canvas is scaled up
             let w, h, drawScale, tlx, tly: number;
-            if (this.srcCanvas !== null) {
-                w = this.srcCanvas.width;
-                h = this.srcCanvas.height;
-                [drawScale, tlx, tly] = getCanvasScalingParameters(this.srcCanvas, this.canvas);
+            if (this.srcCtx.canvas !== null) {
+                w = this.srcCtx.canvas.width;
+                h = this.srcCtx.canvas.height;
+                [drawScale, tlx, tly] = getCanvasScalingParameters(this.srcCtx.canvas, this.destCtx.canvas);
             }
             else {
-                w = this.canvas.width;
-                h = this.canvas.height;
+                w = this.destCtx.canvas.width;
+                h = this.destCtx.canvas.height;
                 drawScale = 1;
                 tlx = 0;
                 tly = 0;
             }
 
-            var resX = Math.floor((x - rect.left - tlx) / drawScale);
-            var resY = Math.floor((y - rect.top - tly) / drawScale);
+            var resX = Math.floor((clientX - rect.left - tlx) / drawScale);
+            var resY = Math.floor((clientY - rect.top - tly) / drawScale);
             if (resX < 0 || resX >= w || resY < 0 || resY >= h) {
                 return null;
             }
@@ -46,10 +44,14 @@ namespace PH {
             }
         }
 
-        public handleMouseMove(clientX: number, clientY: number) {
+        handleMouseMoveClientCoords(clientX: number, clientY: number) {
             this.mousePos = this.getGameCoordsFromClientCoords(clientX, clientY);
         }
 
+        draw() {
+            this.destCtx.imageSmoothingEnabled = false;
+            PH.drawScaledCanvas(this.srcCtx.canvas, this.destCtx);
+        }
     }
 
 }

@@ -8,7 +8,7 @@ class Game {
     //////////////
 
     resources: PH.Resources;
-    canvasTransformer: PH.CanvasTransformer;
+    pixelationLayer: PH.PixelationLayer;
     mainFont: PH.Font;
     buttonDrawer: PH.CanvasButtonSpriteDrawer;
     spriteBoxNormal: PH.SpriteBox;
@@ -33,7 +33,7 @@ class Game {
         this.ctx = ctx;
         this.mainFont = mainFont;
 
-        this.canvasTransformer = new PH.CanvasTransformer(this.outCtx.canvas, this.ctx.canvas);
+        this.pixelationLayer = new PH.PixelationLayer(this.ctx, this.outCtx);
 
         // Initialize subsystems.
         this.spriteBoxNormal = new PH.SpriteBox(this.resources.data.boxes, 4, 0);
@@ -45,21 +45,20 @@ class Game {
         this.buttonDrawer = new PH.CanvasButtonSpriteDrawer(
             this.spriteBoxButton, this.spriteBoxPressed, this.mainFont);
 
-        this.layerManager.setupMouseListeners(this.outCtx.canvas, (x, y) => this.canvasTransformer.handleMouseMove(x, y));
+        this.layerManager.setupMouseListeners(this.outCtx.canvas);
         this.layerManager.setupKeyboardListeners(window);
 
         this.convoLayer = new ConvoLayer(this);
         this.farmLayer = new FarmLayer(this);
         this.cursorLayer = new PH.CanvasCursorLayer(this.ctx, this.outCtx.canvas,
-            this.canvasTransformer, this.resources.data.cursor, [0, 0]);
+            this.pixelationLayer, this.resources.data.cursor, [0, 0]);
 
         // Start the game.
-        this.layerManager.setLayers(new MenuLayer(this), this.cursorLayer);
+        this.layerManager.setLayers(new MenuLayer(this), this.cursorLayer, this.pixelationLayer);
 
         // Start animation frames.
         let fm = new PH.FrameManager({
-            frameCallback: (deltat) => this.frame(deltat),
-            pixelArtMode: [this.ctx, this.outCtx]
+            frameCallback: (deltat) => this.frame(deltat)
         });
         fm.start();
     }
@@ -79,24 +78,24 @@ class Game {
     }
 
     startFarm(firstTime: boolean) {
-        this.layerManager.setLayers(this.farmLayer, this.farmLayer.uiLayer, this.convoLayer, this.cursorLayer);
+        this.layerManager.setLayers(this.farmLayer, this.farmLayer.uiLayer, this.convoLayer, this.cursorLayer, this.pixelationLayer);
         this.farmLayer.init(firstTime);
     }
 
     doGameOver() {
-        this.layerManager.setLayers(new GameOverLayer(this), this.cursorLayer);
+        this.layerManager.setLayers(new GameOverLayer(this), this.cursorLayer, this.pixelationLayer);
     }
 
     startMinigame(shakeLevel: number, particleLevel: number, detailLevel: number,
         soundLevel: number, difficultyLevel: number) {
         let minigameLayer = new MinigameLayer(this, shakeLevel,
             particleLevel, detailLevel, soundLevel, difficultyLevel, this.minigamePlayedTimes);
-        this.layerManager.setLayers(minigameLayer, this.convoLayer, this.cursorLayer);
+        this.layerManager.setLayers(minigameLayer, this.convoLayer, this.cursorLayer, this.pixelationLayer);
         this.minigamePlayedTimes++;
     }
 
     endMinigame(won: boolean) {
-        this.layerManager.setLayers(this.farmLayer, this.convoLayer, this.cursorLayer);
+        this.layerManager.setLayers(this.farmLayer, this.convoLayer, this.cursorLayer, this.pixelationLayer);
         this.farmLayer.continueFromMinigame(won);
     }
 }
@@ -122,8 +121,7 @@ async function start() {
         frameCallback: (deltat) => {
             PH.resizeCanvasToFullWindow(outCtx.canvas);
             loadingScreen.draw();
-        },
-        pixelArtMode: [ctx, outCtx]
+        }
     });
     fm.start();
 

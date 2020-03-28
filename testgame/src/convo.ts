@@ -34,10 +34,6 @@ class ConvoLayer extends PH.Layer {
     }
 
     convoEnqueue(speaker: string | null, msg: string | null, callback: (() => void) | void) {
-        // a convo object is a tuple consisting of: name of speaker,
-        // message, a callback function to be called when the message
-        // is first shown, and a bool representing whether it's been
-        // shown yet.
         let c: (() => void) | null;
         if (typeof (callback) === "undefined") c = null;
         else c = callback;
