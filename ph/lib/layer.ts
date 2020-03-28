@@ -1,5 +1,7 @@
 namespace PH {
-    export class Scene {
+    export class Layer {
+        add(): void { };
+        remove(): void { };
         draw(): void { };
         update(deltat: number): boolean { return true; }
 
@@ -15,13 +17,32 @@ namespace PH {
 
     export type CoordinateHandler = (x: number, y: number) => void;
 
-    export class SceneList {
-        public scenes: Scene[] = [];
-        coordinateHandler: CoordinateHandler | null = null;
+    export class LayerManager {
+        private layers: Layer[] = [];
+        private coordinateHandler: CoordinateHandler | null = null;
 
         constructor() { }
 
-        public setupMouseListeners(target: HTMLElement | Window, coordinateHandler: CoordinateHandler) {
+        setLayers(...layers: Layer[]) {
+            // Call the "remove" function on all layers that get removed.
+            for(let s of this.layers) {
+                if(layers.indexOf(s) < 0) {
+                    s.remove();
+                }
+            }
+
+            // Call the "add" function on all newly added layers
+            for(let s of layers) {
+                if(this.layers.indexOf(s) < 0) {
+                    s.add();
+                }
+            }
+            
+            // Actually set the list of layers.
+            this.layers = layers;
+        }
+
+        setupMouseListeners(target: HTMLElement | Window, coordinateHandler: CoordinateHandler) {
             this.coordinateHandler = coordinateHandler;
             target.addEventListener('click', (e) => this.handleClick(<MouseEvent>e));
             target.addEventListener('dblclick', (e) => this.handleDoubleClick(<MouseEvent>e));
@@ -31,23 +52,23 @@ namespace PH {
             target.addEventListener('mousemove', (e) => this.handleMouseMove(<MouseEvent>e));
         }
 
-        public setupKeyboardListeners(target: HTMLElement | Window) {
+        setupKeyboardListeners(target: HTMLElement | Window) {
             target.addEventListener('keydown', (e) => this.handleKeyDown(<KeyboardEvent>e));
             target.addEventListener('keyup', (e) => this.handleKeyUp(<KeyboardEvent>e));
         }
 
-        public draw() {
-            // Draw all the scenes, from first to last
-            for (let k = 0; k < this.scenes.length; k++) {
-                this.scenes[k].draw();
+        draw() {
+            // Draw all the layers, from first to last
+            for (let k = 0; k < this.layers.length; k++) {
+                this.layers[k].draw();
             }
         }
 
-        public update(deltat: number) {
-            // Update all the scenes, from last to first, stopping if we get
+        update(deltat: number) {
+            // Update all the layers, from last to first, stopping if we get
             // a false return value.
-            for (let k = this.scenes.length - 1; k >= 0; k--) {
-                let passThrough = this.scenes[k].update(deltat);
+            for (let k = this.layers.length - 1; k >= 0; k--) {
+                let passThrough = this.layers[k].update(deltat);
                 if (!passThrough) break;
             }
         }
@@ -61,60 +82,60 @@ namespace PH {
 
         handleClick(e: MouseEvent) {
             this.handleMouseMove(e);
-            for (let k = this.scenes.length - 1; k >= 0; k--) {
-                let passThrough = this.scenes[k].handleClick();
+            for (let k = this.layers.length - 1; k >= 0; k--) {
+                let passThrough = this.layers[k].handleClick();
                 if (!passThrough) break;
             }
             return this.stopBubble(e);
         }
-        
+
         handleDoubleClick(e: MouseEvent) {
             this.handleMouseMove(e);
-            for (let k = this.scenes.length - 1; k >= 0; k--) {
-                let passThrough = this.scenes[k].handleDoubleClick();
+            for (let k = this.layers.length - 1; k >= 0; k--) {
+                let passThrough = this.layers[k].handleDoubleClick();
                 if (!passThrough) break;
             }
             return this.stopBubble(e);
         }
-        
+
         handleMouseDown(e: MouseEvent) {
             this.handleMouseMove(e);
-            for (let k = this.scenes.length - 1; k >= 0; k--) {
-                let passThrough = this.scenes[k].handleMouseDown();
+            for (let k = this.layers.length - 1; k >= 0; k--) {
+                let passThrough = this.layers[k].handleMouseDown();
                 if (!passThrough) break;
             }
             return this.stopBubble(e);
         }
-        
+
         handleMouseUp(e: MouseEvent) {
             this.handleMouseMove(e);
-            for (let k = this.scenes.length - 1; k >= 0; k--) {
-                let passThrough = this.scenes[k].handleMouseUp();
+            for (let k = this.layers.length - 1; k >= 0; k--) {
+                let passThrough = this.layers[k].handleMouseUp();
                 if (!passThrough) break;
             }
             return this.stopBubble(e);
         }
-        
+
         handleMouseMove(e: MouseEvent) {
-            if(this.coordinateHandler) this.coordinateHandler(e.clientX, e.clientY);
-            for (let k = this.scenes.length - 1; k >= 0; k--) {
-                let passThrough = this.scenes[k].handleMouseMove();
+            if (this.coordinateHandler) this.coordinateHandler(e.clientX, e.clientY);
+            for (let k = this.layers.length - 1; k >= 0; k--) {
+                let passThrough = this.layers[k].handleMouseMove();
                 if (!passThrough) break;
             }
             return this.stopBubble(e);
         }
-        
+
         handleKeyDown(e: KeyboardEvent) {
-            for (let k = this.scenes.length - 1; k >= 0; k--) {
-                let passThrough = this.scenes[k].handleKeyDown(e);
+            for (let k = this.layers.length - 1; k >= 0; k--) {
+                let passThrough = this.layers[k].handleKeyDown(e);
                 if (!passThrough) return;
             }
             return this.stopBubble(e);
         }
 
         handleKeyUp(e: KeyboardEvent) {
-            for (let k = this.scenes.length - 1; k >= 0; k--) {
-                let passThrough = this.scenes[k].handleKeyUp(e);
+            for (let k = this.layers.length - 1; k >= 0; k--) {
+                let passThrough = this.layers[k].handleKeyUp(e);
                 if (!passThrough) return;
             }
             return this.stopBubble(e);

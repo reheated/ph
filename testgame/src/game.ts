@@ -7,23 +7,23 @@ class Game {
     // BASIC STUFF
     //////////////
 
-    public resources: PH.Resources;
-    public canvasTransformer: PH.CanvasTransformer;
-    public mainFont: PH.Font;
-    public buttonDrawer: PH.CanvasButtonSpriteDrawer;
-    public spriteBoxNormal: PH.SpriteBox;
-    public spriteBoxButton: PH.SpriteBox;
-    public spriteBoxPressed: PH.SpriteBox;
-    public spriteBoxPlot: PH.SpriteBox;
-    public spriteBoxConvo: PH.SpriteBox;
+    resources: PH.Resources;
+    canvasTransformer: PH.CanvasTransformer;
+    mainFont: PH.Font;
+    buttonDrawer: PH.CanvasButtonSpriteDrawer;
+    spriteBoxNormal: PH.SpriteBox;
+    spriteBoxButton: PH.SpriteBox;
+    spriteBoxPressed: PH.SpriteBox;
+    spriteBoxPlot: PH.SpriteBox;
+    spriteBoxConvo: PH.SpriteBox;
 
     outCtx: CanvasRenderingContext2D;
     ctx: CanvasRenderingContext2D;
 
-    sceneList = new PH.SceneList();
-    farmScene: FarmScene;
-    convoScene: ConvoScene;
-    cursorScene: PH.CanvasCursorScene;
+    layerManager = new PH.LayerManager();
+    farmLayer: FarmLayer;
+    convoLayer: ConvoLayer;
+    cursorLayer: PH.CanvasCursorLayer;
     minigamePlayedTimes = 0;
 
     constructor(resources: PH.Resources, outCtx: CanvasRenderingContext2D, ctx: CanvasRenderingContext2D,
@@ -45,16 +45,16 @@ class Game {
         this.buttonDrawer = new PH.CanvasButtonSpriteDrawer(
             this.spriteBoxButton, this.spriteBoxPressed, this.mainFont);
 
-        this.sceneList.setupMouseListeners(this.outCtx.canvas, (x, y) => this.canvasTransformer.handleMouseMove(x, y));
-        this.sceneList.setupKeyboardListeners(window);
+        this.layerManager.setupMouseListeners(this.outCtx.canvas, (x, y) => this.canvasTransformer.handleMouseMove(x, y));
+        this.layerManager.setupKeyboardListeners(window);
 
-        this.convoScene = new ConvoScene(this);
-        this.farmScene = new FarmScene(this);
-        this.cursorScene = new PH.CanvasCursorScene(this.ctx, this.outCtx.canvas,
+        this.convoLayer = new ConvoLayer(this);
+        this.farmLayer = new FarmLayer(this);
+        this.cursorLayer = new PH.CanvasCursorLayer(this.ctx, this.outCtx.canvas,
             this.canvasTransformer, this.resources.data.cursor, [0, 0]);
 
         // Start the game.
-        this.sceneList.scenes = [new MenuScene(this), this.cursorScene];
+        this.layerManager.setLayers(new MenuLayer(this), this.cursorLayer);
 
         // Start animation frames.
         let fm = new PH.FrameManager({
@@ -66,38 +66,38 @@ class Game {
 
     frame(deltat: number) {
         // Update step.
-        this.sceneList.update(deltat);
+        this.layerManager.update(deltat);
 
         // Graphics step.
         PH.resizeCanvasToFullWindow(this.outCtx.canvas);
         PH.resetDrawing(this.ctx, "#154617");
-        this.sceneList.draw();
+        this.layerManager.draw();
     }
 
-    public convoEnqueue(speaker: string | null, msg: string | null, callback: (() => void) | void) {
-        this.convoScene.convoEnqueue(speaker, msg, callback);
+    convoEnqueue(speaker: string | null, msg: string | null, callback: (() => void) | void) {
+        this.convoLayer.convoEnqueue(speaker, msg, callback);
     }
 
-    public startFarm(firstTime: boolean) {
-        this.sceneList.scenes = [this.farmScene, this.convoScene, this.cursorScene];
-        this.farmScene.init(firstTime);
+    startFarm(firstTime: boolean) {
+        this.layerManager.setLayers(this.farmLayer, this.farmLayer.uiLayer, this.convoLayer, this.cursorLayer);
+        this.farmLayer.init(firstTime);
     }
 
-    public doGameOver() {
-        this.sceneList.scenes = [new GameOverScene(this), this.cursorScene!];
+    doGameOver() {
+        this.layerManager.setLayers(new GameOverLayer(this), this.cursorLayer);
     }
 
-    public startMinigame(shakeLevel: number, particleLevel: number, detailLevel: number,
+    startMinigame(shakeLevel: number, particleLevel: number, detailLevel: number,
         soundLevel: number, difficultyLevel: number) {
-        let minigameScene = new MinigameScene(this, shakeLevel,
+        let minigameLayer = new MinigameLayer(this, shakeLevel,
             particleLevel, detailLevel, soundLevel, difficultyLevel, this.minigamePlayedTimes);
-        this.sceneList.scenes = [minigameScene, this.convoScene!, this.cursorScene!];
+        this.layerManager.setLayers(minigameLayer, this.convoLayer, this.cursorLayer);
         this.minigamePlayedTimes++;
     }
 
-    public endMinigame(won: boolean) {
-        this.sceneList.scenes = [this.farmScene!, this.convoScene!, this.cursorScene!];
-        this.farmScene.continueFromMinigame(won);
+    endMinigame(won: boolean) {
+        this.layerManager.setLayers(this.farmLayer, this.convoLayer, this.cursorLayer);
+        this.farmLayer.continueFromMinigame(won);
     }
 }
 
@@ -114,14 +114,14 @@ async function start() {
     await PH.quickFont("m5x7", "m5x7.ttf");
     let mainFont = new PH.NormalFont("m5x7", 16, 7, 10, "#000000");
 
-    // Set up loading scene
-    let loadingScene = new LoadingScene(resources, ctx, mainFont);
+    // Set up loading sceen
+    let loadingScreen = new LoadingScreen(resources, ctx, mainFont);
 
     // Start animation frames for while the game is loading.
     let fm = new PH.FrameManager({
         frameCallback: (deltat) => {
             PH.resizeCanvasToFullWindow(outCtx.canvas);
-            loadingScene.draw();
+            loadingScreen.draw();
         },
         pixelArtMode: [ctx, outCtx]
     });

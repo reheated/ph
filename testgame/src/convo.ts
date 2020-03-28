@@ -14,7 +14,7 @@ class ConvoItem {
     }
 }
 
-class ConvoScene extends PH.Scene {
+class ConvoLayer extends PH.Layer {
     TIME_BEFORE_DISPLAY = 0.25; // time before displaying the convo.
     MINCLICKDELAY = 0.1;
 

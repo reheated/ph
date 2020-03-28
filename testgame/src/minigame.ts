@@ -35,7 +35,7 @@ class Particle {
     fill: string = "#000000";
 }
 
-class MinigameScene extends PH.Scene {
+class MinigameLayer extends PH.Layer {
     
     MAX_DELTAT = 1.0 / 30; // Maximum time step the game simulation is allowed to make.
     REST_TIME = 2.0; // Seconds after winning/losing that the minigame still displays
@@ -237,15 +237,15 @@ class MinigameScene extends PH.Scene {
 
     startPlaying()
     {
-        this.quickSound(this.soundSettings.intro, false);
+        this.quickSound(this.soundSettings.intro);
         var t = PH.curTime()
         this.minigameStartedTime = t;
         this.nextSongPlay = t + this.introTime;
     }
 
-    quickSound(soundName: string | null, loop: boolean) {
+    quickSound(soundName: string | null) {
         if (soundName === null) return null;
-        var result = this.game.resources.playSound(this.game.resources.data[soundName], loop);
+        var result = this.game.resources.playSound(this.game.resources.data[soundName], false);
         return result;
     }
 
@@ -372,7 +372,7 @@ class MinigameScene extends PH.Scene {
             this.won = true;
             this.endedTime = PH.curTime();
             this.stopMusic();
-            this.quickSound(this.soundSettings.won, false);
+            this.quickSound(this.soundSettings.won);
         }
         else if(this.lives <= 0)
         {
@@ -387,14 +387,14 @@ class MinigameScene extends PH.Scene {
     {
         this.particleExplosion(x, y, this.particleSettings.count, "#461093");
         this.lastShake = PH.curTime();
-        this.quickSound(this.soundSettings.get, false);
+        this.quickSound(this.soundSettings.get);
     }
 
     birdCollisionEffect(x: number, y: number)
     {
         this.particleExplosion(x, y, this.particleSettings.count, "#222222");
         this.lastShake = PH.curTime();
-        this.quickSound(this.soundSettings.bird, false);
+        this.quickSound(this.soundSettings.bird);
     }
 
     drawObjects()
@@ -644,7 +644,7 @@ class MinigameScene extends PH.Scene {
         var t = PH.curTime();
         if(this.nextSongPlay !== null && t > this.nextSongPlay)
         {
-            this.curSong = this.quickSound(this.soundSettings.music, false);
+            this.curSong = this.quickSound(this.soundSettings.music);
             this.nextSongPlay = t + this.songTime;
         }
     }

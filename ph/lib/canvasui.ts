@@ -1,15 +1,17 @@
 namespace PH {
-    export class CanvasUI {
-        canvas: HTMLCanvasElement;
+    export class CanvasUILayer extends Layer {
+        canvasTransformer: CanvasTransformer;
         buttons: CanvasButton[] = [];
         mouseOverButton: CanvasButton | null = null;
 
-        constructor(canvas: HTMLCanvasElement) {
-            this.canvas = canvas;
+        constructor(canvasTransformer: CanvasTransformer) {
+            super();
+            this.canvasTransformer = canvasTransformer;
         }
 
-        public handleMouseMove(mousePos: [number, number] | null) {
+        public handleMouseMove() {
             // Process buttons
+            let mousePos = this.canvasTransformer.mousePos;
             this.mouseOverButton = null;
             if (mousePos !== null) {
                 for (let b of this.buttons) {
@@ -18,25 +20,30 @@ namespace PH {
                     }
                 }
             }
+            return true;
         }
 
         public handleMouseDown() {
+            let passThrough = true;
             for (let b of this.buttons) {
-                b.handleMouseDown();
+                passThrough = b.handleMouseDown() && passThrough;
             }
+            return passThrough;
         }
 
         public handleMouseUp() {
+            let passThrough = true;
             for (let b of this.buttons) {
-                b.handleMouseUp();
+                passThrough = b.handleMouseUp() && passThrough;
             }
+            return passThrough;
         }
 
         public addButton(b: CanvasButton) {
             this.buttons.push(b);
         }
 
-        public drawButtons() {
+        public draw() {
             for (let b of this.buttons) {
                 b.draw();
             }

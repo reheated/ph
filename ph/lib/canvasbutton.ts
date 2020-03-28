@@ -46,8 +46,9 @@ namespace PH {
             this.drawer = drawer;
         }
 
-        public handleMouseDown() {
+        public handleMouseDown(): boolean {
             if (this.mouseOver) this.pressed = true;
+            return !this.mouseOver;
         }
 
         public handleMouseUp() {
@@ -56,6 +57,9 @@ namespace PH {
             if(doCallback) {
                 this.clickCallback();
             }
+            // It seems best to always let a mouse up event pass through the buttons,
+            // so that other parts of the game can detect it.
+            return true;
         }
 
         public draw() {

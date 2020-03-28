@@ -12,7 +12,7 @@ class PlotContents {
     }
 }
 
-class FarmScene extends PH.Scene {
+class FarmLayer extends PH.Layer {
 
     GRID_H: number = 4;
     GRID_W: number = 4;
@@ -42,7 +42,7 @@ class FarmScene extends PH.Scene {
     CASHRECT: [number, number, number, number] = [160, 4, 92, 16];
 
     game: Game;
-    uiLayer: PH.CanvasUI | null = null;
+    uiLayer: PH.CanvasUILayer;
     hoverCallbacks: { [key: string]: () => void } = {};
 
     cash: number = 2000;
@@ -85,10 +85,8 @@ class FarmScene extends PH.Scene {
             }
         }
         this.plotContents[1][1].push(new PlotContents(this.SAPLING, 1, 0));
-    }
 
-    public init(firstTime: boolean) {
-        this.uiLayer = new PH.CanvasUI(this.game.ctx.canvas);
+        this.uiLayer = new PH.CanvasUILayer(this.game.canvasTransformer);
         this.hoverCallbacks = {};
 
         // Buttons for upgrades
@@ -116,8 +114,11 @@ class FarmScene extends PH.Scene {
             TREE: this.game.resources.data.tree,
             JUICE: this.game.resources.data.juice
         }
-        this.startMusic();
 
+    }
+
+    init(firstTime: boolean) {
+        this.startMusic();
         if(firstTime) {
             this.convoIntro();
         }
@@ -226,7 +227,7 @@ class FarmScene extends PH.Scene {
         this.game.ctx.drawImage(this.game.resources.data.calendarhighlight, l + 12 * dow, t + 12 * week);
     }
 
-    public draw() {
+    draw() {
         // Draw the farm plots
         this.game.spriteBoxNormal!.draw(this.game.ctx, 4, 4, 152, 104);
         this.game.mainFont!.drawText(this.game.ctx, "Farm plots", 8, 8);
@@ -260,9 +261,6 @@ class FarmScene extends PH.Scene {
         this.game.spriteBoxNormal!.draw(this.game.ctx, 160, 124, 156, 72);
         this.drawInfoText();
 
-        // Draw all buttons
-        this.uiLayer!.drawButtons();
-
         // Draw text
         this.game.mainFont!.drawText(this.game.ctx, "Debt:", 104, 118);
         this.game.mainFont!.drawText(this.game.ctx, "$" + this.DEBT.toString(), 104, 134);
@@ -279,7 +277,7 @@ class FarmScene extends PH.Scene {
 
     }
 
-    public update(deltat: number): boolean {
+    update(deltat: number): boolean {
         this.infoTextLines = [];
         this.updateMouseOverPlot();
 
@@ -291,8 +289,7 @@ class FarmScene extends PH.Scene {
         return true;
     }
 
-    public handleMouseDown(): boolean {
-        this.uiLayer!.handleMouseDown();
+    handleMouseDown(): boolean {
         this.mouseDownOverPlot = this.mouseOverPlot; // ditto.
 
         if (this.mouseOverPlot !== null) {
@@ -397,8 +394,6 @@ class FarmScene extends PH.Scene {
     }
 
     handleMouseUp(): boolean {
-        this.uiLayer!.handleMouseUp();
-
         let mp = this.game.canvasTransformer.mousePos;
         if (this.mouseDragPlot !== null && mp !== null) {
             this.handleDragPlot(this.mouseDragPlot, mp);
@@ -407,16 +402,11 @@ class FarmScene extends PH.Scene {
         return false;
     }
 
-    handleMouseMove() {
-        this.uiLayer!.handleMouseMove(this.game.canvasTransformer.mousePos);
-        return true;
-    }
-
     ///////////////////////////////
     // HANDLING CLICKS ON THE PLOTS
     ///////////////////////////////
 
-    public handleClick(): boolean {
+    handleClick(): boolean {
         if (this.mouseOverPlot !== null) {
             // avoid triggering this when we moused down somewhere else and moused up here
             if (this.mouseDownOverPlot === null ||
@@ -456,7 +446,7 @@ class FarmScene extends PH.Scene {
         this.game.startMinigame(this.levelShake, this.levelParticles, this.levelDetails, this.levelSound, difficulty);
     }
 
-    public continueFromMinigame(won: boolean) {
+    continueFromMinigame(won: boolean) {
         this.init(false);
         // Continue farm mode, after a minigame. won is set to true if the player won.
         if (won) {
@@ -548,7 +538,7 @@ class FarmScene extends PH.Scene {
 
     clickPayDebt() {
         if (this.cash < this.DEBT) {
-            this.game.convoScene!.convoEnqueue("s", "I haven't got enough money to pay off my debt yet...");
+            this.game.convoLayer!.convoEnqueue("s", "I haven't got enough money to pay off my debt yet...");
         }
         else {
             this.convoPayDebtEarly();

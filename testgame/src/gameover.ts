@@ -1,4 +1,4 @@
-class GameOverScene extends PH.Scene {
+class GameOverLayer extends PH.Layer {
     game: Game;
 
     constructor(game: Game) {

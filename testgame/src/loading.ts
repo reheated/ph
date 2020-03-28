@@ -1,4 +1,4 @@
-class LoadingScene extends PH.Scene {
+class LoadingScreen extends PH.Layer {
     resources: PH.Resources;
     ctx: CanvasRenderingContext2D;
     font: PH.Font;

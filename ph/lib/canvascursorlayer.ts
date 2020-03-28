@@ -1,7 +1,7 @@
-/// <reference path="scenes.ts"/>
+/// <reference path="layer.ts"/>
 
 namespace PH {
-    export class CanvasCursorScene extends Scene {
+    export class CanvasCursorLayer extends Layer {
         drawCtx: CanvasRenderingContext2D;
         cursorElt: HTMLElement;
         transformer: CanvasTransformer;
@@ -19,6 +19,14 @@ namespace PH {
             this.transformer = transformer;
             this.img = img;
             this.offset = offset;
+        }
+
+        add() {
+            this.update();
+        }
+
+        remove() {
+            this.cursorElt.style.cursor = "";
         }
 
         update() {

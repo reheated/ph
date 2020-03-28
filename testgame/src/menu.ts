@@ -1,4 +1,4 @@
-class MenuScene extends PH.Scene {
+class MenuLayer extends PH.Layer {
     game: Game;
 
     constructor(game: Game) {
