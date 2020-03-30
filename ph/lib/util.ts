@@ -104,4 +104,10 @@ namespace PH {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
+    export function delay(seconds: number) {
+        let prom = new Promise<void>((resolve, reject) => {
+            setTimeout(() => resolve(), (seconds * 1000));
+        })
+        return prom;
+    }
 }

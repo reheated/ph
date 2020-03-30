@@ -21,25 +21,46 @@ namespace PH {
     export class LayerManager {
         private layers: Layer[] = [];
 
+        private bottomLayers: Layer[] = [];
+        private mainLayers: Layer[] = [];
+        private topLayers: Layer[] = [];
+
         constructor() { }
 
-        setLayers(...layers: Layer[]) {
+        private updateLayers() {
+            let updatedLayers = this.bottomLayers.concat(this.mainLayers).concat(this.topLayers);
+
             // Call the "remove" function on all layers that get removed.
             for(let s of this.layers) {
-                if(layers.indexOf(s) < 0) {
+                if(updatedLayers.indexOf(s) < 0) {
                     s.remove();
                 }
             }
 
             // Call the "add" function on all newly added layers
-            for(let s of layers) {
+            for(let s of updatedLayers) {
                 if(this.layers.indexOf(s) < 0) {
                     s.add();
                 }
             }
             
             // Actually set the list of layers.
-            this.layers = layers;
+            this.layers = updatedLayers;
+        }
+
+        setBottomLayers(...layers: Layer[]) {
+            this.bottomLayers = layers;
+            this.updateLayers();
+        }
+
+        setMainLayers(...layers: Layer[]) {
+            this.mainLayers = layers;
+            this.updateLayers();
+        }
+
+        setTopLayers(...layers: Layer[]) {
+            this.topLayers = layers;
+            this.updateLayers();
         }
 
         setupMouseListeners(target: HTMLElement | Window) {
@@ -58,16 +79,18 @@ namespace PH {
 
         draw() {
             // Draw all the layers, from first to last
-            for (let k = 0; k < this.layers.length; k++) {
-                this.layers[k].draw();
+            let l = this.layers;
+            for (let k = 0; k < l.length; k++) {
+                l[k].draw();
             }
         }
 
         update(deltat: number) {
             // Update all the layers, from last to first, stopping if we get
             // a false return value.
-            for (let k = this.layers.length - 1; k >= 0; k--) {
-                let passThrough = this.layers[k].update(deltat);
+            let l = this.layers;
+            for (let k = l.length - 1; k >= 0; k--) {
+                let passThrough = l[k].update(deltat);
                 if (!passThrough) break;
             }
         }
@@ -80,61 +103,68 @@ namespace PH {
         }
 
         handleClick(e: MouseEvent) {
+            let l = this.layers;
             this.handleMouseMove(e);
-            for (let k = this.layers.length - 1; k >= 0; k--) {
-                let passThrough = this.layers[k].handleClick();
+            for (let k = l.length - 1; k >= 0; k--) {
+                let passThrough = l[k].handleClick();
                 if (!passThrough) break;
             }
             return this.stopBubble(e);
         }
 
         handleDoubleClick(e: MouseEvent) {
+            let l = this.layers;
             this.handleMouseMove(e);
-            for (let k = this.layers.length - 1; k >= 0; k--) {
-                let passThrough = this.layers[k].handleDoubleClick();
+            for (let k = l.length - 1; k >= 0; k--) {
+                let passThrough = l[k].handleDoubleClick();
                 if (!passThrough) break;
             }
             return this.stopBubble(e);
         }
 
         handleMouseDown(e: MouseEvent) {
+            let l = this.layers;
             this.handleMouseMove(e);
-            for (let k = this.layers.length - 1; k >= 0; k--) {
-                let passThrough = this.layers[k].handleMouseDown();
+            for (let k = l.length - 1; k >= 0; k--) {
+                let passThrough = l[k].handleMouseDown();
                 if (!passThrough) break;
             }
             return this.stopBubble(e);
         }
 
         handleMouseUp(e: MouseEvent) {
+            let l = this.layers;
             this.handleMouseMove(e);
-            for (let k = this.layers.length - 1; k >= 0; k--) {
-                let passThrough = this.layers[k].handleMouseUp();
+            for (let k = l.length - 1; k >= 0; k--) {
+                let passThrough = l[k].handleMouseUp();
                 if (!passThrough) break;
             }
             return this.stopBubble(e);
         }
 
         handleMouseMove(e: MouseEvent) {
-            for (let k = this.layers.length - 1; k >= 0; k--) {
-                this.layers[k].handleMouseMoveClientCoords(e.clientX, e.clientY);
-                let passThrough = this.layers[k].handleMouseMove();
+            let l = this.layers;
+            for (let k = l.length - 1; k >= 0; k--) {
+                l[k].handleMouseMoveClientCoords(e.clientX, e.clientY);
+                let passThrough = l[k].handleMouseMove();
                 if (!passThrough) break;
             }
             return this.stopBubble(e);
         }
 
         handleKeyDown(e: KeyboardEvent) {
-            for (let k = this.layers.length - 1; k >= 0; k--) {
-                let passThrough = this.layers[k].handleKeyDown(e);
+            let l = this.layers;
+            for (let k = l.length - 1; k >= 0; k--) {
+                let passThrough = l[k].handleKeyDown(e);
                 if (!passThrough) return;
             }
             return this.stopBubble(e);
         }
 
         handleKeyUp(e: KeyboardEvent) {
-            for (let k = this.layers.length - 1; k >= 0; k--) {
-                let passThrough = this.layers[k].handleKeyUp(e);
+            let l = this.layers;
+            for (let k = l.length - 1; k >= 0; k--) {
+                let passThrough = l[k].handleKeyUp(e);
                 if (!passThrough) return;
             }
             return this.stopBubble(e);

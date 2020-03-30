@@ -117,22 +117,18 @@ class FarmLayer extends PH.Layer {
 
     }
 
-    init(firstTime: boolean) {
-        this.startMusic();
-        if(firstTime) {
-            this.convoIntro();
-        }
+    firstTime() {
+        this.convoIntro();
     }
 
-    startMusic() {
-        this.farmMusic = this.game.resources.playSound(this.game.resources.data['ld45_farm'], true);
+    add() {
+        this.game.jukeBox.setMusic(this.game.resources.data['ld45_farm']);
     }
 
-    stopMusic() {
-        if (this.farmMusic !== null) {
-            this.game.resources.stopSound(this.farmMusic);
-            this.farmMusic = null;
-        }
+    handleKeyUp() {
+        let sp = this.game.soundPlayer;
+        sp.toggle();
+        return false;
     }
 
     registerButton(l: number, t: number, w: number, h: number,
@@ -348,7 +344,7 @@ class FarmLayer extends PH.Layer {
         if (pc.count <= 0) {
             pcList.splice(0, 1);
         }
-        this.game.resources.playSound(this.game.resources.data['ld45_cash'], false);
+        this.game.soundPlayer.playSound(this.game.resources.data['ld45_cash'], false);
     }
 
     tryPlant(srcPlot: Cell, destPlot: Cell) {
@@ -375,7 +371,7 @@ class FarmLayer extends PH.Layer {
         // put a planted seed in the destination
         destPcList.push(new PlotContents(this.PLANTEDSEED, 1, 0));
 
-        this.game.resources.playSound(this.game.resources.data['ld45_plant'], false);
+        this.game.soundPlayer.playSound(this.game.resources.data['ld45_plant'], false);
     }
 
     handleDragPlot(srcPlot: Cell, mouseReleaseCoords: [number, number]) {
@@ -442,12 +438,11 @@ class FarmLayer extends PH.Layer {
         // actually do the harvest
         this.energy -= 1;
         this.harvestingCell = plotCell;
-        this.stopMusic();
+        this.game.jukeBox.setMusic();
         this.game.startMinigame(this.levelShake, this.levelParticles, this.levelDetails, this.levelSound, difficulty);
     }
 
     continueFromMinigame(won: boolean) {
-        this.init(false);
         // Continue farm mode, after a minigame. won is set to true if the player won.
         if (won) {
             // remove the tree, put in the seeds, and put in the juices.
@@ -491,7 +486,7 @@ class FarmLayer extends PH.Layer {
         }
         else {
             this.cash -= cost;
-            this.game.resources.playSound(this.game.resources.data['ld45_upgrade'], false);
+            this.game.soundPlayer.playSound(this.game.resources.data['ld45_upgrade'], false);
             return true;
         }
     }
@@ -676,7 +671,7 @@ class FarmLayer extends PH.Layer {
         this.game.convoEnqueue("r", "Your first payment is due. $2000. I'll just be taking that.");
         this.game.convoEnqueue("s", "!", () => {
             this.cash -= 2000;
-            this.game.resources.playSound(this.game.resources.data['ld45_cash'], false);
+            this.game.soundPlayer.playSound(this.game.resources.data['ld45_cash'], false);
         })
         this.game.convoEnqueue("r", "I'll be back at the end of the month for the remaining $" + this.DEBT + ".");
         this.game.convoEnqueue("s", "What! You took all my money! How am I supposed to build my farm now? I have nothing!");
@@ -738,7 +733,7 @@ class FarmLayer extends PH.Layer {
     convoWinGame() {
         this.game.convoEnqueue("r", "Yes - I think that's everything!", () => {
             this.cash -= this.DEBT;
-            this.game.resources.playSound(this.game.resources.data['ld45_cash'], false);
+            this.game.soundPlayer.playSound(this.game.resources.data['ld45_cash'], false);
         })
         this.game.convoEnqueue("r", "Looks like you're a talented juicefruit farmer! I think your farm will be extremely distinguished in the years to come.");
         this.game.convoEnqueue("s", "...");

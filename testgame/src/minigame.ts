@@ -108,7 +108,7 @@ class MinigameLayer extends PH.Layer {
 
     introTime: number;
     songTime: number;
-    nextSongPlay: number | null = null;
+    startMusicTime: number | null = null;
     curSong: AudioBufferSourceNode | null = null;
 
     // the various juice levels you can upgrade
@@ -240,12 +240,12 @@ class MinigameLayer extends PH.Layer {
         this.quickSound(this.soundSettings.intro);
         var t = PH.curTime()
         this.minigameStartedTime = t;
-        this.nextSongPlay = t + this.introTime;
+        this.startMusicTime = t + this.introTime;
     }
 
     quickSound(soundName: string | null) {
         if (soundName === null) return null;
-        var result = this.game.resources.playSound(this.game.resources.data[soundName], false);
+        var result = this.game.soundPlayer.playSound(this.game.resources.data[soundName], false);
         return result;
     }
 
@@ -639,24 +639,9 @@ class MinigameLayer extends PH.Layer {
         }
     }
 
-    updateMusic()
-    {
-        var t = PH.curTime();
-        if(this.nextSongPlay !== null && t > this.nextSongPlay)
-        {
-            this.curSong = this.quickSound(this.soundSettings.music);
-            this.nextSongPlay = t + this.songTime;
-        }
-    }
-
     stopMusic()
     {
-        if(this.curSong !== null)
-        {
-            this.game.resources.stopSound(this.curSong);
-            this.curSong = null;
-        }
-        this.nextSongPlay = null;
+        this.game.jukeBox.setMusic();
     }
 
     update(deltat: number)
@@ -686,7 +671,12 @@ class MinigameLayer extends PH.Layer {
         this.updateParticles(deltat);
         this.updateBackground(deltat);
 
-        this.updateMusic();
+        if(this.startMusicTime !== null && PH.curTime() >= this.startMusicTime) {
+            if(this.soundSettings.music !== null) {
+                this.game.jukeBox.setMusic(this.game.resources.data[this.soundSettings.music]);
+            }
+            this.startMusicTime = null;
+        }
 
         return true;
     }

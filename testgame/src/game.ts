@@ -20,20 +20,22 @@ class Game {
     outCtx: CanvasRenderingContext2D;
     ctx: CanvasRenderingContext2D;
 
+    soundPlayer: PH.SoundPlayer;
+    jukeBox: PH.JukeBox;
+
     layerManager = new PH.LayerManager();
     farmLayer: FarmLayer;
     convoLayer: ConvoLayer;
-    cursorLayer: PH.CanvasCursorLayer;
     minigamePlayedTimes = 0;
 
-    constructor(resources: PH.Resources, outCtx: CanvasRenderingContext2D, ctx: CanvasRenderingContext2D,
-        mainFont: PH.Font) {
+    constructor(resources: PH.Resources, mainFont: PH.Font, pixelationLayer: PH.PixelationLayer) {
         this.resources = resources;
-        this.outCtx = outCtx;
-        this.ctx = ctx;
+        this.soundPlayer = new PH.SoundPlayer(resources.audioContext, {});
+        this.jukeBox = new PH.JukeBox(this.soundPlayer);
         this.mainFont = mainFont;
-
-        this.pixelationLayer = new PH.PixelationLayer(this.ctx, this.outCtx);
+        this.pixelationLayer = pixelationLayer;
+        this.ctx = pixelationLayer.srcCtx;
+        this.outCtx = pixelationLayer.destCtx;
 
         // Initialize subsystems.
         this.spriteBoxNormal = new PH.SpriteBox(this.resources.data.boxes, 4, 0);
@@ -50,11 +52,12 @@ class Game {
 
         this.convoLayer = new ConvoLayer(this);
         this.farmLayer = new FarmLayer(this);
-        this.cursorLayer = new PH.CanvasCursorLayer(this.ctx, this.outCtx.canvas,
+        let cursorLayer = new PH.CanvasCursorLayer(this.ctx, this.outCtx.canvas,
             this.pixelationLayer, this.resources.data.cursor, [0, 0]);
 
         // Start the game.
-        this.layerManager.setLayers(new MenuLayer(this), this.cursorLayer, this.pixelationLayer);
+        this.layerManager.setTopLayers(cursorLayer, this.pixelationLayer)
+        this.layerManager.setMainLayers(new MenuLayer(this));
 
         // Start animation frames.
         let fm = new PH.FrameManager({
@@ -77,25 +80,34 @@ class Game {
         this.convoLayer.convoEnqueue(speaker, msg, callback);
     }
 
+    // Mode Changes
+
+    endMenu() {
+        this.soundPlayer.init();
+
+        this.startFarm(true);
+        //this.startFarm(false);
+    }
+
     startFarm(firstTime: boolean) {
-        this.layerManager.setLayers(this.farmLayer, this.farmLayer.uiLayer, this.convoLayer, this.cursorLayer, this.pixelationLayer);
-        this.farmLayer.init(firstTime);
+        this.layerManager.setMainLayers(this.farmLayer, this.farmLayer.uiLayer, this.convoLayer);
+        if(firstTime) this.farmLayer.firstTime();
     }
 
     doGameOver() {
-        this.layerManager.setLayers(new GameOverLayer(this), this.cursorLayer, this.pixelationLayer);
+        this.layerManager.setMainLayers(new GameOverLayer(this));
     }
 
     startMinigame(shakeLevel: number, particleLevel: number, detailLevel: number,
         soundLevel: number, difficultyLevel: number) {
         let minigameLayer = new MinigameLayer(this, shakeLevel,
             particleLevel, detailLevel, soundLevel, difficultyLevel, this.minigamePlayedTimes);
-        this.layerManager.setLayers(minigameLayer, this.convoLayer, this.cursorLayer, this.pixelationLayer);
+        this.layerManager.setMainLayers(minigameLayer, this.convoLayer);
         this.minigamePlayedTimes++;
     }
 
     endMinigame(won: boolean) {
-        this.layerManager.setLayers(this.farmLayer, this.convoLayer, this.cursorLayer, this.pixelationLayer);
+        this.layerManager.setMainLayers(this.farmLayer, this.farmLayer.uiLayer, this.convoLayer);
         this.farmLayer.continueFromMinigame(won);
     }
 }
@@ -108,6 +120,7 @@ async function start() {
     // Set up canvas contexts
     let outCtx = outGameCanvas.getContext('2d')!;
     let ctx = mainGameCanvas.getContext('2d')!;
+    let pixelationLayer = new PH.PixelationLayer(ctx, outCtx);
 
     // Load a TTF font
     await PH.quickFont("m5x7", "m5x7.ttf");
@@ -120,7 +133,9 @@ async function start() {
     let fm = new PH.FrameManager({
         frameCallback: (deltat) => {
             PH.resizeCanvasToFullWindow(outCtx.canvas);
+            PH.resetDrawing(ctx, "#154617");
             loadingScreen.draw();
+            pixelationLayer.draw();
         }
     });
     fm.start();
@@ -130,7 +145,7 @@ async function start() {
     await resources.get();
 
     fm.stop();
-    new Game(resources, outCtx, ctx, mainFont);
+    new Game(resources, mainFont, pixelationLayer);
 }
 
 window.onload = start;

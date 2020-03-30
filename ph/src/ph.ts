@@ -3,13 +3,14 @@ import connect = require('connect');
 import serveStatic = require('serve-static');
 import fs = require('fs');
 
-let TYPES: { [key: string]: string } = {
-    'mp3': 'audio/mpeg',
-    'png': 'image/png',
-    'txt': 'text/plain',
-    'map': 'text/html',
-    'svg': 'image/svg+xml'
-}
+let TYPES: Set<string> = new Set<string>([
+    'mp3',
+    'flac',
+    'png',
+    'txt',
+    'map',
+    'svg',
+]);
 
 class PHSettings {
     resources: string = "resources";
@@ -123,31 +124,27 @@ class PHWatcher {
             // Extract the file extension and the main part of the filename
             let splitName = file.split('.');
             let ext: string;
-            let contentName: string;
             if (splitName.length > 1) {
                 ext = splitName[splitName.length - 1];
-                contentName = file.slice(0, file.length - ext.length - 1);
             }
             else {
                 ext = "";
-                contentName = file;
             }
 
             // Only process if we recognise the file extension.
-            if (ext in TYPES) {
+            if (TYPES.has(ext)) {
                 let curBuffer = fs.readFileSync(file);
                 buffers.push(curBuffer);
 
                 // Cut off the "resources/" part from the start of the filename
-                let shortName = contentName.slice(this.settings.resources.length + 1);
+                let shortFileName = file.slice(this.settings.resources.length + 1);
 
                 // Create a record which will get put at the start of the bundle.
                 fileInfo.push(
                     {
-                        "name": shortName,
+                        "filename": shortFileName,
                         "start": curLength,
-                        "end": curLength + curBuffer.length,
-                        "type": TYPES[ext]
+                        "end": curLength + curBuffer.length
                     }
                 )
                 curLength += curBuffer.length;

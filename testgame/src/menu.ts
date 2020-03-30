@@ -13,7 +13,7 @@ class MenuLayer extends PH.Layer {
     }
 
     handleClick(): boolean {
-        this.game.startFarm(true);
+        this.game.endMenu();
         return false;
     }
 }
