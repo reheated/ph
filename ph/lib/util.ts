@@ -10,8 +10,9 @@ declare interface Document {
 }
 
 namespace PH {
-
     export type FillStyle = string | CanvasGradient | CanvasPattern;
+    export type RGB = [number, number, number];
+    export type RGBA = [number, number, number, number];
 
     export function createCanvas(w: number, h: number): HTMLCanvasElement {
         let c = document.createElement('canvas');
@@ -109,5 +110,22 @@ namespace PH {
             setTimeout(() => resolve(), (seconds * 1000));
         })
         return prom;
+    }
+
+    export function changeColor(img: CanvasImageSource, target: RGB) {
+        let w = <number>img.width;
+        let h = <number>img.height;
+        let result = createCanvas(w, h);
+        let ctx = result.getContext('2d')!;
+        ctx.drawImage(img, 0, 0);
+        let imgData = ctx.getImageData(0, 0, w, h);
+        for (let k = 0; k < w * h; k++) {
+            let offset = k * 4;
+            imgData.data[offset] = target[0];
+            imgData.data[offset + 1] = target[1];
+            imgData.data[offset + 2] = target[2];
+        }
+        ctx.putImageData(imgData, 0, 0);
+        return result;
     }
 }

@@ -108,11 +108,11 @@ class FarmLayer extends PH.Layer {
 
         // set up image references
         this.plotImageDict = {
-            SEED: this.game.resources.data.seed,
-            PLANTEDSEED: this.game.resources.data.plantedseed,
-            SAPLING: this.game.resources.data.sapling,
-            TREE: this.game.resources.data.tree,
-            JUICE: this.game.resources.data.juice
+            SEED: this.game.data.seed,
+            PLANTEDSEED: this.game.data.plantedseed,
+            SAPLING: this.game.data.sapling,
+            TREE: this.game.data.tree,
+            JUICE: this.game.data.juice
         }
 
     }
@@ -122,7 +122,7 @@ class FarmLayer extends PH.Layer {
     }
 
     add() {
-        this.game.jukeBox.setMusic(this.game.resources.data['ld45_farm']);
+        this.game.jukeBox.setMusic(this.game.data['ld45_farm']);
     }
 
     handleKeyUp() {
@@ -216,11 +216,11 @@ class FarmLayer extends PH.Layer {
         var l = 10;
         var t = 136;
 
-        this.game.ctx.drawImage(this.game.resources.data.calendar, l, t);
+        this.game.ctx.drawImage(this.game.data.calendar, l, t);
 
         var week = Math.floor((this.today - 1) / 7);
         var dow = (this.today - 1) % 7;
-        this.game.ctx.drawImage(this.game.resources.data.calendarhighlight, l + 12 * dow, t + 12 * week);
+        this.game.ctx.drawImage(this.game.data.calendarhighlight, l + 12 * dow, t + 12 * week);
     }
 
     draw() {
@@ -237,14 +237,14 @@ class FarmLayer extends PH.Layer {
 
         // Draw the cash display
         this.game.spriteBoxButton!.draw(this.game.ctx, ...this.CASHRECT);
-        this.game.ctx.drawImage(this.game.resources.data.cash, 160, 4);
+        this.game.ctx.drawImage(this.game.data.cash, 160, 4);
         var s = this.cash.toString();
         var sx = 248 - 7 * s.length;
         this.game.mainFont!.drawText(this.game.ctx, s, sx, 8);
 
         // Draw the energy display
         this.game.spriteBoxNormal!.draw(this.game.ctx, 256, 4, 60, 16);
-        this.game.ctx.drawImage(this.game.resources.data.energy, 256, 4);
+        this.game.ctx.drawImage(this.game.data.energy, 256, 4);
         var s = this.energy.toString();
         var sx = 312 - 7 * s.length;
         this.game.mainFont!.drawText(this.game.ctx, s, sx, 8);
@@ -344,7 +344,7 @@ class FarmLayer extends PH.Layer {
         if (pc.count <= 0) {
             pcList.splice(0, 1);
         }
-        this.game.soundPlayer.playSound(this.game.resources.data['ld45_cash'], false);
+        this.game.soundPlayer.playSound(this.game.data['ld45_cash'], false);
     }
 
     tryPlant(srcPlot: Cell, destPlot: Cell) {
@@ -371,7 +371,7 @@ class FarmLayer extends PH.Layer {
         // put a planted seed in the destination
         destPcList.push(new PlotContents(this.PLANTEDSEED, 1, 0));
 
-        this.game.soundPlayer.playSound(this.game.resources.data['ld45_plant'], false);
+        this.game.soundPlayer.playSound(this.game.data['ld45_plant'], false);
     }
 
     handleDragPlot(srcPlot: Cell, mouseReleaseCoords: [number, number]) {
@@ -486,7 +486,7 @@ class FarmLayer extends PH.Layer {
         }
         else {
             this.cash -= cost;
-            this.game.soundPlayer.playSound(this.game.resources.data['ld45_upgrade'], false);
+            this.game.soundPlayer.playSound(this.game.data['ld45_upgrade'], false);
             return true;
         }
     }
@@ -671,7 +671,7 @@ class FarmLayer extends PH.Layer {
         this.game.convoEnqueue("r", "Your first payment is due. $2000. I'll just be taking that.");
         this.game.convoEnqueue("s", "!", () => {
             this.cash -= 2000;
-            this.game.soundPlayer.playSound(this.game.resources.data['ld45_cash'], false);
+            this.game.soundPlayer.playSound(this.game.data['ld45_cash'], false);
         })
         this.game.convoEnqueue("r", "I'll be back at the end of the month for the remaining $" + this.DEBT + ".");
         this.game.convoEnqueue("s", "What! You took all my money! How am I supposed to build my farm now? I have nothing!");
@@ -733,7 +733,7 @@ class FarmLayer extends PH.Layer {
     convoWinGame() {
         this.game.convoEnqueue("r", "Yes - I think that's everything!", () => {
             this.cash -= this.DEBT;
-            this.game.soundPlayer.playSound(this.game.resources.data['ld45_cash'], false);
+            this.game.soundPlayer.playSound(this.game.data['ld45_cash'], false);
         })
         this.game.convoEnqueue("r", "Looks like you're a talented juicefruit farmer! I think your farm will be extremely distinguished in the years to come.");
         this.game.convoEnqueue("s", "...");

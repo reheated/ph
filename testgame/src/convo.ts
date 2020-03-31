@@ -77,7 +77,7 @@ class ConvoLayer extends PH.Layer {
                     }
                     else {
                         // character portrait
-                        this.game.ctx.drawImage(this.game.resources.data[c.speaker], l + 4, t + 4);
+                        this.game.ctx.drawImage(this.game.data[c.speaker], l + 4, t + 4);
 
                         // character name
                         this.game.mainFont!.drawText(this.game.ctx, this.nameDict[c.speaker], l + 28, t + 4);

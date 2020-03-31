@@ -99,51 +99,67 @@ namespace PH {
         }
     }
 
-    export class FixedWidthPixelFont extends Font {
-        img: HTMLImageElement;
-        w: number;
-        h: number;
+    export class PixelFont extends Font {
+        img: CanvasImageSource;
+        cw: number;
+        ch: number;
         undershoot: number;
         startChar: number;
+        charWidths?: number[];
+        yOffset: number = 0;
+        lineHeight: number;
 
-        constructor(img: HTMLImageElement, w: number, h: number,
-            undershoot: number, startChar: number) {
+        constructor(img: CanvasImageSource, cw: number, ch: number,
+            undershoot: number, lineHeight: number, startChar: number,
+            charWidths?: number[]) {
             super();
             this.img = img;
-            this.w = w;
-            this.h = h;
+            this.cw = cw;
+            this.ch = ch;
             this.undershoot = undershoot;
+            this.lineHeight = lineHeight;
             this.startChar = startChar;
+            this.charWidths = charWidths;
         }
 
         public getLineHeight() {
-            return this.h;
+            return this.lineHeight;
         }
 
         public drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number) {
             var curX = x;
-            var curY = y;
-            var modX = Math.floor(this.img.width / this.w);
-            var newLineCode = "\n".charCodeAt(0) - this.startChar;
+            var curY = y + this.yOffset;
+            var modX = Math.floor(<number>this.img.width / this.cw);
             for (var k = 0; k < text.length; k++) {
-                var cCode = text.charCodeAt(k) - this.startChar;
-                if (cCode === newLineCode) {
-                    curX = x;
-                    curY += this.h;
+                var rawCCode = text.charCodeAt(k);
+                var modCCode = rawCCode - this.startChar;
+                var srcX = (modCCode % modX) * this.cw;
+                var srcY = Math.floor(modCCode / modX) * this.ch;
+
+                ctx.drawImage(this.img, srcX, srcY, this.cw, this.ch,
+                    curX, curY, this.cw, this.ch);
+                if(this.charWidths) {
+                    curX += this.charWidths[rawCCode];
                 }
                 else {
-                    var srcX = (cCode % modX) * this.w;
-                    var srcY = Math.floor(cCode / modX) * this.h;
-
-                    ctx.drawImage(this.img, srcX, srcY, this.w, this.h,
-                        curX, curY, this.w, this.h);
-                    curX += this.w - this.undershoot;
+                    curX += this.cw;
                 }
+                curX -= this.undershoot;
             }
         }
 
-        public getWidthOfText(text: string) {
-            return text.length * this.w;
+        public getWidthOfText(text: string): number {
+            if(this.charWidths) {
+                let total = 0;
+                for(let k = 0; k < text.length; k++) {
+                    var rawCCode = text.charCodeAt(k);
+                    total += this.charWidths[rawCCode] - this.undershoot;
+                }
+                return total;
+            }
+            else {
+                return text.length * (this.cw - this.undershoot);
+            }
         }
 
     }

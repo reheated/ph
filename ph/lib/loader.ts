@@ -40,157 +40,101 @@ namespace PH {
         return prom;
     }
 
-    export class Resources {
-        public data: { [key: string]: any } = {};
-        public amtLoaded: { [key: string]: number } = {};
-        public requests: string[] = [];
-        public sizes: { [key: string]: number } = {};
-
-        numSizesGot: number = 0;
-        numRequests: number = 0;
-        numToDecode: number = 0;
-        numPackagesRequested: number = 0;
-        numPackagesProcessed: number = 0;
-        numDownloaded: number = 0;
-        numDecoded: number = 0;
-        totalLoaded: number = 0;
-        totalToLoad: number = 0;
-        errorDecoding: boolean = false;
-
+    export class Loader {
         audioContext: AudioContext;
 
-        constructor() {
+        constructor(audioContext: AudioContext) {
             // constructor for a collection of resources
-            this.sizes = {};
-            this.numSizesGot = 0;
-            this.numRequests = 0;
-            this.numToDecode = 0;
-            this.numPackagesRequested = 0;
-            this.numPackagesProcessed = 0;
-            this.numDownloaded = 0;
-            this.numDecoded = 0;
-            this.totalLoaded = 0;
-            this.totalToLoad = 0;
-            this.errorDecoding = false;
-            this.audioContext = new AudioContext();
+            this.audioContext = audioContext;
         }
 
         ///////////////////////////////////
         // REQUESTING AND DOWNLOADING FILES
         ///////////////////////////////////
 
-        public async get() {
-            await this.getAllFileSizes();
-            this.recomputeLoaded();
-            await this.downloadAll();
+        async getFile(filename: string, progressCallback?: (mb: number, totalMB: number) => void) {
+            let result = await this.getFiles([filename], progressCallback);
+            return result[0];
+        }
+
+        async getFiles(filenames: string[], progressCallback?: (bytes: number, totalBytes: number) => void): Promise<any[]> {
+            let fileSizes = await this.getAllFileSizes(filenames);
+            let totalBytes = 0;
+            for (let filename of filenames) totalBytes += fileSizes[filename];
+            let cb = progressCallback ? (bytes: number) => progressCallback(bytes, totalBytes) : undefined;
+            let objects = await this.downloadAll(filenames, cb);
+            return objects;
         }
 
         //////////////////////////////////////////////////////////////
         // REQUESTING AND EXTRACTING FILES - INTERNAL HELPER FUNCTIONS
         //////////////////////////////////////////////////////////////
 
-        public reqPackage(name: string) {
-            // requests a package full of the other kinds of files
-            this.requests.push(name + ".dat");
-            this.numRequests++;
-            this.numPackagesRequested++;
-        }
-
-        async getAllFileSizes() {
+        private async getAllFileSizes(filenames: string[]) {
             // start getting all the file sizes
             let promises: Promise<void>[] = [];
-            for (let i = 0; i < this.requests.length; i++) {
-                let filename = this.requests[i];
+            let sizes: { [key: string]: number } = {};
+            for (let i = 0; i < filenames.length; i++) {
+                let filename = filenames[i];
                 promises.push(getFileSize(filename).then((bytes) => {
-                    let [name, ext] = splitFilename(filename);
-                    this.sizes[name] = bytes;
-                    this.numSizesGot++;
+                    sizes[filename] = bytes;
                 }));
             }
             await Promise.all(promises);
+            return sizes;
         }
 
-        async downloadAll() {
+        private async downloadAll(filenames: string[], someLoadedCallback?: (bytesSoFar: number) => void) {
             // start getting all the files themselves
             let promises: Promise<void>[] = [];
-            for (let i = 0; i < this.requests.length; i++) {
-                let filename = this.requests[i];
+            let amtLoaded: { [key: string]: number } = {};
+            for (let i = 0; i < filenames.length; i++) {
+                let filename = filenames[i];
                 let [name, ext] = splitFilename(filename);
-                this.amtLoaded[name] = 0;
-                promises.push(this.downloadFile(filename));
-
+                amtLoaded[name] = 0;
+                promises.push(this.downloadFile(filename, (bytesForFile) => {
+                    if (someLoadedCallback) {
+                        amtLoaded[filename] = bytesForFile;
+                        let total = 0;
+                        for (let filename of filenames) total += amtLoaded[filename];
+                        someLoadedCallback(total);
+                    }
+                }));
             }
-            await Promise.all(promises);
+            return await Promise.all(promises);
         }
 
-        async downloadFile(filename: string) {
-            let response = await downloadRawData(filename,
-                (event) => this.updateAmtLoaded(filename, event));
-            this.numDownloaded++;
+        private async downloadFile(filename: string, someLoadedCallback?: (bytesSoFar: number) => void) {
+            let cb = someLoadedCallback ? (event: ProgressEvent<EventTarget>) => someLoadedCallback(event.loaded) : undefined;
+            let response = await downloadRawData(filename, cb);
             let [name, ext] = splitFilename(filename);
             let content = await this.processFile(response, ext);
-            if(ext === PACKAGE_EXT) {
-                for(let key in content) {
-                    this.data[key] = content[key];
-                }
-            }
-            else {
-                this.data[name] = content;
-            }
+            return content;
         }
 
-        updateAmtLoaded(filename: string, event: ProgressEvent<EventTarget>) {
-            let [name, ext] = splitFilename(filename);
-            this.amtLoaded[name] = event.loaded;
-            this.recomputeLoaded();
-        }
-
-        recomputeLoaded() {
-            let denom = 0;
-            for (let x in this.sizes) {
-                if (this.sizes.hasOwnProperty(x)) {
-                    denom += this.sizes[x];
-                }
-            }
-            this.totalToLoad = denom;
-
-            let numer = 0;
-            for (let x in this.amtLoaded) {
-                if (this.amtLoaded.hasOwnProperty(x)) {
-                    numer += this.amtLoaded[x];
-                }
-            }
-            this.totalLoaded = numer;
-        }
-
-        async processFile(response: any, ext: string): Promise<any> {
+        private async processFile(response: any, ext: string): Promise<any> {
             if (ext == "png") {
                 return await processImage(response, "image/png");
             }
             else if (ext == "mp3" || ext == "flac") {
                 return await this.audioContext!.decodeAudioData(response);
             }
-            else if (ext == "txt") // ascii
-            {
+            else if (ext == "txt") { // ascii
                 let decoder = new TextDecoder();
                 return decoder.decode(response);
             }
-            else if (ext == "svg") // svg
-            {
+            else if (ext == "svg") { // svg
                 return processSvg(response);
             }
-            else if (ext == "html") // html structure (create a DOM object)
-            {
+            else if (ext == "html") { // html structure (create a DOM object)
                 return processHtml(response);
             }
-            else if (ext == PACKAGE_EXT) // package
-            {
+            else if (ext == "bff") { // Bitmap font file - from CBFG
+                return processBff(response);
+            }
+            else if (ext == PACKAGE_EXT) { // package
                 let lengthBytes = 4;
-                let lengthArray = new Uint8Array(response.slice(0, lengthBytes));
-                let jsonLength = 0;
-                for (let k = lengthBytes - 1; k >= 0; k--) {
-                    jsonLength = jsonLength * 256 + lengthArray[k];
-                }
+                let jsonLength = bytesToNumber(new Uint8Array(response.slice(0, lengthBytes)));
                 let jsonBytes = new Uint8Array(response.slice(lengthBytes, lengthBytes + jsonLength));
                 let jsonData = '';
                 for (let k = 0; k < jsonBytes.length; k++) {
@@ -209,14 +153,26 @@ namespace PH {
                 let results = await Promise.all(proms);
                 let d: { [key: string]: any } = {};
                 for (let k = 0; k < names.length; k++) {
+                    if (d.hasOwnProperty(names[k])) {
+                        throw new Error("Repeated content name (" + names[k] + ") is not allowed.");
+                    }
                     d[names[k]] = results[k];
                 }
                 return d;
             }
             else {
-                throw new Error("Don't know how to handle extension " + ext);
+                throw new Error("Unrecognized extension: " + ext);
             }
         }
+    }
+
+    function bytesToNumber(bytes: Uint8Array) {
+        let result = 0;
+        let L = bytes.length;
+        for (let k = L - 1; k >= 0; k--) {
+            result = result * 256 + bytes[k];
+        }
+        return result;
     }
 
     function processImage(response: any, mime: string): Promise<HTMLImageElement> {
@@ -243,6 +199,57 @@ namespace PH {
         let domObj = document.createElement('html');
         domObj.innerHTML = txt;
         return domObj;
+    }
+
+    function processBff(response: any) {
+        // create a sprite font from a BFF
+
+        // Check header
+        let data = new Uint8Array(response);
+        if(data[0] != 0xbf || data[1] != 0xf2) {
+            throw new Error("File is not valid BFF2 format.");
+        }
+
+        // Extract all the information
+        let w = bytesToNumber(data.slice(2, 6));
+        let h = bytesToNumber(data.slice(6, 10));
+        let cw = bytesToNumber(data.slice(10, 14));
+        let ch = bytesToNumber(data.slice(14, 18));
+        let bpp = data[18];
+        let startChar = data[19];
+        let charWidths = Array.from(data.slice(20, 20 + 256));
+        let inputImageData = data.slice(20 + 256);
+
+        // Create the image
+        let canvas = createCanvas(w, h);
+        let ctx = canvas.getContext('2d')!;
+        let outputImageData = ctx.createImageData(w, h);
+        // Loop over pixels in the output image
+        for(let k = 0; k < w * h; k++) {
+            let offsetIn = k * bpp / 8;
+            let offsetOut = k * 4;
+            // Loop over channels in the output pixel
+            for(let l = 0; l < 4; l++) {
+                // Decide what the value is, based on the bpp setting
+                let value: number = 0;
+                if(bpp == 32) {
+                    value = inputImageData[offsetIn + l];
+                }
+                else if(bpp == 8 && l == 3) {
+                    value = inputImageData[offsetIn];
+                }
+                else {
+                    value = 255;
+                }
+
+                outputImageData.data[offsetOut + l] = value;
+            }
+        }
+        ctx.putImageData(outputImageData, 0, 0);
+
+        let font = new PixelFont(canvas, cw, ch, 0, ch, startChar, charWidths);
+
+        return font;
     }
 
 }

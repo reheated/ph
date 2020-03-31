@@ -10,6 +10,7 @@ let TYPES: Set<string> = new Set<string>([
     'txt',
     'map',
     'svg',
+    'bff'
 ]);
 
 class PHSettings {

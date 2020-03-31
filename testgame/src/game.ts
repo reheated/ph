@@ -7,7 +7,7 @@ class Game {
     // BASIC STUFF
     //////////////
 
-    resources: PH.Resources;
+    data: {[key: string]: any};
     pixelationLayer: PH.PixelationLayer;
     mainFont: PH.Font;
     buttonDrawer: PH.CanvasButtonSpriteDrawer;
@@ -28,9 +28,9 @@ class Game {
     convoLayer: ConvoLayer;
     minigamePlayedTimes = 0;
 
-    constructor(resources: PH.Resources, mainFont: PH.Font, pixelationLayer: PH.PixelationLayer) {
-        this.resources = resources;
-        this.soundPlayer = new PH.SoundPlayer(resources.audioContext, {});
+    constructor(data: {[key: string]: any}, audioContext: AudioContext, mainFont: PH.Font, pixelationLayer: PH.PixelationLayer) {
+        this.data = data;
+        this.soundPlayer = new PH.SoundPlayer(audioContext, {});
         this.jukeBox = new PH.JukeBox(this.soundPlayer);
         this.mainFont = mainFont;
         this.pixelationLayer = pixelationLayer;
@@ -38,11 +38,11 @@ class Game {
         this.outCtx = pixelationLayer.destCtx;
 
         // Initialize subsystems.
-        this.spriteBoxNormal = new PH.SpriteBox(this.resources.data.boxes, 4, 0);
-        this.spriteBoxButton = new PH.SpriteBox(this.resources.data.boxes, 4, 1);
-        this.spriteBoxPressed = new PH.SpriteBox(this.resources.data.boxes, 4, 2);
-        this.spriteBoxPlot = new PH.SpriteBox(this.resources.data.boxes, 4, 3);
-        this.spriteBoxConvo = new PH.SpriteBox(this.resources.data.boxes, 4, 4);
+        this.spriteBoxNormal = new PH.SpriteBox(this.data.boxes, 4, 0);
+        this.spriteBoxButton = new PH.SpriteBox(this.data.boxes, 4, 1);
+        this.spriteBoxPressed = new PH.SpriteBox(this.data.boxes, 4, 2);
+        this.spriteBoxPlot = new PH.SpriteBox(this.data.boxes, 4, 3);
+        this.spriteBoxConvo = new PH.SpriteBox(this.data.boxes, 4, 4);
 
         this.buttonDrawer = new PH.CanvasButtonSpriteDrawer(
             this.spriteBoxButton, this.spriteBoxPressed, this.mainFont);
@@ -53,7 +53,7 @@ class Game {
         this.convoLayer = new ConvoLayer(this);
         this.farmLayer = new FarmLayer(this);
         let cursorLayer = new PH.CanvasCursorLayer(this.ctx, this.outCtx.canvas,
-            this.pixelationLayer, this.resources.data.cursor, [0, 0]);
+            this.pixelationLayer, this.data.cursor, [0, 0]);
 
         // Start the game.
         this.layerManager.setTopLayers(cursorLayer, this.pixelationLayer)
@@ -115,19 +115,22 @@ class Game {
 async function start() {
     let mainGameCanvas = PH.createCanvas(GAME_WIDTH, GAME_HEIGHT);
     let outGameCanvas = <HTMLCanvasElement>document.getElementById('outGameCanvas')!;
-    let resources = new PH.Resources();
+    let audioContext = new AudioContext();
+    let loader = new PH.Loader(audioContext);
 
     // Set up canvas contexts
     let outCtx = outGameCanvas.getContext('2d')!;
     let ctx = mainGameCanvas.getContext('2d')!;
     let pixelationLayer = new PH.PixelationLayer(ctx, outCtx);
 
-    // Load a TTF font
-    await PH.quickFont("m5x7", "m5x7.ttf");
-    let mainFont = new PH.NormalFont("m5x7", 16, 7, 10, "#000000");
+    // Load a font
+    let mainFont = <PH.PixelFont>await loader.getFile('m5x7.bff');
+    mainFont.img = PH.changeColor(mainFont.img, [0, 0, 0]);
+    mainFont.yOffset = -4;
+    mainFont.lineHeight = 10;
 
     // Set up loading sceen
-    let loadingScreen = new LoadingScreen(resources, ctx, mainFont);
+    let loadingScreen = new LoadingScreen(loader, ctx, mainFont);
 
     // Start animation frames for while the game is loading.
     let fm = new PH.FrameManager({
@@ -141,11 +144,10 @@ async function start() {
     fm.start();
 
     // Load the main contents of the game.
-    resources.reqPackage('game');
-    await resources.get();
+    let data = await loader.getFile('game.dat', (bytes, totalBytes) => loadingScreen.setProgress(bytes, totalBytes));
 
     fm.stop();
-    new Game(resources, mainFont, pixelationLayer);
+    new Game(data, audioContext, mainFont, pixelationLayer);
 }
 
 window.onload = start;

@@ -245,7 +245,7 @@ class MinigameLayer extends PH.Layer {
 
     quickSound(soundName: string | null) {
         if (soundName === null) return null;
-        var result = this.game.soundPlayer.playSound(this.game.resources.data[soundName], false);
+        var result = this.game.soundPlayer.playSound(this.game.data[soundName], false);
         return result;
     }
 
@@ -425,7 +425,7 @@ class MinigameLayer extends PH.Layer {
                 this.game.ctx.translate(this.BIRDRAD * 2, 0);
                 this.game.ctx.scale(-1, 1);
             }
-            this.game.ctx.drawImage(this.game.resources.data.bird, 0, 0);
+            this.game.ctx.drawImage(this.game.data.bird, 0, 0);
             this.game.ctx.restore();
         }
 
@@ -435,7 +435,7 @@ class MinigameLayer extends PH.Layer {
             var pos = this.seedPositions[k];
             var x = Math.floor(pos[0] - this.SEEDRAD + 0.5);
             var y = Math.floor(pos[1] - this.SEEDRAD + 0.5);
-            this.game.ctx.drawImage(this.game.resources.data.fruit, x, y);
+            this.game.ctx.drawImage(this.game.data.fruit, x, y);
         }
 
         // Draw player, if we haven't died
@@ -444,7 +444,7 @@ class MinigameLayer extends PH.Layer {
         {
             var x = Math.floor(this.ballx - this.BALLRAD + 0.5);
             var y = Math.floor(this.bally - this.BALLRAD + 0.5);
-            this.game.ctx.drawImage(this.game.resources.data.playerface, x, y);
+            this.game.ctx.drawImage(this.game.data.playerface, x, y);
         }
 
         // Draw health
@@ -452,7 +452,7 @@ class MinigameLayer extends PH.Layer {
         var y = 4;
         for(var k = 0; k < this.lives; k++)
         {
-            this.game.ctx.drawImage(this.game.resources.data.health, x, y);
+            this.game.ctx.drawImage(this.game.data.health, x, y);
             x -= 10;
         }
     }
@@ -539,7 +539,7 @@ class MinigameLayer extends PH.Layer {
         // draw dusk
         if(this.detailSettings.dusk)
         {
-            this.game.ctx.drawImage(this.game.resources.data.dusk, 0, this.SKY_Y_OFFSET);
+            this.game.ctx.drawImage(this.game.data.dusk, 0, this.SKY_Y_OFFSET);
         }
 
         // draw floodlight
@@ -547,7 +547,7 @@ class MinigameLayer extends PH.Layer {
         {
             this.game.ctx.globalAlpha = 0.4;
             this.game.ctx.globalCompositeOperation = 'multiply';
-            this.game.ctx.drawImage(this.game.resources.data.floodlight, 0, this.SKY_Y_OFFSET);
+            this.game.ctx.drawImage(this.game.data.floodlight, 0, this.SKY_Y_OFFSET);
             this.game.ctx.globalCompositeOperation = 'source-over';
             this.game.ctx.globalAlpha = 1;
         }
@@ -589,7 +589,7 @@ class MinigameLayer extends PH.Layer {
                 // It's nicer with the AA on!
                 var x = pos[0];
                 var y = pos[1];
-                this.game.ctx.drawImage(this.game.resources.data[imgName], x, y);
+                this.game.ctx.drawImage(this.game.data[imgName], x, y);
             }
             this.game.ctx.globalAlpha = 1;
         }
@@ -597,7 +597,7 @@ class MinigameLayer extends PH.Layer {
         // draw long grass
         if(this.detailSettings.grass)
         {
-            this.game.ctx.drawImage(this.game.resources.data.longgrass, 0, this.HEIGHT - this.WALLWIDTH - this.GRASSHEIGHT);
+            this.game.ctx.drawImage(this.game.data.longgrass, 0, this.HEIGHT - this.WALLWIDTH - this.GRASSHEIGHT);
         }
     }
 
@@ -606,7 +606,7 @@ class MinigameLayer extends PH.Layer {
         // draw short grass
         if(this.detailSettings.grass)
         {
-            this.game.ctx.drawImage(this.game.resources.data.shortgrass, 0, this.HEIGHT - this.WALLWIDTH - this.GRASSHEIGHT + 1);
+            this.game.ctx.drawImage(this.game.data.shortgrass, 0, this.HEIGHT - this.WALLWIDTH - this.GRASSHEIGHT + 1);
         }
     }
 
@@ -673,7 +673,7 @@ class MinigameLayer extends PH.Layer {
 
         if(this.startMusicTime !== null && PH.curTime() >= this.startMusicTime) {
             if(this.soundSettings.music !== null) {
-                this.game.jukeBox.setMusic(this.game.resources.data[this.soundSettings.music]);
+                this.game.jukeBox.setMusic(this.game.data[this.soundSettings.music]);
             }
             this.startMusicTime = null;
         }
