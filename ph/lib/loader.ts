@@ -55,6 +55,7 @@ namespace PH {
             this.addExtensionHandler("svg", processSvg);
             this.addExtensionHandler("html", processHtml);
             this.addExtensionHandler("bff", processBff);
+            this.addExtensionHandler("map", processImageMap);
             this.addExtensionHandler(PACKAGE_EXT, (response) => this.processPackage(response));
         }
 
@@ -249,6 +250,18 @@ namespace PH {
         let font = new PixelFont(canvas, cw, ch, 0, ch, startChar, charWidths);
 
         return font;
+    }
+
+    function processImageMap(response: any): any {
+        // Process an image map, as produced by the GIMP image map plugin.
+        // We just have to convert to text, skip the first two lines, and
+        // process the rest as an HTML node.
+        let decoder = new TextDecoder();
+        let txt = decoder.decode(response);
+        txt = txt.split('\n').slice(2).join('\n');
+        let domObj = document.createElement('html');
+        domObj.innerHTML = txt;
+        return domObj;
     }
 
 }

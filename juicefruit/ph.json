@@ -6,5 +6,5 @@
     "serveFolder": "juicefruit",
     "bundleFilename": "game.dat",
     "port": 8080,
-    "resourceExtensions": ["mp3", "flac", "png", "txt", "map", "svg", "bff"]
+    "resourceExtensions": ["mp3", "flac", "png", "txt", "map", "svg", "bff", "map"]
 }
