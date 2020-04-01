@@ -1,7 +1,7 @@
 namespace PH {
     export class Layer {
-        add(): void { };
-        remove(): void { };
+        handleLayerAdded(): void { };
+        handleLayerRemoved(): void { };
         draw(): void { };
         update(deltat: number): boolean { return true; }
 
@@ -33,14 +33,14 @@ namespace PH {
             // Call the "remove" function on all layers that get removed.
             for(let s of this.layers) {
                 if(updatedLayers.indexOf(s) < 0) {
-                    s.remove();
+                    s.handleLayerRemoved();
                 }
             }
 
             // Call the "add" function on all newly added layers
             for(let s of updatedLayers) {
                 if(this.layers.indexOf(s) < 0) {
-                    s.add();
+                    s.handleLayerAdded();
                 }
             }
             

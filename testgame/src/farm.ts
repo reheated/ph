@@ -129,7 +129,7 @@ class FarmLayer extends PH.Layer {
         this.convoIntro();
     }
 
-    add() {
+    handleLayerAdded() {
         this.game.jukeBox.setMusic(this.game.data['ld45_farm']);
     }
 

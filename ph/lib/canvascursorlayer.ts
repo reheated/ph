@@ -21,11 +21,11 @@ namespace PH {
             this.offset = offset;
         }
 
-        add() {
+        handleLayerAdded() {
             this.update();
         }
 
-        remove() {
+        handleLayerRemoved() {
             this.cursorElt.style.cursor = "";
         }
 
