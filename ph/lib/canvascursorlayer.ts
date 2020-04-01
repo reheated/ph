@@ -5,13 +5,13 @@ namespace PH {
         drawCtx: CanvasRenderingContext2D;
         cursorElt: HTMLElement;
         transformer: CanvasTransformerLayer;
-        img: HTMLImageElement;
+        img: CanvasImageSource;
         offset: [number, number];
 
         constructor(ctx: CanvasRenderingContext2D,
             cursorElt: HTMLElement,
             transformer: CanvasTransformerLayer,
-            img: HTMLImageElement,
+            img: CanvasImageSource,
             offset: [number, number]) {
             super();
             this.drawCtx = ctx;

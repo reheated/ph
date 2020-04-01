@@ -1,10 +1,10 @@
 namespace PH {
     export class SpriteBox {
-    srcImg: HTMLImageElement;
+    srcImg: CanvasImageSource;
     tileSize: number;
     multiple: number;
 
-    constructor(srcImg: HTMLImageElement, tileSize: number, multiple: number) {
+    constructor(srcImg: CanvasImageSource, tileSize: number, multiple: number) {
         this.srcImg = srcImg;
         this.tileSize = tileSize;
         this.multiple = multiple;

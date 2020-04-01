@@ -55,7 +55,6 @@ class Game {
         let cursorLayer = new PH.CanvasCursorLayer(this.ctx, this.outCtx.canvas,
             this.pixelationLayer, this.data.cursor, [0, 0]);
 
-        // Start the game.
         this.layerManager.setTopLayers(cursorLayer, this.pixelationLayer)
         this.layerManager.setMainLayers(new MenuLayer(this));
 

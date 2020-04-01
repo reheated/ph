@@ -30,20 +30,23 @@ namespace PH {
     export class CanvasButton extends CanvasRect {
         ctx: CanvasRenderingContext2D;
         public pressed: boolean = false;
-        clickCallback: () => void | null;
+        clickCallback: (b: CanvasButton) => void | null;
         public text: string;
         drawer: CanvasButtonDrawer;
+        tag: any;
 
         constructor(ctx: CanvasRenderingContext2D,
             l: number, t: number, w: number, h: number,
-            clickCallback: () => void | null,
+            clickCallback: (tag: any) => void | null,
             text: string,
-            drawer: CanvasButtonDrawer) {
+            drawer: CanvasButtonDrawer,
+            tag?: any) {
             super(l, t, w, h);
             this.ctx = ctx;
             this.clickCallback = clickCallback;
             this.text = text;
             this.drawer = drawer;
+            this.tag = tag;
         }
 
         public handleMouseDown(): boolean {
@@ -55,7 +58,7 @@ namespace PH {
             let doCallback = this.pressed && this.mouseOver;
             this.pressed = false;
             if(doCallback) {
-                this.clickCallback();
+                this.clickCallback(this);
             }
             // It seems best to always let a mouse up event pass through the buttons,
             // so that other parts of the game can detect it.

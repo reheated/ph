@@ -52,36 +52,10 @@ namespace PH {
             tlx, tly, w * drawScale, h * drawScale);
     }
 
-    export async function quickImage(src: string): Promise<HTMLImageElement> {
-        // Download an image. Runs as a promise.
-        let img = new Image();
-        let prom = new Promise<HTMLImageElement>((resolve, reject) => {
-            img.onload = () => resolve(img);
-            img.onerror = () => reject(new Error("Failed to load image."));
-            img.src = src;
-        });
-        return prom;
-    }
-
     export async function quickFont(name: string, url: string) {
         let f = new FontFace(name, "url(" + url + ")");
         await f.load();
         document.fonts.add(f);
-    }
-
-    export function partImage(img: HTMLImageElement, l: number, t: number,
-        w: number, h: number, scale: number): HTMLImageElement {
-        // Create a new image by extracting the specified rectangle
-        // from an existing image.
-        let canv = document.createElement("canvas");
-        canv.width = w * scale;
-        canv.height = h * scale;
-        let ctx = canv.getContext("2d")!;
-        ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(img, l, t, w, h, 0, 0, w * scale, h * scale);
-        let result = document.createElement("img");
-        result.src = canv.toDataURL();
-        return result;
     }
 
     export function curTime() {

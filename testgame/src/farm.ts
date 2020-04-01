@@ -1,3 +1,17 @@
+// Skill descriptions are in the following form:
+// key: name on the button
+// value: [cost of upgrade, hover message].
+let SKILL_DESCS: { [key: string]: [number, string] } = {
+    "Particles": [100, "Adds particles to your juice, and increases value and difficulty."],
+    "Shake": [100, "Adds screen shake to your juice, and increases value and difficulty."],
+    "Details": [100, "Adds graphical details to your juice, and increases value and difficulty."],
+    "Sound": [100, "Adds sound and music to your juice, and increases value and difficulty."],
+    "Juiciness": [500, "Increases juice yield from each tree."],
+    "Seeds": [250, "Increases seeds from each tree."],
+    "Tractor": [200, "Increases energy reserve."],
+    "Scarecrow": [100, "Reduces difficulty."]
+};
+
 type Cell = [number, number];
 
 class PlotContents {
@@ -12,6 +26,19 @@ class PlotContents {
     }
 }
 
+class Skill {
+    name: string;
+    level: number = 0;
+    cost: number;
+    msg: string;
+
+    constructor(name: string, cost: number, msg: string) {
+        this.name = name;
+        this.cost = cost;
+        this.msg = msg;
+    }
+}
+
 class FarmLayer extends PH.Layer {
 
     GRID_H: number = 4;
@@ -22,15 +49,6 @@ class FarmLayer extends PH.Layer {
     MAXLEVEL: number = 5;
     DEFAULT_ENERGY: number = 3;
     END_DAY: number = 28;
-
-    UPGRADECOST_PARTICLES: number = 100;
-    UPGRADECOST_SHAKE: number = 100;
-    UPGRADECOST_DETAILS: number = 100;
-    UPGRADECOST_SOUND: number = 100;
-    UPGRADECOST_JUICINESS: number = 500;
-    UPGRADECOST_SEEDS: number = 250;
-    UPGRADECOST_TRACTOR: number = 200;
-    UPGRADECOST_SCARECROW: number = 100;
 
     SEED: string = "SEED";
     PLANTEDSEED: string = "PLANTEDSEED";
@@ -43,10 +61,8 @@ class FarmLayer extends PH.Layer {
 
     game: Game;
     uiLayer: PH.CanvasUILayer;
-    hoverCallbacks: { [key: string]: () => void } = {};
+    hoverCallbacks = new Map<any, (tag: any) => void>();
 
-    cash: number = 2000;
-    energy: number;
     mouseOverPlot: Cell | null = null;
     mouseDownOverPlot: Cell | null = null;
     mouseDragPlot: Cell | null = null;
@@ -55,15 +71,9 @@ class FarmLayer extends PH.Layer {
     harvestingCell: Cell | null = null;
 
     // current stats
-    levelParticles: number = 0;
-    levelShake: number = 0;
-    levelDetails: number = 0;
-    levelSound: number = 0;
-    levelJuiciness: number = 0;
-    levelSeeds: number = 0;
-    levelTractor: number = 0;
-    levelScarecrow: number = 0;
-
+    cash: number = 2000;
+    energy: number;
+    skills: { [key: string]: Skill };
     today: number = 1;
     timesMinigameWon: number = 0;
 
@@ -87,20 +97,18 @@ class FarmLayer extends PH.Layer {
         this.plotContents[1][1].push(new PlotContents(this.SAPLING, 1, 0));
 
         this.uiLayer = new PH.CanvasUILayer(this.game.pixelationLayer);
-        this.hoverCallbacks = {};
 
-        // Buttons for upgrades
-        this.registerButton(164, 40, 72, 16, () => this.clickParticles(), () => this.hoverParticles(), "Particles"); // particles
-        this.registerButton(240, 40, 72, 16, () => this.clickShake(), () => this.hoverShake(), "Shake"); // shake
-
-        this.registerButton(164, 60, 72, 16, () => this.clickDetails(), () => this.hoverDetails(), "Details"); // details
-        this.registerButton(240, 60, 72, 16, () => this.clickSound(), () => this.hoverSound(), "Sound"); // sound
-
-        this.registerButton(164, 80, 72, 16, () => this.clickJuiciness(), () => this.hoverJuiciness(), "Juiciness"); // juiciness
-        this.registerButton(240, 80, 72, 16, () => this.clickSeeds(), () => this.hoverSeeds(), "Seeds"); // seeds
-
-        this.registerButton(164, 100, 72, 16, () => this.clickTractor(), () => this.hoverTractor(), "Tractor"); // tractor
-        this.registerButton(240, 100, 72, 16, () => this.clickScarecrow(), () => this.hoverScarecrow(), "Scarecrow"); // scarecrow
+        // Skills and upgrade buttons
+        this.skills = {};
+        let skillNames = Object.keys(SKILL_DESCS);
+        for (let k = 0; k < skillNames.length; k++) {
+            let skillName = skillNames[k];
+            let bl = 164 + 76 * (k % 2);
+            let bt = 40 + 20 * Math.floor(k / 2);
+            let skill = new Skill(skillName, SKILL_DESCS[skillName][0], SKILL_DESCS[skillName][1]);
+            this.skills[skillName] = skill;
+            this.registerButton(bl, bt, 72, 16, (b) => this.clickUpgrade(b.tag), (b) => this.hoverUpgrade(b.tag), skillName, skill);
+        }
 
         // Buttons for actions
         this.registerButton(100, 146, 52, 16, () => this.clickPayDebt(), () => this.hoverPayDebt(), "Pay Debt"); // pay debt
@@ -132,11 +140,12 @@ class FarmLayer extends PH.Layer {
     }
 
     registerButton(l: number, t: number, w: number, h: number,
-        clickCallback: () => void, hoverCallback: () => void, text: string) {
+        clickCallback: (tag: any) => void, hoverCallback: (tag: any) => void, text: string,
+        tag?: any) {
         var b = new PH.CanvasButton(this.game.ctx, l, t, w, h,
-            clickCallback, text, this.game.buttonDrawer!);
+            clickCallback, text, this.game.buttonDrawer!, tag);
         this.uiLayer!.addButton(b);
-        this.hoverCallbacks[text] = hoverCallback;
+        this.hoverCallbacks.set(b, hoverCallback);
     }
 
     updateMouseOverPlot() {
@@ -279,8 +288,8 @@ class FarmLayer extends PH.Layer {
 
         let b = this.uiLayer!.mouseOverButton;
         if (b !== null) {
-            let callback = this.hoverCallbacks[b.text];
-            if (callback !== null) callback();
+            let callback = this.hoverCallbacks.get(b);
+            if (callback) callback(b);
         }
         return true;
     }
@@ -431,25 +440,28 @@ class FarmLayer extends PH.Layer {
         }
 
         // compute the difficulty
-        var difficulty = this.levelShake + this.levelParticles + this.levelDetails + this.levelSound;
-        difficulty -= 2 * this.levelScarecrow;
+        var difficulty = this.skills['Shake'].level + this.skills['Particles'].level +
+            this.skills['Details'].level + this.skills['Sound'].level;
+        difficulty -= 2 * this.skills['Scarecrow'].level;
         difficulty = Math.max(0, difficulty);
 
         // actually do the harvest
         this.energy -= 1;
         this.harvestingCell = plotCell;
         this.game.jukeBox.setMusic();
-        this.game.startMinigame(this.levelShake, this.levelParticles, this.levelDetails, this.levelSound, difficulty);
+        this.game.startMinigame(this.skills['Shake'].level, this.skills['Particles'].level,
+            this.skills['Details'].level, this.skills['Sound'].level, difficulty);
     }
 
     continueFromMinigame(won: boolean) {
         // Continue farm mode, after a minigame. won is set to true if the player won.
         if (won) {
             // remove the tree, put in the seeds, and put in the juices.
-            var numSeeds = 2 + this.levelSeeds;
+            var numSeeds = 2 + this.skills['Seeds'].level;
             var seedValue = 5;
-            var numJuices = 2 + this.levelJuiciness;
-            var juiceValue = 10 * (2 + this.levelShake + this.levelParticles + this.levelDetails + this.levelSound);
+            var numJuices = 2 + this.skills['Juiciness'].level;
+            var juiceValue = 10 * (2 + this.skills['Shake'].level + this.skills['Particles'].level +
+                this.skills['Details'].level + this.skills['Sound'].level);
             var pcList = [new PlotContents(this.JUICE, numJuices, juiceValue), new PlotContents(this.SEED, numSeeds, seedValue)];
             this.plotContents[this.harvestingCell![0]][this.harvestingCell![1]] = pcList;
 
@@ -491,44 +503,10 @@ class FarmLayer extends PH.Layer {
         }
     }
 
-    clickParticles() {
-        if (this.payUpgradeCost(this.levelParticles, this.UPGRADECOST_PARTICLES))
-            this.levelParticles += 1;
-    }
-
-    clickShake() {
-        if (this.payUpgradeCost(this.levelShake, this.UPGRADECOST_SHAKE))
-            this.levelShake += 1;
-    }
-
-    clickDetails() {
-        if (this.payUpgradeCost(this.levelDetails, this.UPGRADECOST_DETAILS))
-            this.levelDetails += 1;
-    }
-
-    clickSound() {
-        if (this.payUpgradeCost(this.levelSound, this.UPGRADECOST_SOUND))
-            this.levelSound += 1;
-    }
-
-    clickJuiciness() {
-        if (this.payUpgradeCost(this.levelJuiciness, this.UPGRADECOST_JUICINESS))
-            this.levelJuiciness += 1;
-    }
-
-    clickSeeds() {
-        if (this.payUpgradeCost(this.levelSeeds, this.UPGRADECOST_SEEDS))
-            this.levelSeeds += 1;
-    }
-
-    clickTractor() {
-        if (this.payUpgradeCost(this.levelTractor, this.UPGRADECOST_TRACTOR))
-            this.levelTractor += 1;
-    }
-
-    clickScarecrow() {
-        if (this.payUpgradeCost(this.levelScarecrow, this.UPGRADECOST_SCARECROW))
-            this.levelScarecrow += 1;
+    clickUpgrade(tag: any) {
+        let skill = <Skill>tag;
+        if (this.payUpgradeCost(skill.level, skill.cost))
+            skill.level += 1;
     }
 
     clickPayDebt() {
@@ -552,7 +530,7 @@ class FarmLayer extends PH.Layer {
         this.today += 1;
 
         // reset energy
-        this.energy = this.DEFAULT_ENERGY + this.levelTractor;
+        this.energy = this.DEFAULT_ENERGY + this.skills['Tractor'].level;
 
         // grow all saplings into trees, and seeds into saplings
         for (var i = 0; i < this.GRID_H; i++) {
@@ -578,41 +556,10 @@ class FarmLayer extends PH.Layer {
     // BUTTON HOVER HANDLERS
     ////////////////////////
 
-    quickHoverText(level: number, cost: number, msg: string) {
-        var s = "Level " + level.toString() + "/" + this.MAXLEVEL.toString() + " Cost $" + cost.toString() + "\n\n" + msg;
+    hoverUpgrade(tag: any) {
+        let skill = <Skill>tag;
+        var s = "Level " + skill.level.toString() + "/" + this.MAXLEVEL.toString() + " Cost $" + skill.cost.toString() + "\n\n" + skill.msg;
         this.setInfoText(s);
-    }
-
-    hoverParticles() {
-        this.quickHoverText(this.levelParticles, this.UPGRADECOST_PARTICLES, "Adds particles to your juice, and increases value and difficulty.");
-    }
-
-    hoverShake() {
-        this.quickHoverText(this.levelShake, this.UPGRADECOST_SHAKE, "Adds screen shake to your juice, and increases value and difficulty.");
-    }
-
-    hoverDetails() {
-        this.quickHoverText(this.levelDetails, this.UPGRADECOST_DETAILS, "Adds graphical details to your juice, and increases value and difficulty.");
-    }
-
-    hoverSound() {
-        this.quickHoverText(this.levelSound, this.UPGRADECOST_SOUND, "Adds sound and music to your juice, and increases value and difficulty.");
-    }
-
-    hoverJuiciness() {
-        this.quickHoverText(this.levelJuiciness, this.UPGRADECOST_JUICINESS, "Increases juice yield from each tree.");
-    }
-
-    hoverSeeds() {
-        this.quickHoverText(this.levelSeeds, this.UPGRADECOST_SEEDS, "Increases seeds from each tree.");
-    }
-
-    hoverTractor() {
-        this.quickHoverText(this.levelTractor, this.UPGRADECOST_TRACTOR, "Increases energy reserve.");
-    }
-
-    hoverScarecrow() {
-        this.quickHoverText(this.levelScarecrow, this.UPGRADECOST_SCARECROW, "Reduces difficulty.");
     }
 
     hoverPayDebt() {
