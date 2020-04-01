@@ -5,10 +5,10 @@ namespace PH {
         draw(): void { };
         update(deltat: number): boolean { return true; }
 
-        handleClick(): boolean { return true; }
+        handleClick(button: number): boolean { return true; }
         handleDoubleClick(): boolean { return true; }
-        handleMouseDown(): boolean { return true; }
-        handleMouseUp(): boolean { return true; }
+        handleMouseDown(button: number): boolean { return true; }
+        handleMouseUp(button: number): boolean { return true; }
         handleMouseMoveClientCoords(clientX: number, clientY: number): void { }
         handleMouseMove(): boolean { return true; }
 
@@ -106,7 +106,7 @@ namespace PH {
             let l = this.layers;
             this.handleMouseMove(e);
             for (let k = l.length - 1; k >= 0; k--) {
-                let passThrough = l[k].handleClick();
+                let passThrough = l[k].handleClick(e.button);
                 if (!passThrough) break;
             }
             return this.stopBubble(e);
@@ -126,7 +126,7 @@ namespace PH {
             let l = this.layers;
             this.handleMouseMove(e);
             for (let k = l.length - 1; k >= 0; k--) {
-                let passThrough = l[k].handleMouseDown();
+                let passThrough = l[k].handleMouseDown(e.button);
                 if (!passThrough) break;
             }
             return this.stopBubble(e);
@@ -136,7 +136,7 @@ namespace PH {
             let l = this.layers;
             this.handleMouseMove(e);
             for (let k = l.length - 1; k >= 0; k--) {
-                let passThrough = l[k].handleMouseUp();
+                let passThrough = l[k].handleMouseUp(e.button);
                 if (!passThrough) break;
             }
             return this.stopBubble(e);

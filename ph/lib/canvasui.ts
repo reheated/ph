@@ -23,18 +23,18 @@ namespace PH {
             return true;
         }
 
-        public handleMouseDown() {
+        public handleMouseDown(button: number) {
             let passThrough = true;
             for (let b of this.buttons) {
-                passThrough = b.handleMouseDown() && passThrough;
+                passThrough = b.handleMouseDown(button) && passThrough;
             }
             return passThrough;
         }
 
-        public handleMouseUp() {
+        public handleMouseUp(button: number) {
             let passThrough = true;
             for (let b of this.buttons) {
-                passThrough = b.handleMouseUp() && passThrough;
+                passThrough = b.handleMouseUp(button) && passThrough;
             }
             return passThrough;
         }

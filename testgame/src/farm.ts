@@ -2,14 +2,14 @@
 // key: name on the button
 // value: [cost of upgrade, hover message].
 let SKILL_DESCS: { [key: string]: [number, string] } = {
-    "Particles": [100, "Adds particles to your juice, and increases value and difficulty."],
-    "Shake": [100, "Adds screen shake to your juice, and increases value and difficulty."],
-    "Details": [100, "Adds graphical details to your juice, and increases value and difficulty."],
-    "Sound": [100, "Adds sound and music to your juice, and increases value and difficulty."],
-    "Juiciness": [500, "Increases juice yield from each tree."],
-    "Seeds": [250, "Increases seeds from each tree."],
-    "Tractor": [200, "Increases energy reserve."],
-    "Scarecrow": [100, "Reduces difficulty."]
+    "Particles": [100, "Add particles to your juice; increase value & difficulty."],
+    "Shake": [100, "Add screen shake to your juice; increase value & difficulty."],
+    "Details": [100, "Add graphical details to your juice; increase value & difficulty."],
+    "Sound": [100, "Add sound & music to your juice; increase value & difficulty."],
+    "Juiciness": [500, "Increase juice yield from each tree."],
+    "Seeds": [250, "Increase seeds from each tree."],
+    "Tractor": [200, "Increase energy reserve."],
+    "Scarecrow": [100, "Reduce difficulty."]
 };
 
 type Cell = [number, number];
@@ -107,7 +107,7 @@ class FarmLayer extends PH.Layer {
             let bt = 40 + 20 * Math.floor(k / 2);
             let skill = new Skill(skillName, SKILL_DESCS[skillName][0], SKILL_DESCS[skillName][1]);
             this.skills[skillName] = skill;
-            this.registerButton(bl, bt, 72, 16, (b) => this.clickUpgrade(b.tag), (b) => this.hoverUpgrade(b.tag), skillName, skill);
+            this.registerButton(bl, bt, 72, 16, (b, mb) => this.clickUpgrade(b.tag, mb), (b) => this.hoverUpgrade(b.tag), skillName, skill);
         }
 
         // Buttons for actions
@@ -140,10 +140,10 @@ class FarmLayer extends PH.Layer {
     }
 
     registerButton(l: number, t: number, w: number, h: number,
-        clickCallback: (tag: any) => void, hoverCallback: (tag: any) => void, text: string,
+        clickCallback: (tag: any, mb: number) => void, hoverCallback: (tag: any) => void, text: string,
         tag?: any) {
         var b = new PH.CanvasButton(this.game.ctx, l, t, w, h,
-            clickCallback, text, this.game.buttonDrawer!, tag);
+            clickCallback, text, this.game.buttonDrawer!, [0, 2], tag);
         this.uiLayer!.addButton(b);
         this.hoverCallbacks.set(b, hoverCallback);
     }
@@ -329,27 +329,28 @@ class FarmLayer extends PH.Layer {
         return count;
     }
 
-    trySell(plotCell: Cell) {
+    trySell(plotCell: Cell, trySellAll: boolean) {
         // try to sell the contents of the plot
         var pcList = this.plotContents[plotCell[0]][plotCell[1]];
         if (pcList.length === 0) {
             return;
         }
         var pc = pcList[0];
+        let numToSell = trySellAll? pc.count : 1;
 
         // if this is a seed, check that we aren't selling our last seed/sapling/tree.
         // return early and let the player know
         if (pc.desc === this.SEED) {
             var stc = this.getSeedTreeCount();
-            if (stc <= 1) {
+            if (stc <= numToSell) {
                 this.game.convoEnqueue("s", "I don't have any trees - I won't sell my last seed!");
                 return;
             }
         }
 
         // make the sale
-        this.cash += pc.value;
-        pc.count -= 1;
+        this.cash += pc.value * numToSell;
+        pc.count -= numToSell;
         if (pc.count <= 0) {
             pcList.splice(0, 1);
         }
@@ -390,7 +391,7 @@ class FarmLayer extends PH.Layer {
         let [l, t, w, h] = this.CASHRECT;
         if (x >= l && x < l + w && y >= t && y < t + h) {
             // trying to sell a seed or juice
-            this.trySell(srcPlot);
+            this.trySell(srcPlot, false);
         }
         else if (this.mouseOverPlot !== null) {
             // trying to plant a seed?
@@ -398,7 +399,7 @@ class FarmLayer extends PH.Layer {
         }
     }
 
-    handleMouseUp(): boolean {
+    handleMouseUp(mb: number): boolean {
         let mp = this.game.pixelationLayer.mousePos;
         if (this.mouseDragPlot !== null && mp !== null) {
             this.handleDragPlot(this.mouseDragPlot, mp);
@@ -411,7 +412,7 @@ class FarmLayer extends PH.Layer {
     // HANDLING CLICKS ON THE PLOTS
     ///////////////////////////////
 
-    handleClick(): boolean {
+    handleClick(mb: number): boolean {
         if (this.mouseOverPlot !== null) {
             // avoid triggering this when we moused down somewhere else and moused up here
             if (this.mouseDownOverPlot === null ||
@@ -419,14 +420,18 @@ class FarmLayer extends PH.Layer {
                 this.mouseDownOverPlot[1] !== this.mouseOverPlot[1]) {
                 return false;
             }
-            // check if this is a tree that we can harvest
-            var pcList = this.plotContents[this.mouseOverPlot[0]][this.mouseOverPlot[1]];
-            if (pcList.length === 0) {
-                return false;
+            if (mb === 0) { // left-click - check if this is a tree that we can harvest
+                var pcList = this.plotContents[this.mouseOverPlot[0]][this.mouseOverPlot[1]];
+                if (pcList.length === 0) {
+                    return false;
+                }
+                var pc = pcList[0];
+                if (pc.desc === this.TREE) {
+                    this.tryHarvest(this.mouseOverPlot)
+                }
             }
-            var pc = pcList[0];
-            if (pc.desc === this.TREE) {
-                this.tryHarvest(this.mouseOverPlot)
+            else if(mb === 2) { // right-click - try to sell all juice/seeds
+                this.trySell(this.mouseOverPlot, true);
             }
         }
         return false;
@@ -503,10 +508,23 @@ class FarmLayer extends PH.Layer {
         }
     }
 
-    clickUpgrade(tag: any) {
+    clickUpgrade(tag: any, mb: number) {
         let skill = <Skill>tag;
-        if (this.payUpgradeCost(skill.level, skill.cost))
-            skill.level += 1;
+        if (mb == 0) { // left-click: upgrade
+            if (this.payUpgradeCost(skill.level, skill.cost))
+                skill.level += 1;
+        }
+        else if (mb == 2) { // right-click: downgrade
+            if (skill.level <= 0) {
+                this.game.convoEnqueue("s", "I can't downgrade that any further.");
+                return false;
+            }
+            else {
+                this.cash += Math.floor(skill.cost / 2);
+                skill.level -= 1;
+                this.game.soundPlayer.playSound(this.game.data['ld45_upgrade'], false);
+            }
+        }
     }
 
     clickPayDebt() {
@@ -558,7 +576,9 @@ class FarmLayer extends PH.Layer {
 
     hoverUpgrade(tag: any) {
         let skill = <Skill>tag;
-        var s = "Level " + skill.level.toString() + "/" + this.MAXLEVEL.toString() + " Cost $" + skill.cost.toString() + "\n\n" + skill.msg;
+        var s = "Level " + skill.level.toString() + "/" + this.MAXLEVEL.toString() +
+            " Cost $" + skill.cost.toString() + "\n\n" + skill.msg + " " +
+            "Left-click: buy. Right-click: sell for 50%.";
         this.setInfoText(s);
     }
 
@@ -578,7 +598,7 @@ class FarmLayer extends PH.Layer {
         var pc = pcList[0];
         var name = pc.desc;
         if (name === this.SEED) {
-            var s = "A seed. Drag it to an empty plot to plant it, or to your funds to sell it.\n\n" + "Sell value: $" + pc.value.toString();
+            var s = "A seed. Drag it to an empty plot to plant it, or to your funds to sell it. Right-click to sell all.\n\n" + "Sell value: $" + pc.value.toString();
             this.setInfoText(s);
         }
         else if (name === this.PLANTEDSEED) {
@@ -591,7 +611,7 @@ class FarmLayer extends PH.Layer {
             this.setInfoText("A juicefruit tree. Click it to harvest.");
         }
         else if (name === this.JUICE) {
-            var s = "Juice. Drag it to your funds to sell it.\n\n" + "Sell value: $" + pc.value.toString();
+            var s = "Juice. Drag it to your funds to sell it. Right-click to sell all.\n\n" + "Sell value: $" + pc.value.toString();
             this.setInfoText(s);
         }
     }

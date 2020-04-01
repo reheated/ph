@@ -29,43 +29,58 @@ namespace PH {
 
     export class CanvasButton extends CanvasRect {
         ctx: CanvasRenderingContext2D;
-        public pressed: boolean = false;
-        clickCallback: (b: CanvasButton) => void | null;
+        public pressedMouseButton: number | null = null;
+        clickCallback: (b: CanvasButton, mouseButton: number) => void | null;
         public text: string;
         drawer: CanvasButtonDrawer;
+        handleButtons: number[]
         tag: any;
 
         constructor(ctx: CanvasRenderingContext2D,
             l: number, t: number, w: number, h: number,
-            clickCallback: (tag: any) => void | null,
+            clickCallback: (b: CanvasButton, mouseButton: number) => void | null,
             text: string,
             drawer: CanvasButtonDrawer,
+            handleButtons?: number[],
             tag?: any) {
             super(l, t, w, h);
             this.ctx = ctx;
             this.clickCallback = clickCallback;
             this.text = text;
             this.drawer = drawer;
+            if(handleButtons) {
+                this.handleButtons = handleButtons;
+            }
+            else {
+                this.handleButtons = [0];
+            }
             this.tag = tag;
         }
 
-        public handleMouseDown(): boolean {
-            if (this.mouseOver) this.pressed = true;
+        private doHandleButton(button: number): boolean {
+            return this.handleButtons.indexOf(button) >= 0;
+        }
+
+        handleMouseDown(button: number): boolean {
+            let ok = this.doHandleButton(button) && this.pressedMouseButton === null;
+            if (ok && this.mouseOver) this.pressedMouseButton = button;
             return !this.mouseOver;
         }
 
-        public handleMouseUp() {
-            let doCallback = this.pressed && this.mouseOver;
-            this.pressed = false;
-            if(doCallback) {
-                this.clickCallback(this);
+        handleMouseUp(button: number) {
+            if(this.doHandleButton(button)) {
+                let doCallback = this.pressedMouseButton !== null && this.mouseOver;
+                this.pressedMouseButton = null;
+                if(doCallback) {
+                    this.clickCallback(this, button);
+                }
             }
             // It seems best to always let a mouse up event pass through the buttons,
             // so that other parts of the game can detect it.
             return true;
         }
 
-        public draw() {
+        draw() {
             this.drawer.draw(this.ctx, this);
         }
     }
@@ -87,7 +102,7 @@ namespace PH {
         }
 
         draw(ctx: CanvasRenderingContext2D, b: CanvasButton) {
-            let sb = (b.pressed && b.mouseOver)? this.sbPressed : this.sbUnpressed;
+            let sb = (b.pressedMouseButton !== null && b.mouseOver)? this.sbPressed : this.sbUnpressed;
             sb.draw(ctx, b.l, b.t, b.w, b.h);
             this.font.drawText(ctx, b.text, b.l + 4, b.t + 4);
         }
