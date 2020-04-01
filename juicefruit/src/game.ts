@@ -112,8 +112,11 @@ class Game {
 }
 
 async function start() {
+    window.onerror = null;
+
     let mainGameCanvas = PH.createCanvas(GAME_WIDTH, GAME_HEIGHT);
     let outGameCanvas = <HTMLCanvasElement>document.getElementById('outGameCanvas')!;
+    outGameCanvas.hidden = false;
     let audioContext = new AudioContext();
     let loader = new PH.Loader(audioContext);
 
