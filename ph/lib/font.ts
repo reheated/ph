@@ -1,6 +1,6 @@
 namespace PH {
 
-    export abstract class Font {
+    export abstract class CanvasFont {
 
         public abstract getLineHeight(): number;
         public abstract drawText(ctx: CanvasRenderingContext2D,
@@ -58,7 +58,7 @@ namespace PH {
 
     }
 
-    export class NormalFont extends Font {
+    export class SimpleFont extends CanvasFont {
         fontString: string;
         fillStyle: string | CanvasGradient | CanvasPattern;
         letterHeight: number;
@@ -99,7 +99,7 @@ namespace PH {
         }
     }
 
-    export class PixelFont extends Font {
+    export class PixelFont extends CanvasFont {
         img: CanvasImageSource;
         cw: number;
         ch: number;

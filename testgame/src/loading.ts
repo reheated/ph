@@ -1,9 +1,9 @@
 class LoadingScreen extends PH.Layer {
     ctx: CanvasRenderingContext2D;
-    font: PH.Font;
+    font: PH.CanvasFont;
     loadingString = "Loading";
 
-    constructor(resources: PH.Loader, ctx: CanvasRenderingContext2D, font: PH.Font) {
+    constructor(resources: PH.Loader, ctx: CanvasRenderingContext2D, font: PH.CanvasFont) {
         super();
         this.ctx = ctx;
         this.font = font;

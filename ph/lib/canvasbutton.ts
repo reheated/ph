@@ -95,9 +95,9 @@ namespace PH {
     export class CanvasButtonSpriteDrawer extends CanvasButtonDrawer {
         sbUnpressed: SpriteBox;
         sbPressed: SpriteBox;
-        font: Font;
+        font: CanvasFont;
 
-        constructor(sbUnpressed: SpriteBox, sbPressed: SpriteBox, font: Font) {
+        constructor(sbUnpressed: SpriteBox, sbPressed: SpriteBox, font: CanvasFont) {
             super();
             this.sbUnpressed = sbUnpressed;
             this.sbPressed = sbPressed;

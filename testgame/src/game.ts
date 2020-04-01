@@ -9,7 +9,7 @@ class Game {
 
     data: {[key: string]: any};
     pixelationLayer: PH.PixelationLayer;
-    mainFont: PH.Font;
+    mainFont: PH.CanvasFont;
     buttonDrawer: PH.CanvasButtonSpriteDrawer;
     spriteBoxNormal: PH.SpriteBox;
     spriteBoxButton: PH.SpriteBox;
@@ -28,7 +28,7 @@ class Game {
     convoLayer: ConvoLayer;
     minigamePlayedTimes = 0;
 
-    constructor(data: {[key: string]: any}, audioContext: AudioContext, mainFont: PH.Font, pixelationLayer: PH.PixelationLayer) {
+    constructor(data: {[key: string]: any}, audioContext: AudioContext, mainFont: PH.CanvasFont, pixelationLayer: PH.PixelationLayer) {
         this.data = data;
         this.soundPlayer = new PH.SoundPlayer(audioContext, {});
         this.jukeBox = new PH.JukeBox(this.soundPlayer);
