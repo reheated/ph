@@ -3,24 +3,15 @@ import connect = require('connect');
 import serveStatic = require('serve-static');
 import fs = require('fs');
 
-let TYPES: Set<string> = new Set<string>([
-    'mp3',
-    'flac',
-    'png',
-    'txt',
-    'map',
-    'svg',
-    'bff'
-]);
-
-class PHSettings {
-    resources: string = "resources";
-    static: string = "static";
-    staticRoot: string = "staticRoot";
-    build: string = "build";
-    serveFolder: string = "game";
-    bundleFilename: string = "game.dat";
-    port: number = 8080;
+interface PHSettings {
+    resources: string;
+    static: string;
+    staticRoot: string;
+    build: string;
+    serveFolder: string;
+    bundleFilename: string;
+    port: number;
+    resourceExtensions: string[];
 
     [key: string]: any;
 }
@@ -61,14 +52,17 @@ function copyFilesRecursive(srcPath: string, destPath: string) {
 }
 
 class PHWatcher {
-    settings: PHSettings = new PHSettings();
+    settings: PHSettings;
     server: http.Server | null = null;
     gamePathWatchers: fs.FSWatcher[] = [];
 
+    constructor () {
+        this.settings = this.getSettings("ph.json");
+    }
+
     public start() {
         // Get the settings
-        let settingsString = fs.readFileSync("ph.json", "utf8");
-        this.settings = JSON.parse(settingsString);
+        this.settings = this.getSettings("ph.json");
         let dataPaths = [this.settings.resources, this.settings.static];
 
         // Start the web server
@@ -83,6 +77,11 @@ class PHWatcher {
             this.gamePathWatchers.push(fs.watch(path, { 'recursive': true },
                 () => this.rebundle()));
         }
+    }
+
+    private getSettings(filename: string): PHSettings {
+        let settingsString = fs.readFileSync(filename, "utf8");
+        return JSON.parse(settingsString);
     }
 
     public stop() {
@@ -121,6 +120,7 @@ class PHWatcher {
         let buffers: Buffer[] = [];
         let fileInfo = [];
         let curLength = 0;
+        let exts = new Set(this.settings.resourceExtensions)
         for (let file of resourceFiles) {
             // Extract the file extension and the main part of the filename
             let splitName = file.split('.');
@@ -133,7 +133,7 @@ class PHWatcher {
             }
 
             // Only process if we recognise the file extension.
-            if (TYPES.has(ext)) {
+            if (exts.has(ext)) {
                 let curBuffer = fs.readFileSync(file);
                 buffers.push(curBuffer);
 

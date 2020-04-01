@@ -42,10 +42,24 @@ namespace PH {
 
     export class Loader {
         audioContext: AudioContext;
+        extensionHandlers: {[key: string]: (response: any) => Promise<any>} = {};
 
         constructor(audioContext: AudioContext) {
             // constructor for a collection of resources
             this.audioContext = audioContext;
+            
+            this.addExtensionHandler("png", (response) => processImage(response, "image/png"));
+            this.addExtensionHandler("mp3", (response) => this.audioContext!.decodeAudioData(response));
+            this.addExtensionHandler("flac", (response) => this.audioContext!.decodeAudioData(response));
+            this.addExtensionHandler("txt", (response) => (new TextDecoder()).decode(response));
+            this.addExtensionHandler("svg", processSvg);
+            this.addExtensionHandler("html", processHtml);
+            this.addExtensionHandler("bff", processBff);
+            this.addExtensionHandler(PACKAGE_EXT, (response) => this.processPackage(response));
+        }
+
+        addExtensionHandler(ext: string, fn: (response: any) => any) {
+            this.extensionHandlers[ext] = fn;
         }
 
         ///////////////////////////////////
@@ -113,56 +127,41 @@ namespace PH {
         }
 
         private async processFile(response: any, ext: string): Promise<any> {
-            if (ext == "png") {
-                return await processImage(response, "image/png");
-            }
-            else if (ext == "mp3" || ext == "flac") {
-                return await this.audioContext!.decodeAudioData(response);
-            }
-            else if (ext == "txt") { // ascii
-                let decoder = new TextDecoder();
-                return decoder.decode(response);
-            }
-            else if (ext == "svg") { // svg
-                return processSvg(response);
-            }
-            else if (ext == "html") { // html structure (create a DOM object)
-                return processHtml(response);
-            }
-            else if (ext == "bff") { // Bitmap font file - from CBFG
-                return processBff(response);
-            }
-            else if (ext == PACKAGE_EXT) { // package
-                let lengthBytes = 4;
-                let jsonLength = bytesToNumber(new Uint8Array(response.slice(0, lengthBytes)));
-                let jsonBytes = new Uint8Array(response.slice(lengthBytes, lengthBytes + jsonLength));
-                let jsonData = '';
-                for (let k = 0; k < jsonBytes.length; k++) {
-                    jsonData += String.fromCharCode(jsonBytes[k]);
-                }
-                let pack = JSON.parse(jsonData);
-                let offset = lengthBytes + jsonLength;
-                let names: string[] = [];
-                let proms: Promise<any>[] = [];
-                for (let k = 0; k < pack.length; k++) {
-                    let thisData = response.slice(offset + pack[k].start, offset + pack[k].end);
-                    let [curName, curExt] = splitFilename(pack[k].filename);
-                    names.push(curName);
-                    proms.push(this.processFile(thisData, curExt));
-                }
-                let results = await Promise.all(proms);
-                let d: { [key: string]: any } = {};
-                for (let k = 0; k < names.length; k++) {
-                    if (d.hasOwnProperty(names[k])) {
-                        throw new Error("Repeated content name (" + names[k] + ") is not allowed.");
-                    }
-                    d[names[k]] = results[k];
-                }
-                return d;
+            if (ext in this.extensionHandlers) {
+                return this.extensionHandlers[ext](response);
             }
             else {
                 throw new Error("Unrecognized extension: " + ext);
             }
+        }
+
+        private async processPackage(response: any): Promise<any> {
+            let lengthBytes = 4;
+            let jsonLength = bytesToNumber(new Uint8Array(response.slice(0, lengthBytes)));
+            let jsonBytes = new Uint8Array(response.slice(lengthBytes, lengthBytes + jsonLength));
+            let jsonData = '';
+            for (let k = 0; k < jsonBytes.length; k++) {
+                jsonData += String.fromCharCode(jsonBytes[k]);
+            }
+            let pack = JSON.parse(jsonData);
+            let offset = lengthBytes + jsonLength;
+            let names: string[] = [];
+            let proms: Promise<any>[] = [];
+            for (let k = 0; k < pack.length; k++) {
+                let thisData = response.slice(offset + pack[k].start, offset + pack[k].end);
+                let [curName, curExt] = splitFilename(pack[k].filename);
+                names.push(curName);
+                proms.push(this.processFile(thisData, curExt));
+            }
+            let results = await Promise.all(proms);
+            let d: { [key: string]: any } = {};
+            for (let k = 0; k < names.length; k++) {
+                if (d.hasOwnProperty(names[k])) {
+                    throw new Error("Repeated content name (" + names[k] + ") is not allowed.");
+                }
+                d[names[k]] = results[k];
+            }
+            return d;
         }
     }
 
