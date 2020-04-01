@@ -10,7 +10,7 @@ namespace PH {
         handleMouseDown(button: number): boolean { return true; }
         handleMouseUp(button: number): boolean { return true; }
         handleMouseMoveClientCoords(clientX: number, clientY: number): void { }
-        handleMouseMove(): boolean { return true; }
+        handleMouseMove(): void { }
 
         handleKeyDown(e: KeyboardEvent): boolean { return true; }
         handleKeyUp(e: KeyboardEvent): boolean { return true; }
@@ -95,7 +95,7 @@ namespace PH {
             }
         }
 
-        stopBubble(e: Event): boolean {
+        private stopBubble(e: Event): boolean {
             // don't let event bubble up
             e.preventDefault();
             e.stopPropagation();
@@ -105,69 +105,73 @@ namespace PH {
         handleClick(e: MouseEvent) {
             let l = this.layers;
             this.handleMouseMove(e);
+            let passThrough = true;
             for (let k = l.length - 1; k >= 0; k--) {
-                let passThrough = l[k].handleClick(e.button);
+                passThrough = l[k].handleClick(e.button);
                 if (!passThrough) break;
             }
-            return this.stopBubble(e);
+            if(!passThrough) return this.stopBubble(e);
         }
 
         handleDoubleClick(e: MouseEvent) {
             let l = this.layers;
             this.handleMouseMove(e);
+            let passThrough = true;
             for (let k = l.length - 1; k >= 0; k--) {
-                let passThrough = l[k].handleDoubleClick();
+                passThrough = l[k].handleDoubleClick();
                 if (!passThrough) break;
             }
-            return this.stopBubble(e);
+            if(!passThrough) return this.stopBubble(e);
         }
 
         handleMouseDown(e: MouseEvent) {
             let l = this.layers;
             this.handleMouseMove(e);
+            let passThrough = true;
             for (let k = l.length - 1; k >= 0; k--) {
-                let passThrough = l[k].handleMouseDown(e.button);
+                passThrough = l[k].handleMouseDown(e.button);
                 if (!passThrough) break;
             }
-            return this.stopBubble(e);
+            if(!passThrough) return this.stopBubble(e);
         }
 
         handleMouseUp(e: MouseEvent) {
             let l = this.layers;
             this.handleMouseMove(e);
+            let passThrough = true;
             for (let k = l.length - 1; k >= 0; k--) {
-                let passThrough = l[k].handleMouseUp(e.button);
+                passThrough = l[k].handleMouseUp(e.button);
                 if (!passThrough) break;
             }
-            return this.stopBubble(e);
+            if(!passThrough) return this.stopBubble(e);
         }
 
         handleMouseMove(e: MouseEvent) {
             let l = this.layers;
             for (let k = l.length - 1; k >= 0; k--) {
                 l[k].handleMouseMoveClientCoords(e.clientX, e.clientY);
-                let passThrough = l[k].handleMouseMove();
-                if (!passThrough) break;
+                l[k].handleMouseMove();
             }
-            return this.stopBubble(e);
         }
 
         handleKeyDown(e: KeyboardEvent) {
             let l = this.layers;
+            let passThrough = true;
             for (let k = l.length - 1; k >= 0; k--) {
-                let passThrough = l[k].handleKeyDown(e);
+                passThrough = l[k].handleKeyDown(e);
                 if (!passThrough) return;
             }
-            return this.stopBubble(e);
+            if(!passThrough) return this.stopBubble(e);
         }
 
         handleKeyUp(e: KeyboardEvent) {
             let l = this.layers;
+            let passThrough = true;
             for (let k = l.length - 1; k >= 0; k--) {
-                let passThrough = l[k].handleKeyUp(e);
+                passThrough = l[k].handleKeyUp(e);
                 if (!passThrough) return;
             }
-            return this.stopBubble(e);
+            if(!passThrough) return this.stopBubble(e);
         }
 
     }

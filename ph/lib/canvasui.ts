@@ -19,7 +19,6 @@ namespace PH {
                     this.mouseOverButton = b;
                 }
             }
-            return true;
         }
 
         public handleMouseDown(button: number) {
