@@ -13,11 +13,10 @@ namespace PH {
             // Process buttons
             let mousePos = this.canvasTransformer.mousePos;
             this.mouseOverButton = null;
-            if (mousePos !== null) {
-                for (let b of this.buttons) {
-                    if (b.handleNewMouseCoords(...mousePos)) {
-                        this.mouseOverButton = b;
-                    }
+            for (let b of this.buttons) {
+                b.handleNewMouseCoords(mousePos)
+                if (b.mouseOver) {
+                    this.mouseOverButton = b;
                 }
             }
             return true;

@@ -1,10 +1,10 @@
 namespace PH {
-    abstract class CanvasRect {
-        public l: number;
-        public t: number;
-        public w: number;
-        public h: number;
-        public mouseOver: boolean = false;
+
+    export class Rect {
+        l: number;
+        t: number;
+        w: number;
+        h: number;
 
         constructor(l: number, t: number, w: number, h: number) {
             this.l = l;
@@ -13,25 +13,28 @@ namespace PH {
             this.h = h;
         }
 
-        public handleNewMouseCoords(x: number | null, y: number | null): boolean {
-            let mo: boolean;
-            if (x == null || y == null) {
-                mo = false;
-            }
-            else {
-                mo = (x >= this.l && x < this.l + this.w &&
-                    y >= this.t && y < this.t + this.h);
-            }
-            this.mouseOver = mo;
-            return this.mouseOver;
+        contains(pos: [number, number]) {
+            let [x, y] = pos;
+            let result = (x >= this.l && x < this.l + this.w &&
+                y >= this.t && y < this.t + this.h);
+            return result;
+        }
+
+    }
+
+    abstract class CanvasRect extends Rect {
+        mouseOver: boolean = false;
+
+        handleNewMouseCoords(mousePos: [number, number] | null) {
+            this.mouseOver = mousePos !== null && this.contains(mousePos);
         }
     }
 
     export class CanvasButton extends CanvasRect {
         ctx: CanvasRenderingContext2D;
-        public pressedMouseButton: number | null = null;
+        pressedMouseButton: number | null = null;
         clickCallback: (b: CanvasButton, mouseButton: number) => void | null;
-        public text: string;
+        text: string;
         drawer: CanvasButtonDrawer;
         handleButtons: number[]
         tag: any;
@@ -48,7 +51,7 @@ namespace PH {
             this.clickCallback = clickCallback;
             this.text = text;
             this.drawer = drawer;
-            if(handleButtons) {
+            if (handleButtons) {
                 this.handleButtons = handleButtons;
             }
             else {
@@ -68,10 +71,10 @@ namespace PH {
         }
 
         handleMouseUp(button: number) {
-            if(this.doHandleButton(button)) {
+            if (this.doHandleButton(button)) {
                 let doCallback = this.pressedMouseButton !== null && this.mouseOver;
                 this.pressedMouseButton = null;
-                if(doCallback) {
+                if (doCallback) {
                     this.clickCallback(this, button);
                 }
             }
@@ -86,7 +89,7 @@ namespace PH {
     }
 
     export abstract class CanvasButtonDrawer {
-        public abstract draw(ctx: CanvasRenderingContext2D, b: CanvasButton): void;
+        abstract draw(ctx: CanvasRenderingContext2D, b: CanvasButton): void;
     }
 
     export class CanvasButtonSpriteDrawer extends CanvasButtonDrawer {
@@ -102,7 +105,7 @@ namespace PH {
         }
 
         draw(ctx: CanvasRenderingContext2D, b: CanvasButton) {
-            let sb = (b.pressedMouseButton !== null && b.mouseOver)? this.sbPressed : this.sbUnpressed;
+            let sb = (b.pressedMouseButton !== null && b.mouseOver) ? this.sbPressed : this.sbUnpressed;
             sb.draw(ctx, b.l, b.t, b.w, b.h);
             this.font.drawText(ctx, b.text, b.l + 4, b.t + 4);
         }

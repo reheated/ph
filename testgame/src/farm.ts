@@ -57,7 +57,7 @@ class FarmLayer extends PH.Layer {
     JUICE: string = "JUICE";
     DRAGGABLE: string[] = [this.SEED, this.JUICE];
 
-    CASHRECT: [number, number, number, number] = [160, 4, 92, 16];
+    cashRect = new PH.Rect(160, 4, 92, 16);
 
     game: Game;
     uiLayer: PH.CanvasUILayer;
@@ -245,7 +245,7 @@ class FarmLayer extends PH.Layer {
         this.drawCalendar();
 
         // Draw the cash display
-        this.game.spriteBoxButton!.draw(this.game.ctx, ...this.CASHRECT);
+        this.game.spriteBoxButton!.draw(this.game.ctx, this.cashRect);
         this.game.ctx.drawImage(this.game.data.cash, 160, 4);
         var s = this.cash.toString();
         var sx = 248 - 7 * s.length;
@@ -388,8 +388,7 @@ class FarmLayer extends PH.Layer {
         let [x, y] = mouseReleaseCoords;
 
         // coords of the box where you can drop things to sell them
-        let [l, t, w, h] = this.CASHRECT;
-        if (x >= l && x < l + w && y >= t && y < t + h) {
+        if (this.cashRect.contains(mouseReleaseCoords)) {
             // trying to sell a seed or juice
             this.trySell(srcPlot, false);
         }
