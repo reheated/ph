@@ -1,6 +1,7 @@
 import http = require('http');
 import connect = require('connect');
 import serveStatic = require('serve-static');
+import compression = require('compression');
 import fs = require('fs');
 
 interface PHSettings {
@@ -64,9 +65,10 @@ class PHWatcher {
         // Get the settings
         this.settings = this.getSettings("ph.json");
         let dataPaths = [this.settings.resources, this.settings.static];
-
+        
         // Start the web server
         this.server = connect()
+            .use(<connect.HandleFunction>compression())
             .use(<connect.HandleFunction>serveStatic(this.settings.build, {}))
             .listen(this.settings.port);
 

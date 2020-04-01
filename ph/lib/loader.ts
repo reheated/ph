@@ -42,12 +42,12 @@ namespace PH {
 
     export class Loader {
         audioContext: AudioContext;
-        extensionHandlers: {[key: string]: (response: any) => Promise<any>} = {};
+        extensionHandlers: { [key: string]: (response: any) => Promise<any> } = {};
 
         constructor(audioContext: AudioContext) {
             // constructor for a collection of resources
             this.audioContext = audioContext;
-            
+
             this.addExtensionHandler("png", (response) => processImage(response, "image/png"));
             this.addExtensionHandler("mp3", (response) => this.audioContext!.decodeAudioData(response));
             this.addExtensionHandler("flac", (response) => this.audioContext!.decodeAudioData(response));
@@ -73,11 +73,17 @@ namespace PH {
         }
 
         async getFiles(filenames: string[], progressCallback?: (bytes: number, totalBytes: number) => void): Promise<any[]> {
-            let fileSizes = await this.getAllFileSizes(filenames);
-            let totalBytes = 0;
-            for (let filename of filenames) totalBytes += fileSizes[filename];
-            let cb = progressCallback ? (bytes: number) => progressCallback(bytes, totalBytes) : undefined;
-            let objects = await this.downloadAll(filenames, cb);
+            let objects: any[];
+            if (progressCallback) {
+                let fileSizes = await this.getAllFileSizes(filenames);
+                let totalBytes = 0;
+                for (let filename of filenames) totalBytes += fileSizes[filename];
+                let cb = (bytes: number) => progressCallback(bytes, totalBytes);
+                objects = await this.downloadAll(filenames, cb);
+            }
+            else {
+                objects = await this.downloadAll(filenames);
+            }
             return objects;
         }
 
@@ -101,7 +107,7 @@ namespace PH {
 
         private async downloadAll(filenames: string[], someLoadedCallback?: (bytesSoFar: number) => void) {
             // start getting all the files themselves
-            let promises: Promise<void>[] = [];
+            let promises: Promise<any>[] = [];
             let amtLoaded: { [key: string]: number } = {};
             for (let i = 0; i < filenames.length; i++) {
                 let filename = filenames[i];
@@ -206,7 +212,7 @@ namespace PH {
 
         // Check header
         let data = new Uint8Array(response);
-        if(data[0] != 0xbf || data[1] != 0xf2) {
+        if (data[0] != 0xbf || data[1] != 0xf2) {
             throw new Error("File is not valid BFF2 format.");
         }
 
@@ -225,17 +231,17 @@ namespace PH {
         let ctx = canvas.getContext('2d')!;
         let outputImageData = ctx.createImageData(w, h);
         // Loop over pixels in the output image
-        for(let k = 0; k < w * h; k++) {
+        for (let k = 0; k < w * h; k++) {
             let offsetIn = k * bpp / 8;
             let offsetOut = k * 4;
             // Loop over channels in the output pixel
-            for(let l = 0; l < 4; l++) {
+            for (let l = 0; l < 4; l++) {
                 // Decide what the value is, based on the bpp setting
                 let value: number = 0;
-                if(bpp == 32) {
+                if (bpp == 32) {
                     value = inputImageData[offsetIn + l];
                 }
-                else if(bpp == 8 && l == 3) {
+                else if (bpp == 8 && l == 3) {
                     value = inputImageData[offsetIn];
                 }
                 else {
