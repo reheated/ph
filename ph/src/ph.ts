@@ -2,6 +2,7 @@ import http = require('http');
 import connect = require('connect');
 import serveStatic = require('serve-static');
 import compression = require('compression');
+import minimatch = require("minimatch");
 import fs = require('fs');
 
 interface PHSettings {
@@ -9,6 +10,7 @@ interface PHSettings {
     static: string;
     staticRoot: string;
     build: string;
+    preserveGlobs: string;
     serveFolder: string;
     bundleFilename: string;
     port: number;
@@ -61,10 +63,11 @@ class PHWatcher {
         this.settings = this.getSettings("ph.json");
     }
 
-    public start() {
+    start() {
         // Get the settings
         this.settings = this.getSettings("ph.json");
-        let dataPaths = [this.settings.resources, this.settings.static];
+        if(!this.checkSettings()) return;
+        let dataPaths = [this.settings.resources, this.settings.static, this.settings.staticRoot];
         
         // Start the web server
         this.server = connect()
@@ -76,6 +79,7 @@ class PHWatcher {
         this.rebundle();
         this.gamePathWatchers = [];
         for (let path of dataPaths) {
+            fs.mkdirSync(path, { recursive: true });
             this.gamePathWatchers.push(fs.watch(path, { 'recursive': true },
                 () => this.rebundle()));
         }
@@ -86,35 +90,39 @@ class PHWatcher {
         return JSON.parse(settingsString);
     }
 
-    public stop() {
+    stop() {
         this.server!.close();
         for (let w of this.gamePathWatchers) {
             w.close();
         }
     }
 
-    public restart() {
+    restart() {
         this.stop();
         this.start();
         console.log('ph watcher restarting');
     }
 
-    public rebundle() {
-        // Repackage all the resources
-        console.log((new Date()).toJSON() + ": Rebundling");
-
-        // Check the settings
-        let failed = false;
+    private checkSettings(): boolean {
+        let ok = true;
         for(let entry of ['resources', 'static', 'staticRoot', 'build', 'serveFolder'])
         {
             let s = <string>this.settings[entry];
             if(s.indexOf('.') >= 0 || s.indexOf('/') >= 0 || s.indexOf('\\') >= 0)
             {
                 console.log("Setting \"" + entry + "\" must not contain the characters \\, /, .");
-                failed = true;
+                ok = false;
             }
         }
-        if(failed) return;
+        return ok;
+    }
+
+    rebundle() {
+        // Repackage all the resources
+        console.log((new Date()).toJSON() + ": Rebundling");
+
+        // Check the settings
+        if(!this.checkSettings()) return;
 
         // Get all the files in the resource directory
         let resourceFiles = getFilesRecursive(this.settings.resources);
@@ -140,12 +148,12 @@ class PHWatcher {
                 buffers.push(curBuffer);
 
                 // Cut off the "resources/" part from the start of the filename
-                let shortFileName = file.slice(this.settings.resources.length + 1);
+                let shortFilename = file.slice(this.settings.resources.length + 1);
 
                 // Create a record which will get put at the start of the bundle.
                 fileInfo.push(
                     {
-                        "filename": shortFileName,
+                        "filename": shortFilename,
                         "start": curLength,
                         "end": curLength + curBuffer.length
                     }
@@ -162,7 +170,21 @@ class PHWatcher {
         // Make everything into one big buffer.
         let fullBuffer = Buffer.concat(buffers);
 
-        // Write to the file
+        // We're ready to copy everything over. First, let's clean up by
+        // deleting the files in the build directory, except for those
+        // excluded by the preserveRegEx setting.
+        let buildFiles = getFilesRecursive(this.settings.build);
+        for(let filename of buildFiles) {
+            // Cut off the base directory
+            let shortFilename = filename.slice(this.settings.build.length + 1);
+            let preserve = false;
+            for(let glob of this.settings.preserveGlobs) {
+                preserve = preserve || minimatch(shortFilename, glob);
+            }
+            if(!preserve) fs.unlinkSync(filename);
+        }
+
+        // Write fullBuffer to the user-specified bundle filename
         let gamePath = this.settings.build + "/" + this.settings.serveFolder;
         fs.mkdirSync(gamePath, { recursive: true });
         let bundlePath = gamePath + "/" + this.settings.bundleFilename;

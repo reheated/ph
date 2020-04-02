@@ -9,8 +9,10 @@
   "author": "",
   "dependencies": {
     "@types/compression": "^1.7.0",
+    "@types/minimatch": "^3.0.3",
     "compression": "^1.7.4",
     "connect": "^3.7.0",
+    "minimatch": "^3.0.4",
     "serve-static": "^1.14.1"
   },
   "devDependencies": {

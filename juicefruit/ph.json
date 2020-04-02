@@ -3,6 +3,7 @@
     "static": "static",
     "staticRoot": "staticRoot",
     "build": "build",
+    "preserveGlobs": ["juicefruit/game.js", "juicefruit/game.js.map"],
     "serveFolder": "juicefruit",
     "bundleFilename": "game.dat",
     "port": 8080,

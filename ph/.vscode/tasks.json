@@ -2,11 +2,10 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "pH: Watch pH Source",
+            "label": "pH: Build pH Source",
             "type": "typescript",
             "tsconfig": "tsconfig.json",
-            "option": "watch",
-            "problemMatcher": ["$tsc-watch"],
+            "problemMatcher": ["$tsc"],
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
