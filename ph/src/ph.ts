@@ -202,7 +202,13 @@ class PHWatcher {
         if (!this.checkSettings()) return;
 
         // Get all the files in the resource directory
-        let resourceFiles = getFilesRecursive(this.settings.resources);
+        let resourceFiles: string[];
+        if (fs.existsSync(this.settings.static)) {
+            resourceFiles = getFilesRecursive(this.settings.resources);
+        }
+        else {
+            resourceFiles = [];
+        }
 
         let buffers: Buffer[] = [];
         let fileInfo = [];
@@ -246,9 +252,12 @@ class PHWatcher {
 
         // Make everything into one big buffer.
         let fullBuffer = Buffer.concat(buffers);
+        
+        // We're ready to copy everything over. Make sure the game path exists.
+        let gamePath = this.settings.build + "/" + this.settings.serveFolder;
+        fs.mkdirSync(gamePath, { recursive: true });
 
-        // We're ready to copy everything over. First, let's clean up by
-        // deleting the files in the build directory, except for those
+        // Clean up by deleting the files in the build directory, except for those
         // excluded by the preserveRegEx setting.
         let buildFiles = getFilesRecursive(this.settings.build);
         for (let filename of buildFiles) {
@@ -262,8 +271,6 @@ class PHWatcher {
         }
 
         // Write fullBuffer to the user-specified bundle filename
-        let gamePath = this.settings.build + "/" + this.settings.serveFolder;
-        fs.mkdirSync(gamePath, { recursive: true });
         let bundlePath = gamePath + "/" + this.settings.bundleFilename;
         fs.writeFileSync(bundlePath, fullBuffer);
 

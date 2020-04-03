@@ -1,4 +1,5 @@
 {
+    "extends": "./localtsconfig",
     "compilerOptions": {
         "target": "es6",
         "module": "none",
@@ -7,9 +8,5 @@
         "allowJs": true,
         "outFile": "build/game/game.js",
         "mapRoot": "http://localhost:8080/game"
-    },
-    "include": [
-        "../ph/lib/**/*",
-        "src/**/*"
-    ]
+    }
 }

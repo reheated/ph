@@ -124,7 +124,7 @@ async function start() {
     let outCtx = outGameCanvas.getContext('2d')!;
     let ctx = mainGameCanvas.getContext('2d')!;
     let pixelationLayer = new PH.PixelationLayer(ctx, outCtx);
-
+    
     // Load a font
     let mainFont = <PH.PixelFont>await loader.getFile('m5x7.bff');
     mainFont.img = PH.changeColor(mainFont.img, [0, 0, 0]);

@@ -10,8 +10,8 @@
     "port": 8080,
     "resourceExtensions": ["mp3", "flac", "png", "txt", "map", "svg", "bff", "map"],
     
-    "title": "Juicefruit Orchard",
-    "description": "Make a juice farm.",
+    "title": "TODO",
+    "description": "TODO.",
     "javascriptErrorMessage": "⚠️ There was an error running the javascript. Probably, the game uses features that are not supported by your browser. A recent version of Firefox or Chrome should work, as long as javascript is turned on.",
     "javascriptOffMessage": "⚠️ This game requires javascript. A recent version of Firefox or Chrome should work, as long as javascript is turned on."
 }
