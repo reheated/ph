@@ -5,8 +5,8 @@
         "sourceMap": true,
         "strict": true,
         "allowJs": true,
-        "outFile": "build/game/game.js",
-        "mapRoot": "http://localhost:8080/game"
+        "outFile": "aux/game.js",
+        "mapRoot": "http://localhost:8080/sourcemap"
     },
     "include": [
         "../ph/lib/**/*",

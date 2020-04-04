@@ -5,7 +5,10 @@
 		},
 		{
 			"path": "juicefruit"
-		}
+		},
+        {
+            "path": "ph/emptygame"
+        }
 	],
 	"settings": {}
 }

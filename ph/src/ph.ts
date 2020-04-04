@@ -2,7 +2,6 @@ import http = require('http');
 import connect = require('connect');
 import serveStatic = require('serve-static');
 import compression = require('compression');
-import minimatch = require("minimatch");
 import fs = require('fs');
 import path = require('path');
 
@@ -11,12 +10,13 @@ let PHJSON = "ph.json";
 let CHECK_INTERVAL = 100;
 
 interface PHSettings {
-    resources: string;
-    static: string;
-    staticRoot: string;
-    template: string;
-    build: string;
-    preserveGlobs: string;
+    dirResources: string;
+    dirStatic: string;
+    dirStaticRoot: string;
+    dirTemplate: string;
+    dirBuild: string;
+    dirAux: string;
+    sourcemap: string,
     serveFolder: string;
     bundleFilename: string;
     port: number;
@@ -115,7 +115,8 @@ function fillTemplate(contents: string, subs: { [key: string]: any }) {
 
 function checkSettings(settings: PHSettings): boolean {
     let ok = true;
-    for (let entry of ['resources', 'static', 'staticRoot', 'template', 'build', 'serveFolder']) {
+    for (let entry of ['dirResources', 'dirStatic', 'dirStaticRoot',
+        'dirTemplate', 'dirBuild', 'dirAux', 'serveFolder']) {
         let s = <string>settings[entry];
         if (s.indexOf('.') >= 0 || s.indexOf('/') >= 0 || s.indexOf('\\') >= 0) {
             console.log("Setting \"" + entry + "\" must not contain the characters \\, /, .");
@@ -132,8 +133,8 @@ function bundle(settings: PHSettings) {
 
     // Get all the files in the resource directory
     let resourceFiles: string[];
-    if (fs.existsSync(settings.static)) {
-        resourceFiles = getFilesRecursive(settings.resources);
+    if (fs.existsSync(settings.dirResources)) {
+        resourceFiles = getFilesRecursive(settings.dirResources);
     }
     else {
         resourceFiles = [];
@@ -160,7 +161,7 @@ function bundle(settings: PHSettings) {
             buffers.push(curBuffer);
 
             // Cut off the "resources/" part from the start of the filename
-            let shortFilename = file.slice(settings.resources.length + 1);
+            let shortFilename = file.slice(settings.dirResources.length + 1);
 
             // Create a record which will get put at the start of the bundle.
             fileInfo.push(
@@ -183,41 +184,38 @@ function bundle(settings: PHSettings) {
     let fullBuffer = Buffer.concat(buffers);
 
     // We're ready to copy everything over. Make sure the game path exists.
-    let gamePath = settings.build + "/" + settings.serveFolder;
-    fs.mkdirSync(gamePath, { recursive: true });
+    fs.mkdirSync(settings.dirBuild, { recursive: true });
 
-    // Clean up by deleting the files in the build directory, except for those
-    // excluded by the preserveRegEx setting.
-    let buildFiles = getFilesRecursive(settings.build);
+    // Clean up by deleting the files in the build directory
+    let buildFiles = getFilesRecursive(settings.dirBuild);
     for (let filename of buildFiles) {
-        // Cut off the base directory
-        let shortFilename = filename.slice(settings.build.length + 1);
-        let preserve = false;
-        for (let glob of settings.preserveGlobs) {
-            preserve = preserve || minimatch(shortFilename, glob);
+        fs.unlinkSync(filename);
+    }
+
+    // Copy the compiled javascript files over
+    if (fs.existsSync(settings.dirAux)) {
+        for (let filename of getFilesRecursive(settings.dirAux)) {
+            if (filename.slice(filename.length - 3) === ".js") {
+                let dest = relativeFile(settings.dirAux, settings.dirBuild, filename);
+                fs.copyFileSync(filename, dest);
+            }
         }
-        if (!preserve) fs.unlinkSync(filename);
     }
 
     // Write fullBuffer to the user-specified bundle filename
-    let bundlePath = gamePath + "/" + settings.bundleFilename;
+    let bundlePath = settings.dirBuild + "/" + settings.bundleFilename;
     fs.writeFileSync(bundlePath, fullBuffer);
 
     // Now copy all the static files over
-    if (fs.existsSync(settings.static)) {
-        copyFilesRecursive(settings.static, gamePath);
-    }
-
-    // Copy in the static root files
-    if (fs.existsSync(settings.staticRoot)) {
-        copyFilesRecursive(settings.staticRoot, settings.build);
+    if (fs.existsSync(settings.dirStatic)) {
+        copyFilesRecursive(settings.dirStatic, settings.dirBuild);
     }
 
     // Run template substitution on all the files in the template folder
-    if (fs.existsSync(settings.template)) {
-        let templateFiles = getFilesRecursive(settings.template);
+    if (fs.existsSync(settings.dirTemplate)) {
+        let templateFiles = getFilesRecursive(settings.dirTemplate);
         for (let file of templateFiles) {
-            let destFile = relativeFile(settings.template, gamePath, file);
+            let destFile = relativeFile(settings.dirTemplate, settings.dirBuild, file);
             let contents = fs.readFileSync(file, "utf8");
             let result = fillTemplate(contents, settings);
             fs.writeFileSync(destFile, result, { encoding: "utf8" });
@@ -234,7 +232,6 @@ class PHWatcher {
     settings: PHSettings;
     server: http.Server | null = null;
     gamePathWatchers: fs.FSWatcher[] = [];
-    dataPaths: string[] = [];
     dirty = true;
     watchTimeout: NodeJS.Timeout | null = null;
 
@@ -245,15 +242,16 @@ class PHWatcher {
     start() {
         // Get the settings
         if (!checkSettings(this.settings)) return;
-        this.dataPaths = [
-            this.settings.resources, this.settings.static,
-            this.settings.staticRoot, this.settings.template];
 
         // Start the web server
         let hostname = this.settings.allowRemote ? "0.0.0.0" : "127.0.0.1";
         this.server = connect()
             .use(<connect.HandleFunction>compression())
-            .use(<connect.HandleFunction>serveStatic(this.settings.build, {}))
+            .use('/' + this.settings.serveFolder,
+                <connect.HandleFunction>serveStatic(this.settings.dirBuild, {}))
+            .use(<connect.HandleFunction>serveStatic(this.settings.dirStaticRoot, {}))
+            .use('/sourcemap',
+            <connect.HandleFunction>serveStatic(this.settings.dirAux, {}))
             .listen(this.settings.port, hostname);
 
         // Start the resource watcher.
@@ -285,19 +283,23 @@ class PHWatcher {
         await this.stop();
         this.settings = getSettings(PHJSON);
         this.start();
-        console.log('ph watcher restarting');
+        console.log((new Date()).toJSON() + ": Restarting");
     }
 
     checkFileChange(filename: string) {
-        // does the location of this file indicate that we need to rebundle?
+        // A file got changed. Check if it should trigger a restart or rebundle.
         let doRebundle = false;
 
+        // If ph.json changed restart all the stuff.
         if (filename === PHJSON) {
             this.restart();
             return;
         }
 
-        for (let curPath of this.dataPaths) {
+        // If a file in one of these special folders changed, trigger a rebundle.
+        for (let curPath of [
+            this.settings.dirResources, this.settings.dirStatic,
+            this.settings.dirTemplate, this.settings.dirAux]) {
             if (isPathPrefix(curPath, filename)) doRebundle = true;
         }
 
