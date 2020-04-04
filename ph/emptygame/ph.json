@@ -8,6 +8,7 @@
     "serveFolder": "game",
     "bundleFilename": "game.dat",
     "port": 8080,
+    "allowRemote": false,
     "resourceExtensions": ["mp3", "flac", "png", "txt", "map", "svg", "bff", "map"],
     
     "title": "TODO",

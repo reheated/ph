@@ -4,7 +4,7 @@
         {
             "label": "Watch Data",
             "type": "shell",
-            "command": "node ${workspaceFolder:ph}/ph.js",
+            "command": "node ${workspaceFolder:ph}/ph.js watch",
             "problemMatcher": [],
             "presentation": {
                 "reveal": "always",

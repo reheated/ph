@@ -20,6 +20,7 @@ interface PHSettings {
     serveFolder: string;
     bundleFilename: string;
     port: number;
+    allowRemote: boolean;
     resourceExtensions: string[];
 
     [key: string]: any;
@@ -249,10 +250,11 @@ class PHWatcher {
             this.settings.staticRoot, this.settings.template];
 
         // Start the web server
+        let hostname = this.settings.allowRemote ? "0.0.0.0" : "127.0.0.1";
         this.server = connect()
             .use(<connect.HandleFunction>compression())
             .use(<connect.HandleFunction>serveStatic(this.settings.build, {}))
-            .listen(this.settings.port);
+            .listen(this.settings.port, hostname);
 
         // Start the resource watcher.
         this.gamePathWatchers = [fs.watch('.', { 'recursive': true },
@@ -268,17 +270,19 @@ class PHWatcher {
         this.watchTimeout = setTimeout(() => this.checkDirty(), CHECK_INTERVAL);
     }
 
-    stop() {
+    stop(): Promise<void> {
         if (this.watchTimeout !== null) clearTimeout(this.watchTimeout);
         this.watchTimeout = null;
-        this.server!.close();
         for (let w of this.gamePathWatchers) {
             w.close();
         }
+        return new Promise<void>((resolve, reject) => {
+            this.server!.close(() => resolve());
+        });
     }
 
-    restart() {
-        this.stop();
+    async restart() {
+        await this.stop();
         this.settings = getSettings(PHJSON);
         this.start();
         console.log('ph watcher restarting');
@@ -288,7 +292,10 @@ class PHWatcher {
         // does the location of this file indicate that we need to rebundle?
         let doRebundle = false;
 
-        if (filename === PHJSON) doRebundle = true;
+        if (filename === PHJSON) {
+            this.restart();
+            return;
+        }
 
         for (let curPath of this.dataPaths) {
             if (isPathPrefix(curPath, filename)) doRebundle = true;
@@ -327,10 +334,10 @@ function initLocal() {
     let gcwFile = "./game.code-workspace";
     let checkFiles = [ltcFile, gcwFile];
     let existsFiles = [];
-    for(let curFile of checkFiles) {
-        if(fs.existsSync(curFile)) existsFiles.push(curFile);
+    for (let curFile of checkFiles) {
+        if (fs.existsSync(curFile)) existsFiles.push(curFile);
     }
-    if(existsFiles.length > 0) {
+    if (existsFiles.length > 0) {
         console.log(`The following files already exist: ${existsFiles.join(", ")}.`);
         console.log("Local initialisation would clobber these files.");
         return;
