@@ -7,8 +7,18 @@
             "tsconfig": "tsconfig.json",
             "problemMatcher": ["$tsc"],
             "presentation": {
-                "reveal": "always",
-                "panel": "new"
+                "revealProblems": "onProblem"
+            },
+            "group": "build"
+        },
+        {
+            "label": "Watch pH Tool",
+            "type": "typescript",
+            "tsconfig": "tsconfig.json",
+            "option": "watch",
+            "problemMatcher": ["$tsc-watch"],
+            "presentation": {
+                "revealProblems": "onProblem"
             },
             "group": "build"
         }
