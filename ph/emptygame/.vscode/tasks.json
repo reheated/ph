@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "pH: Watch Data",
+            "label": "Watch Data",
             "type": "shell",
             "command": "node ${workspaceFolder:ph}/ph.js",
             "problemMatcher": [],
@@ -10,7 +10,8 @@
                 "reveal": "always",
                 "panel": "new",
                 "group": "pH"
-            }
+            },
+            "group": "build"
         },
         {
             "label": "Watch Source",
@@ -22,11 +23,12 @@
                 "reveal": "always",
                 "panel": "new",
                 "group": "pH"
-            }
+            },
+            "group": "build"
         },
         {
-            "label": "pH: Watch Source and Data",
-            "dependsOn": ["pH: Watch Data", "Watch Source"],
+            "label": "Watch Source and Data",
+            "dependsOn": ["Watch Data", "Watch Source"],
             "problemMatcher": [],
             "group": "build"
         }
