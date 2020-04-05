@@ -59,19 +59,23 @@ namespace PH {
     }
 
     export class SimpleFont extends CanvasFont {
+        fontName: string;
+        fontSize: number;
         fontString: string;
         fillStyle: string | CanvasGradient | CanvasPattern;
-        letterHeight: number;
-        lineHeight: number;
+        letterHeightScale: number;
+        lineHeightScale: number;
         dummyCtx: CanvasRenderingContext2D;
 
         constructor(fontName: string, fontSize: number,
-            letterHeight: number, lineHeight: number,
+            letterHeightScale: number, lineHeightScale: number,
             fillStyle: string | CanvasGradient | CanvasPattern) {
             super();
-            this.fontString = Math.floor(fontSize).toString() + "px " + fontName;
-            this.letterHeight = letterHeight;
-            this.lineHeight = lineHeight;
+            this.fontName = fontName;
+            this.fontSize = fontSize;
+            this.fontString = this.getFontString(fontSize);
+            this.letterHeightScale = letterHeightScale;
+            this.lineHeightScale = lineHeightScale;
             this.fillStyle = fillStyle;
 
             // Create a dummy canvas context, just for its ability to measure text.
@@ -80,8 +84,17 @@ namespace PH {
             this.dummyCtx.font = this.fontString;
         }
 
+        private getFontString(fontSize: number) {
+            return Math.floor(fontSize).toString() + "px " + this.fontName;
+        }
+
+        public setFontSize(fontSize: number) {
+            this.fontSize = fontSize;
+            this.fontString = this.getFontString(fontSize);
+        }
+
         public getLineHeight() {
-            return this.lineHeight;
+            return this.lineHeightScale * this.fontSize;
         }
 
         public drawText(ctx: CanvasRenderingContext2D,
@@ -90,7 +103,7 @@ namespace PH {
             ctx.fillStyle = this.fillStyle;
             ctx.textAlign = "left";
             ctx.textBaseline = "alphabetic";
-            ctx.fillText(text, x, y + this.letterHeight);
+            ctx.fillText(text, x, y + this.letterHeightScale * this.fontSize);
         }
 
         public getWidthOfText(text: string) {
