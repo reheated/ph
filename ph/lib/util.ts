@@ -102,4 +102,39 @@ namespace PH {
         ctx.putImageData(imgData, 0, 0);
         return result;
     }
+
+    function objectKey(name: string) {
+        let gameId = (<any>window).gameId;
+        if(gameId === undefined) {
+            throw new Error("saveObject requires window.gameId to be defined.");
+        }
+        let key = gameId + "_" + name;
+        return key;
+    }
+
+    export function saveObject(name: string, data: any) {
+        let s = JSON.stringify(data);
+        let key = objectKey(name);
+        localStorage.setItem(key, s);
+    }
+
+    export function isSavedObject(name: string) {
+        let key = objectKey(name);
+        let s = localStorage.getItem(key);
+        return (s !== null);
+    }
+
+    export function loadObject(name: string) {
+        let key = objectKey(name);
+        let s = localStorage.getItem(key);
+        if(s === null) {
+            throw new Error(`loadObject: key "${key}" not found in localStorage.`);
+        }
+        return JSON.parse(s);
+    }
+
+    export function removeObject(name: string) {
+        let key = objectKey(name);
+        localStorage.removeItem(key);
+    }
 }
