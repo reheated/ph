@@ -59,7 +59,7 @@ namespace PH {
         return prom;
     }
 
-    export function changeImageColor(img: CanvasImageSource, target: RGB) {
+    export function changeImageColor(img: CanvasImageSource, targetColor: RGB) {
         let w = <number>img.width;
         let h = <number>img.height;
         let result = createCanvas(w, h);
@@ -68,9 +68,9 @@ namespace PH {
         let imgData = ctx.getImageData(0, 0, w, h);
         for (let k = 0; k < w * h; k++) {
             let offset = k * 4;
-            imgData.data[offset] = target[0];
-            imgData.data[offset + 1] = target[1];
-            imgData.data[offset + 2] = target[2];
+            imgData.data[offset] = targetColor[0];
+            imgData.data[offset + 1] = targetColor[1];
+            imgData.data[offset + 2] = targetColor[2];
         }
         ctx.putImageData(imgData, 0, 0);
         return result;
