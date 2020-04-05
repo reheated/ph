@@ -1,17 +1,17 @@
 namespace PH {
     export class CanvasUILayer extends Layer {
-        canvasTransformer: CanvasTransformerLayer;
+        coordinateLayer: CoordinateLayer;
         buttons: CanvasButton[] = [];
         mouseOverButton: CanvasButton | null = null;
 
-        constructor(canvasTransformer: CanvasTransformerLayer) {
+        constructor(coordinateLayer: CoordinateLayer) {
             super();
-            this.canvasTransformer = canvasTransformer;
+            this.coordinateLayer = coordinateLayer;
         }
 
         public handleMouseMove() {
             // Process buttons
-            let mousePos = this.canvasTransformer.mousePos;
+            let mousePos = this.coordinateLayer.mousePos;
             this.mouseOverButton = null;
             for (let b of this.buttons) {
                 b.handleNewMouseCoords(mousePos)

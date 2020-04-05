@@ -9,7 +9,7 @@ namespace PH {
         handleDoubleClick(): boolean { return true; }
         handleMouseDown(button: number): boolean { return true; }
         handleMouseUp(button: number): boolean { return true; }
-        handleMouseMoveClientCoords(clientX: number, clientY: number): void { }
+        handleMouseMoveClientCoords(clientCoords: [number, number] | null): void { }
         handleMouseMove(): void { }
 
         handleKeyDown(e: KeyboardEvent): boolean { return true; }
@@ -63,13 +63,20 @@ namespace PH {
             this.updateLayers();
         }
 
-        setupMouseListeners(target: HTMLElement | Window) {
+        setupMouseListeners(target: HTMLElement | Window, touchToo?: boolean) {
             target.addEventListener('click', (e) => this.handleClick(<MouseEvent>e));
             target.addEventListener('dblclick', (e) => this.handleDoubleClick(<MouseEvent>e));
             target.addEventListener('contextmenu', (e) => this.handleClick(<MouseEvent>e));
             target.addEventListener('mousedown', (e) => this.handleMouseDown(<MouseEvent>e));
             target.addEventListener('mouseup', (e) => this.handleMouseUp(<MouseEvent>e));
             target.addEventListener('mousemove', (e) => this.handleMouseMove(<MouseEvent>e));
+            target.addEventListener('mouseout', (e) => this.handleMouseOut(<MouseEvent>e));
+
+            if(touchToo) {
+                target.addEventListener('touchstart', (e) => this.handleTouchAsMouseDown(<TouchEvent>e));
+                target.addEventListener('touchend', (e) => this.handleTouchAsMouseUp(<TouchEvent>e));
+                target.addEventListener('touchmove', (e) => this.handleTouchAsMouseMove(<TouchEvent>e));
+            }
         }
 
         setupKeyboardListeners(target: HTMLElement | Window) {
@@ -85,16 +92,6 @@ namespace PH {
             }
         }
 
-        update(deltat: number) {
-            // Update all the layers, from last to first, stopping if we get
-            // a false return value.
-            let l = this.layers;
-            for (let k = l.length - 1; k >= 0; k--) {
-                let passThrough = l[k].update(deltat);
-                if (!passThrough) break;
-            }
-        }
-
         private stopBubble(e: Event): boolean {
             // don't let event bubble up
             e.preventDefault();
@@ -102,9 +99,25 @@ namespace PH {
             return false;
         }
 
-        handleClick(e: MouseEvent) {
+        private callOnLayers(f: (layer: Layer) => boolean) {
             let l = this.layers;
-            this.handleMouseMove(e);
+            let passThrough = true;
+            for (let k = l.length - 1; k >= 0; k--) {
+                passThrough = f(l[k]);
+                if (!passThrough) break;
+            }
+            return passThrough;
+        }
+
+        update(deltat: number) {
+            // Update all the layers, from last to first, stopping if we get
+            // a false return value.
+            this.callOnLayers((layer) => layer.update(deltat));
+        }
+
+        handleClick(e: MouseEvent) {
+            this.processMouseMove([e.clientX, e.clientY]);
+            let l = this.layers;
             let passThrough = true;
             for (let k = l.length - 1; k >= 0; k--) {
                 passThrough = l[k].handleClick(e.button);
@@ -114,63 +127,69 @@ namespace PH {
         }
 
         handleDoubleClick(e: MouseEvent) {
-            let l = this.layers;
-            this.handleMouseMove(e);
-            let passThrough = true;
-            for (let k = l.length - 1; k >= 0; k--) {
-                passThrough = l[k].handleDoubleClick();
-                if (!passThrough) break;
-            }
+            this.processMouseMove([e.clientX, e.clientY]);
+            let passThrough = this.callOnLayers((layer) => layer.handleDoubleClick());
             if(!passThrough) return this.stopBubble(e);
         }
 
         handleMouseDown(e: MouseEvent) {
-            let l = this.layers;
-            this.handleMouseMove(e);
-            let passThrough = true;
-            for (let k = l.length - 1; k >= 0; k--) {
-                passThrough = l[k].handleMouseDown(e.button);
-                if (!passThrough) break;
-            }
+            this.processMouseMove([e.clientX, e.clientY]);
+            let passThrough = this.callOnLayers((layer) => layer.handleMouseDown(e.button));
+            if(!passThrough) return this.stopBubble(e);
+        }
+
+        handleTouchAsMouseDown(e: TouchEvent) {
+            let touch = e.changedTouches[0];
+            this.processMouseMove([touch.clientX, touch.clientY]);
+            let passThrough = this.callOnLayers((layer) => layer.handleMouseDown(0));
             if(!passThrough) return this.stopBubble(e);
         }
 
         handleMouseUp(e: MouseEvent) {
-            let l = this.layers;
-            this.handleMouseMove(e);
-            let passThrough = true;
-            for (let k = l.length - 1; k >= 0; k--) {
-                passThrough = l[k].handleMouseUp(e.button);
-                if (!passThrough) break;
-            }
+            this.processMouseMove([e.clientX, e.clientY]);
+            let passThrough = this.callOnLayers((layer) => layer.handleMouseUp(e.button));
             if(!passThrough) return this.stopBubble(e);
         }
 
+        handleTouchAsMouseUp(e: TouchEvent) {
+            let touch = e.changedTouches[0];
+            this.processMouseMove([touch.clientX, touch.clientY]);
+            let passThrough = this.callOnLayers((layer) => layer.handleMouseUp(0));
+            if(!passThrough) return this.stopBubble(e);
+        }
+
+        private processMouseMove(clientCoords: [number, number]) {
+            this.callOnLayers((layer) => {
+                layer.handleMouseMoveClientCoords(clientCoords);
+                layer.handleMouseMove();
+                return true;
+            });
+        }
+
         handleMouseMove(e: MouseEvent) {
-            let l = this.layers;
-            for (let k = l.length - 1; k >= 0; k--) {
-                l[k].handleMouseMoveClientCoords(e.clientX, e.clientY);
-                l[k].handleMouseMove();
-            }
+            this.processMouseMove([e.clientX, e.clientY]);
+        }
+
+        handleTouchAsMouseMove(e: TouchEvent) {
+            let touch = e.changedTouches[0];
+            this.processMouseMove([touch.clientX, touch.clientY]);
+        }
+
+        handleMouseOut(e: MouseEvent) {
+            this.callOnLayers((layer) => {
+                layer.handleMouseMoveClientCoords(null);
+                layer.handleMouseMove();
+                return true;
+            });
         }
 
         handleKeyDown(e: KeyboardEvent) {
-            let l = this.layers;
-            let passThrough = true;
-            for (let k = l.length - 1; k >= 0; k--) {
-                passThrough = l[k].handleKeyDown(e);
-                if (!passThrough) return;
-            }
+            let passThrough = this.callOnLayers((layer) => layer.handleKeyDown(e));
             if(!passThrough) return this.stopBubble(e);
         }
 
         handleKeyUp(e: KeyboardEvent) {
-            let l = this.layers;
-            let passThrough = true;
-            for (let k = l.length - 1; k >= 0; k--) {
-                passThrough = l[k].handleKeyUp(e);
-                if (!passThrough) return;
-            }
+            let passThrough = this.callOnLayers((layer) => layer.handleKeyUp(e));
             if(!passThrough) return this.stopBubble(e);
         }
 
