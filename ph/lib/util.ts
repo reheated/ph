@@ -9,6 +9,10 @@ declare interface Document {
     fonts: FontFaceSet;
 }
 
+declare interface Window {
+    gameId?: string;
+}
+
 namespace PH {
     export type FillStyle = string | CanvasGradient | CanvasPattern;
     export type RGB = [number, number, number];
@@ -19,37 +23,6 @@ namespace PH {
         c.width = w;
         c.height = h;
         return c;
-    }
-
-    export function getCanvasScalingParameters(srcCanvas: HTMLCanvasElement,
-        targetCanvas: HTMLCanvasElement): [number, number, number] {
-        // Figure out how much to scale up by.
-        let w = srcCanvas.width;
-        let h = srcCanvas.height;
-        let targetW = targetCanvas.width;
-        let targetH = targetCanvas.height;
-        let drawScale = Math.min(targetW / w, targetH / h);
-        drawScale = Math.floor(drawScale);
-        if (drawScale < 1) drawScale = 1;
-
-        // Figure out the top left point to draw to.
-        let tlx = Math.floor((targetW - drawScale * w) / 2);
-        let tly = Math.floor((targetH - drawScale * h) / 2);
-
-        return [drawScale, tlx, tly];
-    }
-
-    export function drawScaledCanvas(srcCanvas: HTMLCanvasElement,
-        targetCtx: CanvasRenderingContext2D) {
-        // This function draws one canvas onto another, scaling up the size by
-        // the maximum possible integer multiple, and centring the picture.
-        // For pixel graphics.
-
-        let w = srcCanvas.width;
-        let h = srcCanvas.height;
-        let [drawScale, tlx, tly] = getCanvasScalingParameters(srcCanvas, targetCtx.canvas);
-        targetCtx.drawImage(srcCanvas, 0, 0, w, h,
-            tlx, tly, w * drawScale, h * drawScale);
     }
 
     export async function quickFont(name: string, url: string) {
@@ -86,7 +59,7 @@ namespace PH {
         return prom;
     }
 
-    export function changeColor(img: CanvasImageSource, target: RGB) {
+    export function changeImageColor(img: CanvasImageSource, target: RGB) {
         let w = <number>img.width;
         let h = <number>img.height;
         let result = createCanvas(w, h);
@@ -104,36 +77,36 @@ namespace PH {
     }
 
     function objectKey(name: string) {
-        let gameId = (<any>window).gameId;
+        let gameId = window.gameId;
         if(gameId === undefined) {
-            throw new Error("saveObject requires window.gameId to be defined.");
+            throw new Error("localStorage operations require window.gameId to be defined.");
         }
         let key = gameId + "_" + name;
         return key;
     }
 
-    export function saveObject(name: string, data: any) {
+    export function localStorageSave(name: string, data: any) {
         let s = JSON.stringify(data);
         let key = objectKey(name);
         localStorage.setItem(key, s);
     }
 
-    export function isSavedObject(name: string) {
+    export function localStorageIsSaved(name: string) {
         let key = objectKey(name);
         let s = localStorage.getItem(key);
         return (s !== null);
     }
 
-    export function loadObject(name: string) {
+    export function localStorageLoad(name: string) {
         let key = objectKey(name);
         let s = localStorage.getItem(key);
         if(s === null) {
-            throw new Error(`loadObject: key "${key}" not found in localStorage.`);
+            throw new Error(`Key "${key}" not found in localStorage.`);
         }
         return JSON.parse(s);
     }
 
-    export function removeObject(name: string) {
+    export function localStorageRemove(name: string) {
         let key = objectKey(name);
         localStorage.removeItem(key);
     }

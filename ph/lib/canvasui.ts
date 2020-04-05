@@ -9,7 +9,7 @@ namespace PH {
             this.coordinateLayer = coordinateLayer;
         }
 
-        public handleMouseMove() {
+        handleMouseMove() {
             // Process buttons
             let mousePos = this.coordinateLayer.mousePos;
             this.mouseOverButton = null;
@@ -21,7 +21,7 @@ namespace PH {
             }
         }
 
-        public handleMouseDown(button: number) {
+        handleMouseDown(button: number) {
             let passThrough = true;
             for (let b of this.buttons) {
                 passThrough = b.handleMouseDown(button) && passThrough;
@@ -29,7 +29,7 @@ namespace PH {
             return passThrough;
         }
 
-        public handleMouseUp(button: number) {
+        handleMouseUp(button: number) {
             let passThrough = true;
             for (let b of this.buttons) {
                 passThrough = b.handleMouseUp(button) && passThrough;
@@ -37,11 +37,11 @@ namespace PH {
             return passThrough;
         }
 
-        public addButton(b: CanvasButton) {
+        addButton(b: CanvasButton) {
             this.buttons.push(b);
         }
 
-        public draw() {
+        draw() {
             for (let b of this.buttons) {
                 b.draw();
             }

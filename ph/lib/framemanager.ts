@@ -10,19 +10,19 @@ namespace PH {
     export class FrameManager {
         // Class to automate calling requestAnimationFrame, frame rate calculations,
         // and scaling graphics for pixellated games.
-        running: boolean = false;
-        resetTime: number | null = null;
-        frameCount: number = 0;
-        lastFrameTime: number | null = null;
-        settings: FrameManagerSettings;
+        private running: boolean = false;
+        private resetTime: number | null = null;
+        private frameCount: number = 0;
+        private lastFrameTime: number | null = null;
+        private settings: FrameManagerSettings;
 
-        public frameRate: number | null = null;
+        frameRate: number | null = null;
 
         constructor(settings: FrameManagerSettings) {
             this.settings = settings;
         }
 
-        public start() {
+        start() {
             if (!this.running) {
                 this.running = true;
                 requestAnimationFrame(() => this.frame());
@@ -30,11 +30,11 @@ namespace PH {
             this.lastFrameTime = curTime();
         }
 
-        public stop() {
+        stop() {
             this.running = false;
         }
 
-        public frame() {
+        frame() {
             let frameRateInterval = this.settings.frameRateInterval || 5.0;
             let frameRateReporting = this.settings.frameRateReporting || false;
             if (!this.running) return;

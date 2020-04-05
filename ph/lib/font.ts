@@ -2,32 +2,31 @@ namespace PH {
 
     export abstract class CanvasFont {
 
-        public abstract getLineHeight(): number;
-        public abstract drawText(ctx: CanvasRenderingContext2D,
+        abstract getLineHeight(): number;
+        abstract drawText(ctx: CanvasRenderingContext2D,
             text: string, x: number, y: number): void;
-        public abstract getWidthOfText(text: string): number;
+        abstract getWidthOfText(text: string): number;
 
-        public drawMultiLineText(ctx: CanvasRenderingContext2D, lines: string[], l: number, t: number) {
+        drawMultiLineText(ctx: CanvasRenderingContext2D, lines: string[], l: number, t: number) {
             for (var k = 0; k < lines.length; k++) {
                 var y = t + k * this.getLineHeight();
                 this.drawText(ctx, lines[k], l, y);
             }
         }
 
-        public drawCenteredText(ctx: CanvasRenderingContext2D, text: string, midx: number, midy: number) {
+        drawCenteredText(ctx: CanvasRenderingContext2D, text: string, midx: number, midy: number) {
             let w = this.getWidthOfText(text);
             var leftx = Math.floor(midx - w / 2);
             var topy = Math.floor(midy - this.getLineHeight() / 2);
             this.drawText(ctx, text, leftx, topy);
         }
 
-
         wordWrap(text: string, maxw: number): string[] {
             // Word-wrap, to a fixed pixel width.
             let outList = [];
             let cLine = '';
             let rem = text;
-            while (rem != '') {
+            while (rem !== '') {
                 // get the next word
                 let nextSpace = rem.indexOf(' ');
                 let nextWord;
@@ -52,7 +51,7 @@ namespace PH {
                     cLine = nextWord;
                 }
             }
-            if (cLine != '') outList.push(cLine);
+            if (cLine !== '') outList.push(cLine);
             return outList;
         }
 
@@ -73,7 +72,7 @@ namespace PH {
             super();
             this.fontName = fontName;
             this.fontSize = fontSize;
-            this.fontString = this.getFontString(fontSize);
+            this.fontString = this.getFontString();
             this.letterHeightScale = letterHeightScale;
             this.lineHeightScale = lineHeightScale;
             this.fillStyle = fillStyle;
@@ -84,20 +83,20 @@ namespace PH {
             this.dummyCtx.font = this.fontString;
         }
 
-        private getFontString(fontSize: number) {
-            return Math.floor(fontSize).toString() + "px " + this.fontName;
+        private getFontString() {
+            return Math.floor(this.fontSize).toString() + "px " + this.fontName;
         }
 
-        public setFontSize(fontSize: number) {
+        setFontSize(fontSize: number) {
             this.fontSize = fontSize;
-            this.fontString = this.getFontString(fontSize);
+            this.fontString = this.getFontString();
         }
 
-        public getLineHeight() {
+        getLineHeight() {
             return this.lineHeightScale * this.fontSize;
         }
 
-        public drawText(ctx: CanvasRenderingContext2D,
+        drawText(ctx: CanvasRenderingContext2D,
             text: string, x: number, y: number) {
             ctx.font = this.fontString;
             ctx.fillStyle = this.fillStyle;
@@ -106,7 +105,7 @@ namespace PH {
             ctx.fillText(text, x, y + this.letterHeightScale * this.fontSize);
         }
 
-        public getWidthOfText(text: string) {
+        getWidthOfText(text: string) {
             let mes = this.dummyCtx.measureText(text);
             return mes.width;
         }
@@ -135,11 +134,11 @@ namespace PH {
             this.charWidths = charWidths;
         }
 
-        public getLineHeight() {
+        getLineHeight() {
             return this.lineHeight;
         }
 
-        public drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number) {
+        drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number) {
             var curX = x;
             var curY = y + this.yOffset;
             var modX = Math.floor(<number>this.img.width / this.cw);
@@ -161,7 +160,7 @@ namespace PH {
             }
         }
 
-        public getWidthOfText(text: string): number {
+        getWidthOfText(text: string): number {
             if(this.charWidths) {
                 let total = 0;
                 for(let k = 0; k < text.length; k++) {

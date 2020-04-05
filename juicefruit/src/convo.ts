@@ -1,9 +1,9 @@
 class ConvoItem {
     game: Game;
-    public speaker: string | null;
-    public wrappedText: string[] | null;
-    public callback: (() => void) | null;
-    public seen: boolean;
+    speaker: string | null;
+    wrappedText: string[] | null;
+    callback: (() => void) | null;
+    seen: boolean;
 
     constructor(game: Game, speaker: string | null, msg: string | null, callback: (() => void) | null) {
         this.game = game;
@@ -63,7 +63,7 @@ class ConvoLayer extends PH.Layer {
                     c.seen = true;
                 }
 
-                if (c.wrappedText == null) // no message
+                if (c.wrappedText === null) // no message
                 {
                     this.dequeue();
                 }
@@ -96,7 +96,7 @@ class ConvoLayer extends PH.Layer {
 
     dequeue() {
         this.convoQ.splice(0, 1);
-        if (this.convoQ.length == 0) this.convoStartedTime = null;
+        if (this.convoQ.length === 0) this.convoStartedTime = null;
     }
 
     handleClick(): boolean {

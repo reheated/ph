@@ -127,7 +127,7 @@ async function start() {
     
     // Load a font
     let mainFont = <PH.PixelFont>await loader.getFile('m5x7.bff');
-    mainFont.img = PH.changeColor(mainFont.img, [0, 0, 0]);
+    mainFont.img = PH.changeImageColor(mainFont.img, [0, 0, 0]);
     mainFont.yOffset = -4;
     mainFont.lineHeight = 10;
 
@@ -144,7 +144,7 @@ async function start() {
         }
     });
     fm.start();
-
+    
     // Load the main contents of the game.
     let data = await loader.getFile('game.dat', (bytes, totalBytes) => loadingScreen.setProgress(bytes, totalBytes));
 

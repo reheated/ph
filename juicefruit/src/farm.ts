@@ -189,7 +189,7 @@ class FarmLayer extends PH.Layer {
         for (var i = 0; i < this.GRID_H; i++) {
             for (var j = 0; j < this.GRID_W; j++) {
                 var pcList = this.plotContents[i][j];
-                if (pcList.length == 0) continue;
+                if (pcList.length === 0) continue;
                 var pc = pcList[0];
                 var x = j * 22 + this.FARM_LEFT + 2;
                 var y = i * 22 + this.FARM_TOP + 2;
@@ -211,7 +211,7 @@ class FarmLayer extends PH.Layer {
             for (var l = 0; l < wrapped.length; l++) {
                 this.infoTextLines.push(wrapped[l]);
             }
-            if (wrapped.length == 0) {
+            if (wrapped.length === 0) {
                 this.infoTextLines.push("");
             }
         }
@@ -319,8 +319,8 @@ class FarmLayer extends PH.Layer {
                 var pcList = this.plotContents[i][j];
                 for (var k = 0; k < pcList.length; k++) {
                     var pc = pcList[k];
-                    if (pc.desc == this.SEED || pc.desc == this.PLANTEDSEED ||
-                        pc.desc == this.SAPLING || pc.desc == this.TREE) {
+                    if (pc.desc === this.SEED || pc.desc === this.PLANTEDSEED ||
+                        pc.desc === this.SAPLING || pc.desc === this.TREE) {
                         count += pc.count;
                     }
                 }
@@ -509,11 +509,11 @@ class FarmLayer extends PH.Layer {
 
     clickUpgrade(tag: any, mb: number) {
         let skill = <Skill>tag;
-        if (mb == 0) { // left-click: upgrade
+        if (mb === 0) { // left-click: upgrade
             if (this.payUpgradeCost(skill.level, skill.cost))
                 skill.level += 1;
         }
-        else if (mb == 2) { // right-click: downgrade
+        else if (mb === 2) { // right-click: downgrade
             if (skill.level <= 0) {
                 this.game.convoEnqueue("s", "I can't downgrade that any further.");
                 return false;

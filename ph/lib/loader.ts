@@ -30,7 +30,7 @@ namespace PH {
         if (onprogress !== undefined) req.onprogress = (event => onprogress(event));
         let prom = new Promise<any>((resolve, reject) => {
             req.onreadystatechange = () => {
-                if (req.readyState == req.DONE) {
+                if (req.readyState === req.DONE) {
                     resolve(req.response);
                 }
             }
@@ -212,7 +212,7 @@ namespace PH {
 
         // Check header
         let data = new Uint8Array(response);
-        if (data[0] != 0xbf || data[1] != 0xf2) {
+        if (data[0] !== 0xbf || data[1] !== 0xf2) {
             throw new Error("File is not valid BFF2 format.");
         }
 
@@ -238,10 +238,10 @@ namespace PH {
             for (let l = 0; l < 4; l++) {
                 // Decide what the value is, based on the bpp setting
                 let value: number = 0;
-                if (bpp == 32) {
+                if (bpp === 32) {
                     value = inputImageData[offsetIn + l];
                 }
-                else if (bpp == 8 && l == 3) {
+                else if (bpp === 8 && l === 3) {
                     value = inputImageData[offsetIn];
                 }
                 else {

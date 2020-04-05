@@ -76,7 +76,7 @@ function isPathPrefix(testPrefix: string, path: string) {
     if (path.indexOf(testPrefix) !== 0) return false;
     if (path === testPrefix) return true;
     let c = path[testPrefix.length];
-    if (c == '/' || c == '\\') return true;
+    if (c === '/' || c === '\\') return true;
     return false;
 }
 
@@ -324,7 +324,7 @@ function initGame() {
     copyFilesRecursive(srcPath, '.');
     fs.unlinkSync("./localtsconfig.json");
     initLocal();
-    console.log("Initialised a new game here. I suggest adding the following entries to your version control ignore list:")
+    console.log("Initialized a new game here. I suggest adding the following entries to your version control ignore list:")
     console.log("build/**");
     console.log("phaux/**");
     console.log("localtsconfig.json");
@@ -377,5 +377,5 @@ else if (command === "initlocal") {
     initLocal();
 }
 else {
-    console.log(`Unrecognised command: ${command}`);
+    console.log(`Unrecognized command: ${command}`);
 }

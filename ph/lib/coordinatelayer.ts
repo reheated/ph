@@ -11,6 +11,37 @@ namespace PH {
 
     }
 
+    function getCanvasPixelScalingParameters(srcCanvas: HTMLCanvasElement,
+        targetCanvas: HTMLCanvasElement): [number, number, number] {
+        // Figure out how much to scale up by.
+        let w = srcCanvas.width;
+        let h = srcCanvas.height;
+        let targetW = targetCanvas.width;
+        let targetH = targetCanvas.height;
+        let drawScale = Math.min(targetW / w, targetH / h);
+        drawScale = Math.floor(drawScale);
+        if (drawScale < 1) drawScale = 1;
+
+        // Figure out the top left point to draw to.
+        let tlx = Math.floor((targetW - drawScale * w) / 2);
+        let tly = Math.floor((targetH - drawScale * h) / 2);
+
+        return [drawScale, tlx, tly];
+    }
+
+    function drawPixelScaledCanvas(srcCanvas: HTMLCanvasElement,
+        targetCtx: CanvasRenderingContext2D) {
+        // This function draws one canvas onto another, scaling up the size by
+        // the maximum possible integer multiple, and centring the picture.
+        // For pixel graphics.
+
+        let w = srcCanvas.width;
+        let h = srcCanvas.height;
+        let [drawScale, tlx, tly] = getCanvasPixelScalingParameters(srcCanvas, targetCtx.canvas);
+        targetCtx.drawImage(srcCanvas, 0, 0, w, h,
+            tlx, tly, w * drawScale, h * drawScale);
+    }
+
     export class PixelationLayer extends CoordinateLayer {
         srcCtx: CanvasRenderingContext2D;
         destCtx: CanvasRenderingContext2D;
@@ -30,7 +61,7 @@ namespace PH {
             if (this.srcCtx.canvas !== null) {
                 w = this.srcCtx.canvas.width;
                 h = this.srcCtx.canvas.height;
-                [drawScale, tlx, tly] = getCanvasScalingParameters(this.srcCtx.canvas, this.destCtx.canvas);
+                [drawScale, tlx, tly] = getCanvasPixelScalingParameters(this.srcCtx.canvas, this.destCtx.canvas);
             }
             else {
                 w = this.destCtx.canvas.width;
@@ -47,7 +78,7 @@ namespace PH {
 
         draw() {
             this.destCtx.imageSmoothingEnabled = false;
-            PH.drawScaledCanvas(this.srcCtx.canvas, this.destCtx);
+            drawPixelScaledCanvas(this.srcCtx.canvas, this.destCtx);
         }
     }
 

@@ -226,7 +226,7 @@ class MinigameLayer extends PH.Layer {
         this.won = false;
         this.keysDown = {'ArrowLeft': false, 'ArrowRight': false};
 
-        if(minigamePlayedTimes == 0)
+        if(minigamePlayedTimes === 0)
         {
             this.convoFirstMinigame();
         }
@@ -693,7 +693,7 @@ class MinigameLayer extends PH.Layer {
         this.drawObjects();
         this.drawForeground();
         
-        var isIntro = (this.minigameStartedTime != null &&
+        var isIntro = (this.minigameStartedTime !== null &&
             PH.curTime() - this.minigameStartedTime < this.introTime);
         if(isIntro)
         {
