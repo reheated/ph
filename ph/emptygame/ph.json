@@ -4,7 +4,7 @@
     "dirStaticRoot": "staticRoot",
     "dirTemplate": "template",
     "dirBuild": "build",
-    "dirAux": "aux",
+    "dirAux": "phaux",
     "serveFolder": "game",
     "bundleFilename": "game.dat",
     "port": 8080,

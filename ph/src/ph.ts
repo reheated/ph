@@ -323,12 +323,12 @@ function initGame() {
     let srcPath = phPath + "/emptygame";
     copyFilesRecursive(srcPath, '.');
     fs.unlinkSync("./localtsconfig.json");
-    fs.unlinkSync("./game.code-workspace");
     initLocal();
     console.log("Initialised a new game here. I suggest adding the following entries to your version control ignore list:")
     console.log("build/**");
+    console.log("phaux/**");
     console.log("localtsconfig.json");
-    console.log("tsconfig.json");
+    console.log("game.code-workspace");
 }
 
 function initLocal() {

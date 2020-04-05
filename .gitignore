@@ -2,5 +2,7 @@
 /ph/ph.js
 /ph/ph.js.map
 /juicefruit/build/**
+/juicefruit/phaux/**
 /juicefruit/resources/*~
 /ph/emptygame/build/**
+/ph/emptygame/phaux/**

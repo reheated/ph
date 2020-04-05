@@ -5,7 +5,7 @@
         "sourceMap": true,
         "strict": true,
         "allowJs": true,
-        "outFile": "aux/game.js",
+        "outFile": "phaux/game.js",
         "mapRoot": "http://localhost:8080/sourcemap"
     },
     "include": [
