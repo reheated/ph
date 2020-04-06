@@ -71,7 +71,7 @@ class Game {
 
         // Graphics step.
         PH.resizeCanvasToFullWindow(this.outCtx.canvas);
-        PH.resetDrawing(this.ctx, "#154617");
+        PH.fillCanvas(this.ctx, "#154617");
         this.layerManager.draw();
     }
 
@@ -82,8 +82,6 @@ class Game {
     // Mode Changes
 
     endMenu() {
-        this.soundPlayer.init();
-
         this.startFarm(true);
         //this.startFarm(false);
     }
@@ -138,7 +136,7 @@ async function start() {
     let fm = new PH.FrameManager({
         frameCallback: (deltat) => {
             PH.resizeCanvasToFullWindow(outCtx.canvas);
-            PH.resetDrawing(ctx, "#154617");
+            PH.fillCanvas(ctx, "#154617");
             loadingScreen.draw();
             pixelationLayer.draw();
         }

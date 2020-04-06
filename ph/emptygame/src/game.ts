@@ -38,13 +38,11 @@ class Game {
 
         // Graphics step.
         PH.resizeCanvasToFullWindow(this.ctx.canvas);
-        PH.resetDrawing(this.ctx, "#ffffff");
+        PH.fillCanvas(this.ctx, "#ffffff");
         this.layerManager.draw();
     }
 
     endMenu() {
-        this.soundPlayer.init();
-
         this.startMyScene();
     }
 
@@ -65,7 +63,7 @@ async function start() {
     let ctx = outGameCanvas.getContext('2d')!;
     
     // Load a font
-    let mainFont = new PH.SimpleFont("Calibri", 16, 16, 16, "#000000");
+    let mainFont = new PH.SimpleFont("Calibri", 16, 1.0, "#000000");
 
     // Set up loading sceen
     let loadingScreen = new LoadingScreen(loader, ctx, mainFont);
@@ -74,7 +72,7 @@ async function start() {
     let fm = new PH.FrameManager({
         frameCallback: (deltat) => {
             PH.resizeCanvasToFullWindow(ctx.canvas);
-            PH.resetDrawing(ctx, "#ffffff");
+            PH.fillCanvas(ctx, "#ffffff");
             loadingScreen.draw();
         }
     });

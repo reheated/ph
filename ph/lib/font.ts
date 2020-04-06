@@ -1,12 +1,46 @@
 namespace PH {
 
+    /**
+     * Provides functionality for drawing text on a canvas.
+     */
     export abstract class CanvasFont {
 
+        /**
+         * Get the y-increment of a new line.
+         * 
+         * @returns the line height.
+         */
         abstract getLineHeight(): number;
+
+        /**
+         * Draw a single line of text.
+         * 
+         * @param ctx - 2D context to draw to.
+         * @param text - Text to draw.
+         * @param x - x-coordinate of the left end of the text.
+         * @param y - y-coordinate of the top of the text.
+         */
         abstract drawText(ctx: CanvasRenderingContext2D,
             text: string, x: number, y: number): void;
+
+        /**
+         * Get the width, in pixels, that a single line of text would take up
+         * if it were drawn to the screen.
+         * 
+         * @param text - A line of text to measure.
+         * 
+         * @returns The width of the text, in pixels.
+         */
         abstract getWidthOfText(text: string): number;
 
+        /**
+         * Takes a list of strings, and draws each item on a separate line.
+         * 
+         * @param ctx - 2D context to draw to.
+         * @param lines - List of lines of text.
+         * @param x - x-coordinate of the left end of the text.
+         * @param y - y-coordinate of the top of the text.
+         */
         drawMultiLineText(ctx: CanvasRenderingContext2D, lines: string[], l: number, t: number) {
             for (var k = 0; k < lines.length; k++) {
                 var y = t + k * this.getLineHeight();
@@ -14,6 +48,14 @@ namespace PH {
             }
         }
 
+        /**
+         * Draw a centered line of text.
+         * 
+         * @param ctx - 2D context to draw to.
+         * @param text - A single line of text.
+         * @param midx - x-coordinate of the center of the text.
+         * @param midy - y-coordinate of the center of the text.
+         */
         drawCenteredText(ctx: CanvasRenderingContext2D, text: string, midx: number, midy: number) {
             let w = this.getWidthOfText(text);
             var leftx = Math.floor(midx - w / 2);
@@ -21,6 +63,15 @@ namespace PH {
             this.drawText(ctx, text, leftx, topy);
         }
 
+        /**
+         * Word-wrap a string so that it will fit within a specified width, if
+         * drawn with this font.
+         * 
+         * @param text - Text to word-wrap.
+         * @param maxw - Maximum width, in pixels.
+         * 
+         * @returns An array of strings, suitable for use in drawMultiLineText.
+         */
         wordWrap(text: string, maxw: number): string[] {
             // Word-wrap, to a fixed pixel width.
             let outList = [];
@@ -57,23 +108,49 @@ namespace PH {
 
     }
 
+    /**
+     * This object facilitates drawing text onto the canvas.
+     */
     export class SimpleFont extends CanvasFont {
-        fontName: string;
-        fontSize: number;
-        fontString: string;
-        fillStyle: string | CanvasGradient | CanvasPattern;
-        letterHeightScale: number;
-        lineHeightScale: number;
-        dummyCtx: CanvasRenderingContext2D;
+        private fontName: string;
+        private fontSize: number;
+        private fontString: string;
 
+        /**
+         * Fill style for drawing this text. When you draw the text to a 2D
+         * context, the context's fillStyle will be set to this value.
+         */
+        fillStyle: string | CanvasGradient | CanvasPattern;
+
+        /**
+         * y-increment of a newline, measured as a multiple of the font size.
+         * For example, if the font size is 16 and each line should actually be
+         * 16 pixels below the previous, then this value should be 1.0.
+         */
+        lineHeightScale: number;
+        private dummyCtx: CanvasRenderingContext2D;
+
+        /**
+         * Construct a simple font.
+         *
+         * @param fontName - Font name, for looking up in the browser's
+         * available fonts. For example, "Calibri".
+         * @param fontSize - Font size, in px.
+         * @param lineHeightScale - y-increment of a newline, measured as a
+         * multiple of the font size. For example, if the font size is 16 and
+         * each line should actually be 16 pixels below the previous, then this
+         * value should be 1.0.
+         * @param fillStyle - Fill style for drawing this text. When you draw
+         * the text to a 2D context, the context's fillStyle will be set to this
+         * value.
+         */
         constructor(fontName: string, fontSize: number,
-            letterHeightScale: number, lineHeightScale: number,
+            lineHeightScale: number,
             fillStyle: string | CanvasGradient | CanvasPattern) {
             super();
             this.fontName = fontName;
             this.fontSize = fontSize;
             this.fontString = this.getFontString();
-            this.letterHeightScale = letterHeightScale;
             this.lineHeightScale = lineHeightScale;
             this.fillStyle = fillStyle;
 
@@ -87,6 +164,11 @@ namespace PH {
             return Math.floor(this.fontSize).toString() + "px " + this.fontName;
         }
 
+        /**
+         * Set the font size.
+         * 
+         * @param fontSize - Font size, in px.
+         */
         setFontSize(fontSize: number) {
             this.fontSize = fontSize;
             this.fontString = this.getFontString();
@@ -101,8 +183,8 @@ namespace PH {
             ctx.font = this.fontString;
             ctx.fillStyle = this.fillStyle;
             ctx.textAlign = "left";
-            ctx.textBaseline = "alphabetic";
-            ctx.fillText(text, x, y + this.letterHeightScale * this.fontSize);
+            ctx.textBaseline = "top";
+            ctx.fillText(text, x, y);
         }
 
         getWidthOfText(text: string) {
@@ -111,16 +193,50 @@ namespace PH {
         }
     }
 
+    /**
+     * Provides functionality for drawing a bitmap font to a canvas. Requires a
+     * sprite sheet with all the letters, arranged in a grid.
+     */
     export class PixelFont extends CanvasFont {
+        /**
+         * An image (e.g., an HTMLImageElement) with all the letters, arranged
+         * in a grid.
+         */
         img: CanvasImageSource;
-        cw: number;
-        ch: number;
-        undershoot: number;
-        startChar: number;
-        charWidths?: number[];
+        private cw: number;
+        private ch: number;
+        private undershoot: number;
+        private startChar: number;
+        private charWidths?: number[];
+
+        /**
+         * A y-offset to apply to the coordinates before drawing text. You might
+         * need to set this (to a negative value), if the pixel font's sprite
+         * sheet puts too much space at the top of letters.
+         */
         yOffset: number = 0;
+
+        /**
+         * y-increment of a newline, measured in pixels.
+         */
         lineHeight: number;
 
+        /**
+         * Construct the pixel font.
+         *
+         * @param img - An image (e.g., an HTMLImageElement) with all the
+         * letters, arranged in a grid.
+         * @param cw - Width of a cell in the grid.
+         * @param ch - Height of a cell in the grid.
+         * @param undershoot - Typically you would set this to zero. If the
+         * letters have too much space in between them, you can set this to a
+         * positive integer to squish them closer together.
+         * @param lineHeight - y-increment of a newline, measured in pixels.
+         * @param startChar - The character code for the first character in the
+         * grid. This might be something like 32 (=0x20), since characters
+         * before that are control characters and don't need a graphical
+         * representation.
+         */
         constructor(img: CanvasImageSource, cw: number, ch: number,
             undershoot: number, lineHeight: number, startChar: number,
             charWidths?: number[]) {

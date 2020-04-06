@@ -133,12 +133,6 @@ class FarmLayer extends PH.Layer {
         this.game.jukeBox.setMusic(this.game.data['ld45_farm']);
     }
 
-    handleKeyUp() {
-        let sp = this.game.soundPlayer;
-        sp.toggle();
-        return false;
-    }
-
     registerButton(l: number, t: number, w: number, h: number,
         clickCallback: (tag: any, mb: number) => void, hoverCallback: (tag: any) => void, text: string,
         tag?: any) {

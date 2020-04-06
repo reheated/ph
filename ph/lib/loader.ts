@@ -1,5 +1,8 @@
 namespace PH {
-    let PACKAGE_EXT = "dat"; // File extension for packages
+    /**
+     * File extension for packages
+     */
+    let PACKAGE_EXT = "dat";
 
     function getFileSize(filename: string) {
         let req = new XMLHttpRequest();
@@ -40,10 +43,38 @@ namespace PH {
         return prom;
     }
 
+    /**
+     * Performs pre-loading.
+     *
+     * Use getFile to get a file, or getFiles to get a list of files. The loader
+     * automatically converts the downloaded file into an appropriate object,
+     * making its decisions based on the file extension. (It comes with a bunch
+     * of pre-constructed handlers for various file types, and you can add your
+     * own handlers using addExtensionHandler.)
+     *
+     * If a file's extension is equal to the value of PH.PACKAGE_EXT, then the
+     * loader will treat it as a package produced by the PH tool. This will
+     * result in an object whose keys are filenames contained in the package
+     * (with extensions removed) and values are the corresponding data.
+     */
     export class Loader {
+        /**
+         * An audioContext, used for decoding audio files.
+         */
         audioContext: AudioContext;
+
+        /**
+         * Maps file extensions to handler functions. A handler function takes a
+         * response (req.response value from an XMLHttpRequest) and returns an
+         * object in a usable form.
+         */
         extensionHandlers: { [key: string]: (response: any) => Promise<any> } = {};
 
+        /**
+         * Construct a loader.
+         * 
+         * @param audioContext - An audioContext, used for decoding audio files.
+         */
         constructor(audioContext: AudioContext) {
             // constructor for a collection of resources
             this.audioContext = audioContext;
@@ -59,6 +90,14 @@ namespace PH {
             this.addExtensionHandler(PACKAGE_EXT, (response) => this.processPackage(response));
         }
 
+        /**
+         * Add an extension handler function.
+         *
+         * @param ext - File extension (e.g. "mp3").
+         * @param fn - Handler function. A handler function takes a response
+         * (req.response value from an XMLHttpRequest) and returns an object in
+         * a usable form.
+         */
         addExtensionHandler(ext: string, fn: (response: any) => any) {
             this.extensionHandlers[ext] = fn;
         }
@@ -67,11 +106,35 @@ namespace PH {
         // REQUESTING AND DOWNLOADING FILES
         ///////////////////////////////////
 
-        async getFile(filename: string, progressCallback?: (mb: number, totalMB: number) => void) {
+        /**
+         * Download and decode one file. Awaitable.
+         *
+         * @param filename - The URL to download
+         * @param progressCallback - A function that will be called whenever
+         * progress is made on the download. It should take two parameters:
+         * bytes, the number of bytes downloaded so far, and totalBytes, the
+         * total size of the download.
+         *
+         * @returns A promise resolving to the decoded resource (image, sound,
+         * etc.).
+         */
+        async getFile(filename: string, progressCallback?: (bytes: number, totalBytes: number) => void) {
             let result = await this.getFiles([filename], progressCallback);
             return result[0];
         }
 
+        /**
+         * Download and decode several files. Awaitable.
+         *
+         * @param filenames - An array of the URLs to download
+         * @param progressCallback - A function that will be called whenever
+         * progress is made on the download. It should take two parameters:
+         * bytes, the number of bytes downloaded so far, and totalBytes, the
+         * total size of the downloads.
+         *
+         * @returns A promise resolving to a list of the decoded resources
+         * (images, sounds, etc.).
+         */
         async getFiles(filenames: string[], progressCallback?: (bytes: number, totalBytes: number) => void): Promise<any[]> {
             let objects: any[];
             if (progressCallback) {
@@ -172,6 +235,13 @@ namespace PH {
         }
     }
 
+    /**
+     * Turn a Uint8Array into a number, assuming least significant byte first.
+     * 
+     * @param bytes - A Uint8Array with an encoded number.
+     * 
+     * @returns The number.
+     */
     function bytesToNumber(bytes: Uint8Array) {
         let result = 0;
         let L = bytes.length;
@@ -181,6 +251,14 @@ namespace PH {
         return result;
     }
 
+    /**
+     * Create an image from downloaded data. Awaitable.
+     * 
+     * @param response - The downloaded data (response from an XMLHttpRequest).
+     * @param mime - The mime type, e.g. "image/png" for a PNG file.
+     * 
+     * @returns A promise resolving to the image (as an HTMLImageElement).
+     */
     function processImage(response: any, mime: string): Promise<HTMLImageElement> {
         let blob = new Blob([response], { type: mime });
         let result = new Image();
@@ -191,6 +269,13 @@ namespace PH {
         return prom;
     }
 
+    /**
+     * Create an SVG document from downloaded data.
+     * 
+     * @param response - The downloaded data (response from an XMLHttpRequest).
+     * 
+     * @returns An SVG document.
+     */
     function processSvg(response: any): Document {
         let decoder = new TextDecoder();
         let txt = decoder.decode(response);
@@ -198,6 +283,13 @@ namespace PH {
         return svgElem;
     }
 
+    /**
+     * Create an HTML document from downloaded data.
+     * 
+     * @param response - The downloaded data (response from an XMLHttpRequest).
+     * 
+     * @returns An HTML document.
+     */
     function processHtml(response: any): HTMLHtmlElement {
         // load the text into an html object to get a DOM
         let decoder = new TextDecoder();
@@ -207,6 +299,18 @@ namespace PH {
         return domObj;
     }
 
+    /**
+     * Create a pixel font from a BFF (Bitmap Font File), which is the native
+     * output format of Codehead's Bitmap Font Generator. 
+     *
+     * @param response - The downloaded data (response from an XMLHttpRequest).
+     *
+     * @returns a PixelFont constructed from the BFF. You may need to set the
+     * yOffset and lineHeight values manually. You might also like to change thea
+     * color of the font, which you can do with something like the following:
+     *
+     *     font.img = PH.changeImageColor(mainFont.img, [0, 0, 0]);
+     */
     function processBff(response: any) {
         // create a sprite font from a BFF
 
@@ -258,8 +362,14 @@ namespace PH {
         return font;
     }
 
+    /**
+     * Process an image map, as produced by the GIMP image map plugin. 
+     *
+     * @param response - The downloaded data (response from an XMLHttpRequest).
+     *
+     * @returns An HTML document containing the map element.
+     */
     function processImageMap(response: any): any {
-        // Process an image map, as produced by the GIMP image map plugin.
         // We just have to convert to text, skip the first two lines, and
         // process the rest as an HTML node.
         let decoder = new TextDecoder();
