@@ -66,18 +66,27 @@ namespace PH {
     }
 
     /**
-     * Resize an HTMLCanvasElement so that it takes up the whole window.
-     * 
+     * Resize the image buffer of an on-screen canvas to match its size on the
+     * screen.
+     *
      * @param canvas - The canvas to resize.
+     * @param accountForDevicePixelRatio - Scale up the pixels by the device
+     * pixel ratio in the hopes of getting the pixels to line up exactly with
+     * screen pixels.
      */
-    export function resizeCanvasToFullWindow(canvas: HTMLCanvasElement) {
-        var windowWidth = window.innerWidth;
-        var windowHeight = window.innerHeight;
-        if (windowWidth !== canvas.width ||
-            windowHeight !== canvas.height) {
-            // make sure canvas is the right size
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+    export function resizeCanvasToSizeOnScreen(canvas: HTMLCanvasElement,
+        accountForDevicePixelRatio?: boolean) {
+        var w = canvas.clientWidth;
+        var h = canvas.clientHeight;
+        if(accountForDevicePixelRatio) {
+            let scale = window.devicePixelRatio;
+            w *= scale;
+            h *= scale;
+        }
+        if (w !== canvas.width ||
+            h !== canvas.height) {
+            canvas.width = w;
+            canvas.height = h;
         }
     }
 

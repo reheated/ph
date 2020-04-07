@@ -15,7 +15,7 @@ namespace PH {
     export class CanvasCursorLayer extends Layer {
         private drawCtx: CanvasRenderingContext2D;
         private cursorElt: HTMLElement;
-        private coordinateLayer: CoordinateLayer;
+        private mpp: MousePositionProvider;
         private img: CanvasImageSource;
         private hotSpot: [number, number];
 
@@ -28,7 +28,7 @@ namespace PH {
          * that you are displaying the game on. But it might not be the same
          * canvas as ctx.canvas; for example, if you are drawing your game on an
          * off-screen canvas and then scaling that up onto an on-screen canvas.
-         * @param coordinateLayer - a CoordinateLayer that will be used to
+         * @param mousePositionProvider - a MousePositionProvider that will be used to
          * determine the mouse coordinates.
          * @param img - Image to use as the mouse cursor.
          * @param hotSpot - (x, y) coordinates of the mouse cursor's hot spot,
@@ -36,13 +36,13 @@ namespace PH {
          */
         constructor(ctx: CanvasRenderingContext2D,
             cursorElt: HTMLElement,
-            coordinateLayer: CoordinateLayer,
+            mousePositionProvider: MousePositionProvider,
             img: CanvasImageSource,
             hotSpot: [number, number]) {
             super();
             this.drawCtx = ctx;
             this.cursorElt = cursorElt;
-            this.coordinateLayer = coordinateLayer;
+            this.mpp = mousePositionProvider;
             this.img = img;
             this.hotSpot = hotSpot;
         }
@@ -61,7 +61,7 @@ namespace PH {
         draw() {
             // hide or show the default cursor
             var newStyle;
-            if (this.coordinateLayer.mousePos === null) {
+            if (this.mpp.mousePos === null) {
                 newStyle = "";
             }
             else {
@@ -69,7 +69,7 @@ namespace PH {
             }
             this.cursorElt.style.cursor = newStyle;
 
-            let mp = this.coordinateLayer.mousePos;
+            let mp = this.mpp.mousePos;
             if (mp !== null) {
                 let hs = this.hotSpot;
                 let drawPos: [number, number] = [mp[0] - hs[0], mp[1] - hs[1]];

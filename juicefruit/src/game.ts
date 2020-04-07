@@ -23,12 +23,14 @@ class Game {
     soundPlayer: PH.SoundPlayer;
     jukeBox: PH.JukeBox;
 
-    layerManager = new PH.LayerManager();
+    layerManager: PH.LayerManager;
     farmLayer: FarmLayer;
     convoLayer: ConvoLayer;
     minigamePlayedTimes = 0;
 
-    constructor(data: {[key: string]: any}, audioContext: AudioContext, mainFont: PH.CanvasFont, pixelationLayer: PH.PixelationLayer) {
+    constructor(data: {[key: string]: any}, audioContext: AudioContext,
+        mainFont: PH.CanvasFont, pixelationLayer: PH.PixelationLayer,
+        layerManager: PH.LayerManager) {
         this.data = data;
         this.soundPlayer = new PH.SoundPlayer(audioContext, {});
         this.jukeBox = new PH.JukeBox(this.soundPlayer);
@@ -36,6 +38,7 @@ class Game {
         this.pixelationLayer = pixelationLayer;
         this.ctx = pixelationLayer.srcCtx;
         this.outCtx = pixelationLayer.destCtx;
+        this.layerManager = layerManager;
 
         // Initialize subsystems.
         this.spriteBoxNormal = new PH.SpriteBox(this.data.boxes, 4, 0);
@@ -70,7 +73,7 @@ class Game {
         this.layerManager.update(deltat);
 
         // Graphics step.
-        PH.resizeCanvasToFullWindow(this.outCtx.canvas);
+        PH.resizeCanvasToSizeOnScreen(this.outCtx.canvas);
         PH.fillCanvas(this.ctx, "#154617");
         this.layerManager.draw();
     }
@@ -121,7 +124,8 @@ async function start() {
     // Set up canvas contexts
     let outCtx = outGameCanvas.getContext('2d')!;
     let ctx = mainGameCanvas.getContext('2d')!;
-    let pixelationLayer = new PH.PixelationLayer(ctx, outCtx);
+    let layerManager = new PH.LayerManager();
+    let pixelationLayer = new PH.PixelationLayer(ctx, outCtx, layerManager);
     
     // Load a font
     let mainFont = <PH.PixelFont>await loader.getFile('m5x7.bff');
@@ -135,7 +139,7 @@ async function start() {
     // Start animation frames for while the game is loading.
     let fm = new PH.FrameManager({
         frameCallback: (deltat) => {
-            PH.resizeCanvasToFullWindow(outCtx.canvas);
+            PH.resizeCanvasToSizeOnScreen(outCtx.canvas);
             PH.fillCanvas(ctx, "#154617");
             loadingScreen.draw();
             pixelationLayer.draw();
@@ -147,7 +151,7 @@ async function start() {
     let data = await loader.getFile('game.dat', (bytes, totalBytes) => loadingScreen.setProgress(bytes, totalBytes));
 
     fm.stop();
-    new Game(data, audioContext, mainFont, pixelationLayer);
+    new Game(data, audioContext, mainFont, pixelationLayer, layerManager);
 }
 
 window.onload = start;

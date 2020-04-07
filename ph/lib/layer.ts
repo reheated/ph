@@ -1,3 +1,5 @@
+/// <reference path="mousepos.ts">
+
 namespace PH {
 
     /**
@@ -90,19 +92,6 @@ namespace PH {
         handleMouseUp(button: number): boolean { return true; }
 
         /**
-         * Handle the mouse being moved; on-screen (client) coordinates are
-         * passed in. Note that these often aren't the coordinates you want.
-         * Instead of implementing this function, you could create a
-         * PH.PixelationLayer or PH.CentralCoordinateLayer, add it to your
-         * LayerManager, and access its mousePos property when you need mouse
-         * coordinates.
-         *
-         * @param clientCoords - Latest [x, y] coordinates of the mouse. Or
-         * null, if the mouse moved out of the on-screen object.
-         */
-        handleMouseMoveClientCoords(clientCoords: [number, number] | null): void { }
-
-        /**
          * Handle the mouse being moved.
          */
         handleMouseMove(): void { }
@@ -165,6 +154,8 @@ namespace PH {
      * don't care about that, you can just use setMainLayers.
      */
     export class LayerManager {
+        mousePos: MousePosition = null;
+
         private layers: Layer[] = [];
 
         private bottomLayers: Layer[] = [];
@@ -315,7 +306,7 @@ namespace PH {
          * layers, from last to first, stopping if we get a false return value.
          */
         handleClick(e: MouseEvent) {
-            this.processMouseMove([e.clientX, e.clientY]);
+            this.processMouseMove([e.clientX, e.clientY], e.target);
             let l = this.layers;
             let passThrough = this.callOnLayers((layer) => layer.handleClick(e.button));
             if(!passThrough) return this.stopBubble(e);
@@ -327,7 +318,7 @@ namespace PH {
          * value.
          */
         handleDoubleClick(e: MouseEvent) {
-            this.processMouseMove([e.clientX, e.clientY]);
+            this.processMouseMove([e.clientX, e.clientY], e.target);
             let passThrough = this.callOnLayers((layer) => layer.handleDoubleClick());
             if(!passThrough) return this.stopBubble(e);
         }
@@ -338,7 +329,7 @@ namespace PH {
          * value.
          */
         handleMouseDown(e: MouseEvent) {
-            this.processMouseMove([e.clientX, e.clientY]);
+            this.processMouseMove([e.clientX, e.clientY], e.target);
             let passThrough = this.callOnLayers((layer) => layer.handleMouseDown(e.button));
             if(!passThrough) return this.stopBubble(e);
         }
@@ -348,7 +339,7 @@ namespace PH {
          */
         handleTouchAsMouseDown(e: TouchEvent) {
             let touch = e.changedTouches[0];
-            this.processMouseMove([touch.clientX, touch.clientY]);
+            this.processMouseMove([touch.clientX, touch.clientY], e.target);
             let passThrough = this.callOnLayers((layer) => layer.handleMouseDown(0));
             if(!passThrough) return this.stopBubble(e);
         }
@@ -358,7 +349,7 @@ namespace PH {
          * layers, from last to first, stopping if we get a false return value.
          */
         handleMouseUp(e: MouseEvent) {
-            this.processMouseMove([e.clientX, e.clientY]);
+            this.processMouseMove([e.clientX, e.clientY], e.target);
             let passThrough = this.callOnLayers((layer) => layer.handleMouseUp(e.button));
             if(!passThrough) return this.stopBubble(e);
         }
@@ -368,47 +359,47 @@ namespace PH {
          */
         handleTouchAsMouseUp(e: TouchEvent) {
             let touch = e.changedTouches[0];
-            this.processMouseMove([touch.clientX, touch.clientY]);
+            this.processMouseMove([touch.clientX, touch.clientY], e.target);
             let passThrough = this.callOnLayers((layer) => layer.handleMouseUp(0));
             if(!passThrough) return this.stopBubble(e);
         }
 
-        private processMouseMove(clientCoords: [number, number]) {
-            // Helper function to call the handleMouseMoveClientCoords and
+        private processMouseMove(clientCoords: [number, number], target: EventTarget | null) {
+            // Helper function to record the mouse coordinates and call the
             // handleMouseMove functions of all the layers.
+            let elt = <HTMLElement>target;
+            this.mousePos = clientCoordsToElementCoords(clientCoords, elt);
             this.callOnLayers((layer) => {
-                layer.handleMouseMoveClientCoords(clientCoords);
                 layer.handleMouseMove();
                 return true;
             });
         }
 
         /**
-         * Handle a mouse move event. Calls the handleMouseMoveClientCoords and
-         * handleMouseMove functions for all the layers, from last to first.
+         * Handle a mouse move event. Calls the handleMouseMove function for all
+         * the layers, from last to first.
          */
         handleMouseMove(e: MouseEvent) {
-            this.processMouseMove([e.clientX, e.clientY]);
+            this.processMouseMove([e.clientX, e.clientY], e.target);
         }
 
         /**
          * Handle a touch move event as if it were a mouse move event. Calls the
-         * handleMouseMoveClientCoords and handleMouseMove functions for all the
-         * layers, from last to first.
+         * and handleMouseMove function for all the layers, from last to first.
          */
         handleTouchAsMouseMove(e: TouchEvent) {
             let touch = e.changedTouches[0];
-            this.processMouseMove([touch.clientX, touch.clientY]);
+            this.processMouseMove([touch.clientX, touch.clientY], e.target);
         }
 
         /**
          * Handle a mouse out event. We treat it as a mouse move event, except
-         * that instead of [clientX, clientY] coordinates, we pass null to the
-         * layers' handleMouseMoveClientCoords functions.
+         * that instead of (x, y) coordinates, we set the mouse
+         * position to null.
          */
         handleMouseOut(e: MouseEvent) {
+            this.mousePos = null;
             this.callOnLayers((layer) => {
-                layer.handleMouseMoveClientCoords(null);
                 layer.handleMouseMove();
                 return true;
             });

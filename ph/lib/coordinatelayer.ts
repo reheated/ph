@@ -1,44 +1,6 @@
 namespace PH {
 
     /**
-     * An object that takes care of converting between on-screen (client) and
-     * off-screen (game) coordinates.
-     *
-     * For example, in a 320x200 pixel game, you might want to use a coordinate
-     * system where the x range is 0-319 and the y-range is 0-199. But your
-     * graphics will typically be scaled up, and you'll need to be able to
-     * convert between the scaled and non-scaled coordinates. Derivatives of
-     * this class take care of the calculations.
-     */
-    export abstract class CoordinateLayer extends Layer {
-        /**
-         * Mouse coordinates, in measured in off-screen coordinates.
-         */
-        mousePos: [number, number] | null = null;
-
-        /**
-         * Convert on-screen (client) coordinates to off-screen (game) coordinates.
-         * 
-         * @param clientCoords - On-screen coordinates.
-         * 
-         * @returns Off-screen coordinates.
-         */
-        abstract fromClientCoords(clientCoords: [number, number]): [number, number];
-
-        /**
-         * Call this function when there are new mouse coordinates, so that the
-         * object can keep track of the off-screen coordinates.
-         *
-         * Alternatively, add this object to a LayerManager, and it will take
-         * care of the function call for you.
-         */
-        handleMouseMoveClientCoords(clientCoords: [number, number] | null) {
-            this.mousePos = (clientCoords === null) ? null : this.fromClientCoords(clientCoords);
-        }
-
-    }
-
-    /**
      * Helper function for intermediate calculations used in PixelationLayer.
      *
      * @param srcCanvas - Off-screen canvas.
@@ -95,13 +57,13 @@ namespace PH {
      * care of converting on-screen mouse coordinates into game coordinates.
      *
      * Call draw every frame, after you've finished all your drawing on the
-     * off-screen canvas. Also, call handleMouseMoveClientCoords when there are
-     * new mouse coordinates.
+     * off-screen canvas. Also, call handleMouseMove when there are new mouse
+     * coordinates.
      *
      * Alternatively, add this class to a LayerManager (position it after all
      * your off-screen drawing), and it will take care of the calls for you.
      */
-    export class PixelationLayer extends CoordinateLayer {
+    export class PixelationLayer extends Layer {
         /**
          * 2D context for off-screen drawing.
          */
@@ -113,6 +75,11 @@ namespace PH {
          */
         destCtx: CanvasRenderingContext2D;
 
+        private mousePositionProvider: MousePositionProvider;
+
+        /**
+         * Mouse coordinates, measured in off-screen coordinates.
+         */
         mousePos: [number, number] | null = null;
 
         /**
@@ -122,14 +89,22 @@ namespace PH {
          * @param destCtx - 2D context of an on-screen canvas. The
          * PixelationLayer will scale up the graphics and draw it here.
          */
-        constructor(srcCtx: CanvasRenderingContext2D, destCtx: CanvasRenderingContext2D) {
+        constructor(srcCtx: CanvasRenderingContext2D, destCtx: CanvasRenderingContext2D,
+            mousePositionProvider: MousePositionProvider) {
             super();
             this.srcCtx = srcCtx;
             this.destCtx = destCtx;
+            this.mousePositionProvider = mousePositionProvider;
         }
 
-        fromClientCoords(clientCoords: [number, number]): [number, number] {
-            var rect = this.destCtx.canvas.getBoundingClientRect();
+        /**
+         * Convert on-screen coordinates to off-screen (game) coordinates.
+         * 
+         * @param canvasCoords - On-screen coordinates.
+         * 
+         * @returns Off-screen coordinates.
+         */
+        fromCanvasCoords(canvasCoords: [number, number]): [number, number] {
             // Convert into canvas coordinates.
             // Apply a transformation if the canvas is scaled up
             let w, h, drawScale, tlx, tly: number;
@@ -146,9 +121,25 @@ namespace PH {
                 tly = 0;
             }
 
-            var resX = Math.floor((clientCoords[0] - rect.left - tlx) / drawScale);
-            var resY = Math.floor((clientCoords[1] - rect.top - tly) / drawScale);
+            var resX = Math.floor((canvasCoords[0] - tlx) / drawScale);
+            var resY = Math.floor((canvasCoords[1] - tly) / drawScale);
+            
             return [resX, resY];
+        }
+
+        /**
+         * Get the visible rectangle, in game coordinates.
+         */
+        rect(): Rect {
+            let canvas = this.srcCtx.canvas;
+            return new Rect(0, 0, canvas.width, canvas.height);
+        }
+
+        handleMouseMove() {
+            let canvasCoords = this.mousePositionProvider.mousePos;
+            let mp = (canvasCoords === null) ? null : this.fromCanvasCoords(canvasCoords);
+            if(mp === null) this.mousePos = null;
+            else this.mousePos = this.rect().contains(mp)? mp: null;
         }
 
         /**
@@ -158,82 +149,6 @@ namespace PH {
         draw() {
             this.destCtx.imageSmoothingEnabled = false;
             drawPixelScaledCanvas(this.srcCtx.canvas, this.destCtx);
-        }
-    }
-
-    /**
-     * Class that provides a simple coordinate system, where [0, 0] represents
-     * the center of the canvas, and the box [-1, 1] x [-1, 1] is guaranteed to
-     * be contained in the visible region, and a 1:1 aspect ratio is maintained.
-     *
-     * Call this object's update function every frame. Also call
-     * handleMouseMoveClientCoords whenever there are new mouse coordinates.
-     *
-     * Alternatively, add this object to a LayerManager and it will take care of
-     * the calls for you.
-     */
-    export class CentralCoordinateLayer extends CoordinateLayer {
-        /**
-         * 2D context of the canvas.
-         */
-        ctx: CanvasRenderingContext2D;
-        mousePos: [number, number] | null = null;
-
-        /**
-         * Width of the canvas, in off-screen coordinates.
-         */
-        w: number;
-
-        /**
-         * Height of the canvas, in off-screen coordinates.
-         */
-        h: number;
-
-        /**
-         * Scaling factor.
-         */
-        scale: number;
-
-        /**
-         * Construct the central coordinate layer.
-         * 
-         * @param ctx 2D context of the canvas.
-         */
-        constructor(ctx: CanvasRenderingContext2D) {
-            super();
-            this.ctx = ctx;
-            [this.w, this.h, this.scale] = this.getScale();
-        }
-
-        update(deltat: number) {
-            [this.w, this.h, this.scale] = this.getScale();
-            return true;
-        }
-
-        private getScale() {
-            let w = this.ctx.canvas.width;
-            let h = this.ctx.canvas.height;
-            let scale = Math.min(w, h) / 2;
-            return [w/scale, h/scale, scale];
-        }
-
-        fromClientCoords(clientCoords: [number, number]): [number, number] {
-            let x = clientCoords[0] / this.scale - this.w / 2;
-            let y = clientCoords[1] / this.scale - this.h / 2;
-            return [x, y];
-        }
-
-        /**
-         * Convert off-screen (game) coordinates to on-screen (client) coordinates.
-         * 
-         * @param gameCoords - Off-screen coordinates.
-         * 
-         * @returns On-screen coordinates.
-         */
-        toClientCoords(gameCoords: [number, number]): [number, number] {
-            let x = (gameCoords[0] + this.w / 2) * this.scale;
-            let y = (gameCoords[1] + this.h / 2) * this.scale;
-            return [x, y];
         }
     }
 
