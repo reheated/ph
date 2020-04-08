@@ -92,9 +92,22 @@ namespace PH {
         handleMouseUp(button: number): boolean { return true; }
 
         /**
+         * Transform the mouse coordinates. This function will be called before
+         * handleMouseMove, and transforms the mouse position that is handed to
+         * all lower layers.
+         * 
+         * @param mousePos: The mouse position, provided by the mouse move event,
+         * and transformed by any layers above.
+         * 
+         * @returns The transformed mouse position, that is passed to this layer's
+         * handleMouseMove function.
+         */
+        transformMousePosition(mousePos: MousePosition): MousePosition { return mousePos; };
+
+        /**
          * Handle the mouse being moved.
          */
-        handleMouseMove(): void { }
+        handleMouseMove(mousePos: MousePosition): void { }
 
         /**
          * Handle a key being pressed down.
@@ -154,8 +167,6 @@ namespace PH {
      * don't care about that, you can just use setMainLayers.
      */
     export class LayerManager {
-        mousePos: MousePosition = null;
-
         private layers: Layer[] = [];
 
         private bottomLayers: Layer[] = [];
@@ -368,9 +379,10 @@ namespace PH {
             // Helper function to record the mouse coordinates and call the
             // handleMouseMove functions of all the layers.
             let elt = <HTMLElement>target;
-            this.mousePos = clientCoordsToElementCoords(clientCoords, elt);
+            let mousePos: MousePosition = clientCoordsToElementCoords(clientCoords, elt);
             this.callOnLayers((layer) => {
-                layer.handleMouseMove();
+                mousePos = layer.transformMousePosition(mousePos);
+                layer.handleMouseMove(mousePos);
                 return true;
             });
         }
@@ -398,9 +410,10 @@ namespace PH {
          * position to null.
          */
         handleMouseOut(e: MouseEvent) {
-            this.mousePos = null;
+            let mousePos: MousePosition = null;
             this.callOnLayers((layer) => {
-                layer.handleMouseMove();
+                mousePos = layer.transformMousePosition(mousePos);
+                layer.handleMouseMove(mousePos);
                 return true;
             });
         }

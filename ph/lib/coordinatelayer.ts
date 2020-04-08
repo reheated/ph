@@ -75,13 +75,6 @@ namespace PH {
          */
         destCtx: CanvasRenderingContext2D;
 
-        private mousePositionProvider: MousePositionProvider;
-
-        /**
-         * Mouse coordinates, measured in off-screen coordinates.
-         */
-        mousePos: [number, number] | null = null;
-
         /**
          * Construct the pixelation layer.
          *
@@ -89,12 +82,10 @@ namespace PH {
          * @param destCtx - 2D context of an on-screen canvas. The
          * PixelationLayer will scale up the graphics and draw it here.
          */
-        constructor(srcCtx: CanvasRenderingContext2D, destCtx: CanvasRenderingContext2D,
-            mousePositionProvider: MousePositionProvider) {
+        constructor(srcCtx: CanvasRenderingContext2D, destCtx: CanvasRenderingContext2D) {
             super();
             this.srcCtx = srcCtx;
             this.destCtx = destCtx;
-            this.mousePositionProvider = mousePositionProvider;
         }
 
         /**
@@ -135,11 +126,19 @@ namespace PH {
             return new Rect(0, 0, canvas.width, canvas.height);
         }
 
-        handleMouseMove() {
-            let canvasCoords = this.mousePositionProvider.mousePos;
-            let mp = (canvasCoords === null) ? null : this.fromCanvasCoords(canvasCoords);
-            if(mp === null) this.mousePos = null;
-            else this.mousePos = this.rect().contains(mp)? mp: null;
+        /**
+         * Transform the mouse position from on-screen canvas coordinates to
+         * off-screen canvas coordinates.
+         * 
+         * @param mousePos: On-screen canvas coordinates.
+         * 
+         * @returns Off-screen canvas coordinates.
+         */
+        transformMousePosition(mousePos: MousePosition): MousePosition {
+            mousePos = (mousePos === null) ? null : this.fromCanvasCoords(mousePos);
+            if(mousePos === null) mousePos = null;
+            else mousePos = this.rect().contains(mousePos)? mousePos: null;
+            return mousePos;
         }
 
         /**

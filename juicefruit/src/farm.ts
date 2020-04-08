@@ -63,6 +63,7 @@ class FarmLayer extends PH.Layer {
     uiLayer: PH.CanvasUILayer;
     hoverCallbacks = new Map<any, (tag: any) => void>();
 
+    mousePos: PH.MousePosition = null;
     mouseOverPlot: Cell | null = null;
     mouseDownOverPlot: Cell | null = null;
     mouseDragPlot: Cell | null = null;
@@ -96,7 +97,7 @@ class FarmLayer extends PH.Layer {
         }
         this.plotContents[1][1].push(new PlotContents(this.SAPLING, 1, 0));
 
-        this.uiLayer = new PH.CanvasUILayer(this.game.pixelationLayer);
+        this.uiLayer = new PH.CanvasUILayer();
 
         // Skills and upgrade buttons
         this.skills = {};
@@ -143,12 +144,12 @@ class FarmLayer extends PH.Layer {
     }
 
     updateMouseOverPlot() {
-        if (this.game.pixelationLayer.mousePos === null) {
+        if (this.mousePos === null) {
             this.mouseOverPlot = null;
             this.mouseDownOverPlot = null;
             return;
         }
-        let [x, y] = this.game.pixelationLayer.mousePos;
+        let [x, y] = this.mousePos;
         for (var i = 0; i < this.GRID_H; i++) {
             for (var j = 0; j < this.GRID_W; j++) {
                 var l = j * 22 + this.FARM_LEFT;
@@ -265,12 +266,12 @@ class FarmLayer extends PH.Layer {
         this.game.mainFont!.drawText(this.game.ctx, "$" + this.DEBT.toString(), 104, 134);
 
         // draw anything that's being dragged
-        if (this.mouseDragPlot !== null && this.game.pixelationLayer.mousePos !== null) {
+        if (this.mouseDragPlot !== null && this.mousePos !== null) {
             var pcList = this.plotContents[this.mouseDragPlot[0]][this.mouseDragPlot[1]];
             if (pcList.length !== 0) {
                 var pc = pcList[0];
                 this.game.ctx.drawImage(this.plotImageDict![pc.desc],
-                    this.game.pixelationLayer.mousePos[0] - 11, this.game.pixelationLayer.mousePos[1] - 11);
+                    this.mousePos[0] - 11, this.mousePos[1] - 11);
             }
         }
 
@@ -393,7 +394,7 @@ class FarmLayer extends PH.Layer {
     }
 
     handleMouseUp(mb: number): boolean {
-        let mp = this.game.pixelationLayer.mousePos;
+        let mp = this.mousePos;
         if (this.mouseDragPlot !== null && mp !== null) {
             this.handleDragPlot(this.mouseDragPlot, mp);
         }

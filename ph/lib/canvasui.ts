@@ -10,8 +10,6 @@ namespace PH {
      * the function calls for you.
      */
     export class CanvasUILayer extends Layer {
-        private mpp: MousePositionProvider;
-
         /**
          * List of buttons.
          */
@@ -29,17 +27,18 @@ namespace PH {
          * @param mpp - a MousePositionProvider that will be used to determine
          * the mouse coordinates.
          */
-        constructor(mpp: MousePositionProvider) {
+        constructor() {
             super();
-            this.mpp = mpp;
         }
 
         /**
          * Handle button logic for mouse move events.
+         *
+         * @param mousePos: The mouse position, in the coordinates of the canvas
+         * that the UI Layer is drawn on.
          */
-        handleMouseMove() {
+        handleMouseMove(mousePos: MousePosition) {
             // Process buttons
-            let mousePos = this.mpp.mousePos;
             this.mouseOverButton = null;
             for (let b of this.buttons) {
                 b.handleNewMouseCoords(mousePos)

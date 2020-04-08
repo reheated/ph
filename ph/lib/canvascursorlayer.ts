@@ -15,9 +15,9 @@ namespace PH {
     export class CanvasCursorLayer extends Layer {
         private drawCtx: CanvasRenderingContext2D;
         private cursorElt: HTMLElement;
-        private mpp: MousePositionProvider;
         private img: CanvasImageSource;
         private hotSpot: [number, number];
+        private mousePos: MousePosition = null;
 
         /**
          * Construct the cursor object.
@@ -36,13 +36,11 @@ namespace PH {
          */
         constructor(ctx: CanvasRenderingContext2D,
             cursorElt: HTMLElement,
-            mousePositionProvider: MousePositionProvider,
             img: CanvasImageSource,
             hotSpot: [number, number]) {
             super();
             this.drawCtx = ctx;
             this.cursorElt = cursorElt;
-            this.mpp = mousePositionProvider;
             this.img = img;
             this.hotSpot = hotSpot;
         }
@@ -55,13 +53,17 @@ namespace PH {
             this.cursorElt.style.cursor = "";
         }
 
+        handleMouseMove(mousePos: MousePosition) {
+            this.mousePos = mousePos;
+        }
+
         /**
          * Draw the mouse cursor.
          */
         draw() {
             // hide or show the default cursor
             var newStyle;
-            if (this.mpp.mousePos === null) {
+            if (this.mousePos === null) {
                 newStyle = "";
             }
             else {
@@ -69,7 +71,7 @@ namespace PH {
             }
             this.cursorElt.style.cursor = newStyle;
 
-            let mp = this.mpp.mousePos;
+            let mp = this.mousePos;
             if (mp !== null) {
                 let hs = this.hotSpot;
                 let drawPos: [number, number] = [mp[0] - hs[0], mp[1] - hs[1]];

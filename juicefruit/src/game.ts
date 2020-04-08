@@ -56,7 +56,7 @@ class Game {
         this.convoLayer = new ConvoLayer(this);
         this.farmLayer = new FarmLayer(this);
         let cursorLayer = new PH.CanvasCursorLayer(this.ctx, this.outCtx.canvas,
-            this.pixelationLayer, this.data.cursor, [0, 0]);
+            this.data.cursor, [0, 0]);
 
         this.layerManager.setTopLayers(cursorLayer, this.pixelationLayer)
         this.layerManager.setMainLayers(new MenuLayer(this));
@@ -125,7 +125,7 @@ async function start() {
     let outCtx = outGameCanvas.getContext('2d')!;
     let ctx = mainGameCanvas.getContext('2d')!;
     let layerManager = new PH.LayerManager();
-    let pixelationLayer = new PH.PixelationLayer(ctx, outCtx, layerManager);
+    let pixelationLayer = new PH.PixelationLayer(ctx, outCtx);
     
     // Load a font
     let mainFont = <PH.PixelFont>await loader.getFile('m5x7.bff');
