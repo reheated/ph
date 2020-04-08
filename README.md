@@ -15,6 +15,12 @@ Features include:
 - _SoundPlayer_ and _JukeBox_: provide a simple interface for playing sounds and looping music through Web Audio.
 - More classes and functions to simplify various game-related operations.
 
+#### License and Attributions
+
+pH and the included sample game, Juicefruit Orchard, are [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+
+Juicefruit Orchard uses a processed version of the font [m5x7](https://managore.itch.io/m5x7) by Daniel Linssen, which is [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+
 ### Caveats
 1. The (optional) pH tool is a node script that, among other things, writes to your hard drive, and runs an HTTP server. You should be wary of any downloaded script that does either of these things. Bugs in code that write to your hard drive could cause data loss. Bugs in code that runs an HTTP server could affect your privacy. You should check any such script and make sure it does what you think it does, before running it.
 2. This framework is at a very early stage of development. Expect major changes to the architecture as time goes on.
@@ -24,7 +30,7 @@ Features include:
 <details>
   <summary>I'm using the pH library and pH tool</summary><p>
   
-1. Install typescript version 3.7.5 or higher and node version 12.16.1 or higher. If you want to use VS Code and the Debugger for Firefox: install VS Code, Firefox, and the Debugger for Firefox extension.
+1. Install [TypeScript](https://www.typescriptlang.org/) Version 3.7.5 or higher and [Node](https://nodejs.org) Version 12.16.1 or higher. If you want to use VS Code and the Debugger for Firefox: install [VS Code](https://code.visualstudio.com/), [Firefox](https://mozilla.org/firefox), and the VS Code [Debugger for Firefox](https://marketplace.visualstudio.com/items?itemName=firefox-devtools.vscode-firefox-debug) extension.
 2. Download a copy of the repo.
 3. Create a new directory for your game project.
 4. Open a terminal, navigate to your project directory, and enter
@@ -141,7 +147,11 @@ let layerManager = new PH.LayerManager();
 ```
 Set up mouse and keyboard listeners:
 ```typescript
+// By passing canvas to setupMouseListeners, we get mouse coordinates relative
+// to the canvas.
 layerManager.setupMouseListeners(canvas);
+// By passing window to setupKeyboardListeners, we catch keyboard events when
+// the window is in focus but the canvas is not.
 layerManager.setupKeyboardListeners(window);
 ```
 Now, create a class, e.g., called MenuLayer, extending PH.Layer. Set it as the only layer of the layer manager.
@@ -157,9 +167,9 @@ Now, if your MenuLayer class overrides the Layer class's `draw` function, it wil
 
 If you have multiple layers, the layer manager's draw function will call them in order from first to last. The update function and the event handlers will call them in reverse order. Furthermore, for update and most of the event handlers, your override function must return a boolean value. If this return value is `true`, the layer manager will continue on its way. But if you return `false`, the layer manager will consider this event "caught" by your layer, and will not call the event handlers for the layers under it. It will also cancel the event so that other objects in the DOM and the browser won't try to process it.
 
-The exception to this is handleMouseMove, which can't be cancelled in this way.
+The exception to this is `handleMouseMove`, which can't be cancelled in this way. The `handleMouseMove` function handles both the `mousemove` and `mouseout` events. It takes a parameter of type `MousePosition`, which is defined as `[number, number] | null`. A pair of numbers gives the mouse coordinates; null means that the mouse is outside the visible area.
 
-Mouse move is special in another way, which is that two functions get called: handleMouseMoveClientCoords - which is passed the _client_  coordinates (i.e. pixel coordinates in the browser's viewport), and handleMouseMove - which is not passed any parameters. Often, you don't want to work with client coordinates. Therefore, one way to work with mouse move events is to define a layer that overrides handleMouseMoveClientCoords, converts the client coordinates into a coordinate system you do want to use, and stores the result somewhere. Then, other layers can just implement handleMouseMove, and look up the computed coordinates.
+Mouse move is special in another way, which is that two methods get called: `transformMousePosition`, and then `handleMouseMove`. Ordinarily, you can override `handleMouseMove`, and leave `transformMousePosition` alone. But in some circumstances, you may want to implement a layer that modifies the mouse position for _this and all lower layers_. Override `transformMousePosition` and return the new mouse coordinates to do this. PixelationLayer does this to transform the mouse coordinates from "on-screen canvas coordinates" to "off-screen coordinates".
 
 The `setupMouseListeners` method has a second, optional, parameter, `touchToo`. Set this to `true` if you want the LayerManager to listen to touch-related events, and try to pretend that they are mouse events. This might give you an easy way to handle touch, but it is quite simplistic. In particular, you can't handle multitouch this way.
 
@@ -270,7 +280,7 @@ _In the draw loop_: draw everything to `ctx`, and then get the PixelationLayer t
 ```typescript
 pixelationLayer.draw();
 ```
-During both preloading and the main game loop, make sure any calls to `PH.resizeCanvasToFullWindow` are applied to `outGameCanvas`, not `mainGameCanvas`. You can access the mouse position (in pixel coordinates) with `pixelationLayer.mousePos`.
+During both preloading and the main game loop, make sure any calls to `PH.resizeCanvasToSizeOnScreen` are applied to `outGameCanvas`, not `mainGameCanvas`. You can access the mouse position (in pixel coordinates) with `pixelationLayer.mousePos`.
 
 Alternatively, after creating the `pixelationLayer` you can add it at the top of a LayerManager. This will take care of setting up the event listener, and making the draw call.
 
@@ -321,6 +331,16 @@ font.drawCenteredText(ctx, text, midx, midy);
 </p></details>
 
 <details>
+  <summary>Change the color of an image (changeImageColor)</summary><p>
+
+This function makes a copy of an image, replacing the R, G and B values of every pixel by the specified values, but leaving the alpha value alone. This is useful for changing the color of a PixelFont.
+```typescript
+let newImg = PH.changeImageColor(oldImg, [R, G, B]);
+```
+
+</p></details>
+
+<details>
   <summary>Draw rectangles using sprites (SpriteBox)</summary><p>
 
 The SpriteBox provides a convenient way for drawing patterned rectangles (that you might use for borders, menu frames, and buttons) using sprites. The SpriteBox requires a (3N) x (3N) graphic (the value of N is up to you) consisting of the nine N x N tiles that will be arranged to draw the rectangle. In fact, you can put several of these grids in one image, so your image should have dimensions (3MN) x (3N), where M is the number of different tilesets.
@@ -345,11 +365,18 @@ PH.fillCanvas(ctx, "#000000"); // black
 </p></details>
 
 <details>
-  <summary>Resize a canvas to take up the whole window (resizeCanvasToFullWindow)</summary><p>
+  <summary>Resize a canvas's image to match its size on the screen (resizeCanvasToSizeOnScreen)</summary><p>
 
+The following call will resize a canvas's _image size_ to match the canvas's _size in CSS pixels_. Without this, you could end up with a 300x150 image being stretched to fill the whole game area.
 ```typescript
-PH.resizeCanvasToFullWindow(canvas)
+PH.resizeCanvasToSizeOnScreen(canvas)
 ```
+Generally, this should make the image size big enough to look good. But technically, CSS pixels don't equal pixels on the screen. Passing `true` as the optional second parameter to this function attempts to account for this by using the browser's `devicePixelRatio` value...
+```typescript
+PH.resizeCanvasToSizeOnScreen(canvas, true)
+```
+... but there is still no guarantee that the pixels will match up, and there is nothing you can do about it.
+
 </p></details>
 
 #### UI
@@ -409,16 +436,6 @@ If you are using a LayerManager, add cursorLayer to it (position it after the la
 
 - call cursorLayer.draw() during your draw routine
 - call cursorLayer.handleLayerRemoved() when you want to switch back to the operating system's mouse cursor.
-
-</p></details>
-
-<details>
-  <summary>Change the color of an image (changeImageColor)</summary><p>
-
-This function makes a copy of an image, replacing the R, G and B values of every pixel by the specified values, but leaving the alpha value alone. This is useful for changing the color of a PixelFont.
-```typescript
-let newImg = PH.changeImageColor(oldImg, [R, G, B]);
-```
 
 </p></details>
 
