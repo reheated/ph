@@ -38,8 +38,8 @@ namespace PH {
          * 
          * @param ctx - 2D context to draw to.
          * @param lines - List of lines of text.
-         * @param x - x-coordinate of the left end of the text.
-         * @param y - y-coordinate of the top of the text.
+         * @param l - x-coordinate of the left end of the text.
+         * @param t - y-coordinate of the top of the text.
          */
         drawMultiLineText(ctx: CanvasRenderingContext2D, lines: string[], l: number, t: number) {
             for (var k = 0; k < lines.length; k++) {
@@ -114,13 +114,13 @@ namespace PH {
     export class SimpleFont extends CanvasFont {
         private fontName: string;
         private fontSize: number;
-        private fontString: string;
+        private fontString: string = "";
 
         /**
          * Fill style for drawing this text. When you draw the text to a 2D
          * context, the context's fillStyle will be set to this value.
          */
-        fillStyle: string | CanvasGradient | CanvasPattern;
+        fillStyle: FillStyle;
 
         /**
          * y-increment of a newline, measured as a multiple of the font size.
@@ -146,11 +146,11 @@ namespace PH {
          */
         constructor(fontName: string, fontSize: number,
             lineHeightScale: number,
-            fillStyle: string | CanvasGradient | CanvasPattern) {
+            fillStyle: FillStyle) {
             super();
             this.fontName = fontName;
             this.fontSize = fontSize;
-            this.fontString = this.getFontString();
+            this.updateFontString();
             this.lineHeightScale = lineHeightScale;
             this.fillStyle = fillStyle;
 
@@ -160,8 +160,8 @@ namespace PH {
             this.dummyCtx.font = this.fontString;
         }
 
-        private getFontString() {
-            return Math.floor(this.fontSize).toString() + "px " + this.fontName;
+        private updateFontString() {
+            this.fontString = Math.floor(this.fontSize).toString() + "px " + this.fontName;
         }
 
         /**
@@ -171,7 +171,7 @@ namespace PH {
          */
         setFontSize(fontSize: number) {
             this.fontSize = fontSize;
-            this.fontString = this.getFontString();
+            this.updateFontString();
         }
 
         getLineHeight() {
@@ -236,6 +236,9 @@ namespace PH {
          * grid. This might be something like 32 (=0x20), since characters
          * before that are control characters and don't need a graphical
          * representation.
+         * @param charWidths - An array of numbers, specifying the character
+         * width for each character. If it is not supplied, assume that every
+         * character has width cw.
          */
         constructor(img: CanvasImageSource, cw: number, ch: number,
             undershoot: number, lineHeight: number, startChar: number,

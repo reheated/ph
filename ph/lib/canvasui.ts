@@ -23,9 +23,6 @@ namespace PH {
 
         /**
          * Construct a canvas UI layer.
-         *
-         * @param mpp - a MousePositionProvider that will be used to determine
-         * the mouse coordinates.
          */
         constructor() {
             super();
@@ -78,6 +75,8 @@ namespace PH {
 
         /**
          * Add a button to the UI.
+         * 
+         * @param b - The button to add.
          */
         addButton(b: CanvasButton) {
             this.buttons.push(b);

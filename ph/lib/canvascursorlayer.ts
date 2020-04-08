@@ -5,9 +5,10 @@ namespace PH {
     /**
      * This class draws a mouse cursor using an image.
      *
-     * Call this object's "draw" function every frame to get the cursor. If you
-     * need to switch back to the operating system's normal mouse cursor, call
-     * handleLayerRemoved.
+     * To get the cursor to work, you need to call this object's "draw" function
+     * every frame, and call "handleMouseMove" as part of your mousemove
+     * handler. If you need to switch back to the operating system's normal
+     * mouse cursor, call handleLayerRemoved.
      *
      * Alternatively, add this object to a LayerManager, which will make the
      * function calls automatically.
@@ -28,8 +29,6 @@ namespace PH {
          * that you are displaying the game on. But it might not be the same
          * canvas as ctx.canvas; for example, if you are drawing your game on an
          * off-screen canvas and then scaling that up onto an on-screen canvas.
-         * @param mousePositionProvider - a MousePositionProvider that will be used to
-         * determine the mouse coordinates.
          * @param img - Image to use as the mouse cursor.
          * @param hotSpot - (x, y) coordinates of the mouse cursor's hot spot,
          * measured in pixels. [0, 0] is the top left.

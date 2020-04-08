@@ -43,6 +43,7 @@ namespace PH {
          * Returns true if the rectangle contains a given point.
          * 
          * @param pos - The point to test.
+         * 
          * @returns true if `pos` is inside `this`; false otherwise.
          */
         contains(pos: [number, number]): boolean {
@@ -71,8 +72,10 @@ namespace PH {
          * Call this function when you have new mouse coordinates, and the
          * object will keep track of whether the mouse is over it. This is taken
          * care of by the CanvasUILayer class.
+         * 
+         * @param mousePos - Mouse position.
          */
-        handleNewMouseCoords(mousePos: [number, number] | null) {
+        handleNewMouseCoords(mousePos: MousePosition) {
             this.mouseOver = mousePos !== null && this.contains(mousePos);
         }
     }
@@ -126,11 +129,11 @@ namespace PH {
          * @param text - Text to display on the button.
          * @param drawer - A CanvasButtonDrawer object, which determines how to
          * draw this button.
-         * @handleButtons - An array of numbers, determining which mouse buttons
+         * @param handleButtons - An array of numbers, determining which mouse buttons
          * this button can be clicked by. For example, if this parameter is [0,
          * 2], then the button will handle clicks by the left and the right
          * mouse button, but not by the middle mouse button. The default is [0].
-         * @tag - An arbitrary object that is associated with this button. If
+         * @param tag - An arbitrary object that is associated with this button. If
          * you create a whole bunch of buttons with the same clickCallback
          * function, you can use this tag to tell the buttons apart.
          */
@@ -156,6 +159,7 @@ namespace PH {
         }
 
         private doHandleButton(button: number): boolean {
+            // Helper function - should we handle this button?
             return this.handleButtons.indexOf(button) >= 0;
         }
 

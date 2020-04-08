@@ -96,7 +96,7 @@ namespace PH {
          * handleMouseMove, and transforms the mouse position that is handed to
          * all lower layers.
          * 
-         * @param mousePos: The mouse position, provided by the mouse move event,
+         * @param mousePos - The mouse position, provided by the mouse move event,
          * and transformed by any layers above.
          * 
          * @returns The transformed mouse position, that is passed to this layer's
@@ -106,6 +106,9 @@ namespace PH {
 
         /**
          * Handle the mouse being moved.
+         *
+         * @param mousePos - the mouse position, after being transformed by this
+         * layer and any layers above it.
          */
         handleMouseMove(mousePos: MousePosition): void { }
 
@@ -306,15 +309,18 @@ namespace PH {
         /**
          * Update all the layers, from last to first, stopping if we get
            a false return value.
+
+           @param deltat - Time since the previous frame.
          */
         update(deltat: number) {
-            
             this.callOnLayers((layer) => layer.update(deltat));
         }
 
         /**
          * Handle a click event. Calls the handleClick function of all the
          * layers, from last to first, stopping if we get a false return value.
+         * 
+         * @param e - Event.
          */
         handleClick(e: MouseEvent) {
             this.processMouseMove([e.clientX, e.clientY], e.target);
@@ -327,6 +333,8 @@ namespace PH {
          * Handle a double click event. Calls the handleDoubleClick function of
          * all the layers, from last to first, stopping if we get a false return
          * value.
+         * 
+         * @param e - Event.
          */
         handleDoubleClick(e: MouseEvent) {
             this.processMouseMove([e.clientX, e.clientY], e.target);
@@ -338,6 +346,8 @@ namespace PH {
          * Handle a mouse down event. Calls the handleMouseDown function of all
          * the layers, from last to first, stopping if we get a false return
          * value.
+         * 
+         * @param e - Event.
          */
         handleMouseDown(e: MouseEvent) {
             this.processMouseMove([e.clientX, e.clientY], e.target);
@@ -347,6 +357,8 @@ namespace PH {
 
         /**
          * Handle a touch start event as if it were a mouse down event.
+         * 
+         * @param e - Event.
          */
         handleTouchAsMouseDown(e: TouchEvent) {
             let touch = e.changedTouches[0];
@@ -358,6 +370,8 @@ namespace PH {
         /**
          * Handle a mouse up event. Calls the handleMouseUp function of all the
          * layers, from last to first, stopping if we get a false return value.
+         * 
+         * @param e - Event.
          */
         handleMouseUp(e: MouseEvent) {
             this.processMouseMove([e.clientX, e.clientY], e.target);
@@ -367,6 +381,8 @@ namespace PH {
 
         /**
          * Handle a touch end event as if it were a mouse up event.
+         * 
+         * @param e - Event.
          */
         handleTouchAsMouseUp(e: TouchEvent) {
             let touch = e.changedTouches[0];
@@ -390,6 +406,8 @@ namespace PH {
         /**
          * Handle a mouse move event. Calls the handleMouseMove function for all
          * the layers, from last to first.
+         * 
+         * @param e - Event.
          */
         handleMouseMove(e: MouseEvent) {
             this.processMouseMove([e.clientX, e.clientY], e.target);
@@ -398,6 +416,8 @@ namespace PH {
         /**
          * Handle a touch move event as if it were a mouse move event. Calls the
          * and handleMouseMove function for all the layers, from last to first.
+         * 
+         * @param e - Event.
          */
         handleTouchAsMouseMove(e: TouchEvent) {
             let touch = e.changedTouches[0];
@@ -408,6 +428,8 @@ namespace PH {
          * Handle a mouse out event. We treat it as a mouse move event, except
          * that instead of (x, y) coordinates, we set the mouse
          * position to null.
+         * 
+         * @param e - Event.
          */
         handleMouseOut(e: MouseEvent) {
             let mousePos: MousePosition = null;
@@ -418,11 +440,23 @@ namespace PH {
             });
         }
 
+        /**
+         * Handle a key down event. Calls the handleKeyDown function of all the
+         * layers, from last to first, stopping if we get a false return value.
+         * 
+         * @param e - Event.
+         */
         handleKeyDown(e: KeyboardEvent) {
             let passThrough = this.callOnLayers((layer) => layer.handleKeyDown(e));
             if(!passThrough) return this.stopBubble(e);
         }
 
+        /**
+         * Handle a key up event. Calls the handleKeyUp function of all the
+         * layers, from last to first, stopping if we get a false return value.
+         * 
+         * @param e - Event.
+         */
         handleKeyUp(e: KeyboardEvent) {
             let passThrough = this.callOnLayers((layer) => layer.handleKeyUp(e));
             if(!passThrough) return this.stopBubble(e);

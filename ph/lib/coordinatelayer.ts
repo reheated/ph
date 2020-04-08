@@ -120,6 +120,8 @@ namespace PH {
 
         /**
          * Get the visible rectangle, in game coordinates.
+         * 
+         * @returns The visible rectangle.
          */
         rect(): Rect {
             let canvas = this.srcCtx.canvas;
