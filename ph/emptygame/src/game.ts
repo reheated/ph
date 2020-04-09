@@ -8,7 +8,6 @@ class Game {
     jukeBox: PH.JukeBox;
 
     layerManager = new PH.LayerManager();
-    minigamePlayedTimes = 0;
 
     myLayer: MyLayer;
 
