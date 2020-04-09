@@ -37,7 +37,7 @@ class Game {
         this.layerManager.update(deltat);
 
         // Graphics step.
-        PH.resizeCanvasToFullWindow(this.ctx.canvas);
+        PH.resizeCanvasToSizeOnScreen(this.ctx.canvas);
         PH.fillCanvas(this.ctx, "#ffffff");
         this.layerManager.draw();
     }
@@ -71,7 +71,7 @@ async function start() {
     // Start animation frames for while the game is loading.
     let fm = new PH.FrameManager({
         frameCallback: (deltat) => {
-            PH.resizeCanvasToFullWindow(ctx.canvas);
+            PH.resizeCanvasToSizeOnScreen(ctx.canvas);
             PH.fillCanvas(ctx, "#ffffff");
             loadingScreen.draw();
         }
