@@ -1,9 +1,9 @@
 # pH
-A starting point for HTML games in Typescript
+A starting point for HTML games in TypeScript
 
 ### What is it?
 pH consists of the following components:
-- The _pH library_: a library of typescript classes and functions to assist with HTML game development.
+- The _pH library_: a library of TypeScript classes and functions to assist with HTML game development.
 - The _pH tool_: a node script that provides game bundling functionality and an HTTP server for debugging in Firefox.
 - Some useful default settings for building and testing games in VS Code with the Debugger for Firefox extension.
 
@@ -22,42 +22,52 @@ pH and the included sample game, Juicefruit Orchard, are [CC0](https://creativec
 Juicefruit Orchard uses a processed version of the font [m5x7](https://managore.itch.io/m5x7) by Daniel Linssen, which is [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
 
 ### Caveats
-1. The (optional) pH tool is a node script that, among other things, writes to your hard drive, and runs an HTTP server. You should be wary of any downloaded script that does either of these things. Bugs in code that write to your hard drive could cause data loss. Bugs in code that runs an HTTP server could affect your privacy. You should check any such script and make sure it does what you think it does, before running it.
+1. The (optional) pH tool is a node script that, among other things, writes to your hard drive, and runs an HTTP server. You should be wary of any downloaded script that does either of these things. Bugs in code that writes to your hard drive could cause data loss. Bugs in code that runs an HTTP server could affect your privacy. You should check any such script and make sure it does what you think it does, before running it.
 2. This framework is at a very early stage of development. Expect major changes to the architecture as time goes on.
-3. Be aware that if you are making an HTML game for people to play on the web, you need a web server to host it on. As far as I am aware, file sharing services like DropBox don't cut it.
+3. Be aware that if you are making an HTML game for people to play on the web, you need a web server to host it on. As far as I am aware, file sharing services like Dropbox don't cut it.
 
 ### Getting Started
 <details>
   <summary>I'm using the pH library and pH tool</summary><p>
   
 1. Install [TypeScript](https://www.typescriptlang.org/) Version 3.7.5 or higher and [Node](https://nodejs.org) Version 12.16.1 or higher. If you want to use VS Code and the Debugger for Firefox: install [VS Code](https://code.visualstudio.com/), [Firefox](https://mozilla.org/firefox), and the VS Code [Debugger for Firefox](https://marketplace.visualstudio.com/items?itemName=firefox-devtools.vscode-firefox-debug) extension.
-2. Download a copy of the repo.
-3. Create a new directory for your game project.
-4. Open a terminal, navigate to your project directory, and enter
+2. Download a copy of the repo. From the GitHub page: click "Clone or Download", "Download ZIP" and save the zip file to an appropriate location. Then extract the contents of the zip file.
+3. In a terminal, navigate to the "ph" subdirectory of the repo. Install the dependencies and compile the tool by typing the following commands:
+```
+npm install
+tsc -p tsconfig.json
+```
+4. Create a new directory for your game project.
+5. In a terminal, navigate to your project directory, and enter the following (changing the path as appropriate):
    ```
-   node path_to_ph/ph/ph.js init
+   node path_to_ph_installation/ph/ph.js init
    ```
-   This adds files to the project directory to create an empty game. It also provides you with a list of entries that you should consider adding to your version control file (e.g., your .gitignore file).
-5. Edit ph.json with your text editor and edit the title, description and gameId fields. (gameId is just a short string identifying your game.)
-6. Start the pH tool, the typescript compiler, and try running the game:
+   This adds files to the project directory to create an empty game. It also prints out a list of entries that you should consider adding to your version control file (e.g., your .gitignore file).
+6. Edit ph.json with your text editor and edit the title, description and gameId fields. (gameId should be a short string identifying your game.)
+7. Start the pH tool, the TypeScript compiler, and try running the game:
    - If you're using VS Code: open the newly created file `ph-dev.code-workspace` in VS Code. Open the build task list (Default: Ctrl-Shift-B) and select "Watch Source and Data". Then run the game in the Debugger for Firefox (Default: F5.)
    - If you're not using VS Code: Open a terminal, navigate to your project directory and enter
      ```
-     node path_to_ph/ph.js watch
+     node path_to_ph_installation/ph.js watch
      ```
      to start the ph tool in watch mode. Open a second terminal, navigate to your project directory, and enter
      ```
      tsc -p tsconfig.json --watch
      ```
-     to start the typescript compiler in watch mode. Now open your browser and enter `http://localhost:8080/game/index.html` into the URL browser.
+     to start the TypeScript compiler in watch mode. Now open your browser and enter `http://localhost:8080/game/index.html` into the URL browser.
+8. Each additional developer should set up their own version of the `localtsconfig.json` and `game.code-workspace` files. It may be possible to do this by running
+```
+node path_to_ph_installation/ph.js initlocal
+```
+but if you need customized versions of these files then you'll have to do it manually.
   
 </p></details>
 <details>
   <summary>I've set up my own project - I'm just using the pH library</summary><p>
 
-1. Install typescript version 3.7.5 or higher.
-2. Download a copy of the repo, and copy the ph/lib folder into your own project.
-3. Open tsconfig.json, and add "lib/**/*" to the list of includes, before your own files.
+1. Install Typescript version 3.7.5 or higher.
+2. Download a copy of the repo. From the GitHub page: click "Clone or Download", "Download ZIP" and save the zip file to an appropriate location. Then extract the contents of the zip file. Copy the ph/lib folder into your own project.
+3. Set up your TypeScript configuration to include "lib/**/*" before your own source files.
 
 </p></details>
 
@@ -71,19 +81,19 @@ I have tried to make the different features of pH as independent as possible. Th
   
 If you use VSCode with the default project setup created by the pH tool's init command, the easiest way to run the pH tool is to run the build command "Watch Source and Data" from VSCode. To run the ph tool (outside of VSCode), open a terminal, navigate to your project directory, and enter
 ```
-node path_to_ph/ph.js watch
+node path_to_ph_installation/ph.js watch
 ```
 This tool watches the filesystem for changes to your project, and updates the build/ subdirectory with the latest version of your game. It also runs an HTTP server which you can use to run and debug your game. (Why do you need an HTTP server? The reason is that browsers refuse to let web page javascript code load files directly off your hard drive, for security reasons.)
 
 Project settings are in the ph.json file in your project directory. You should set gameId, title, and description yourself.
 
 The pH tool treats certain subdirectories of your project as special:
-- _resources/_ - Files placed here will be bundled into the "game.dat" file in your build directory, as long as they have one of the extensions in your resourceExtensions setting. The "game.dat" file can be loaded into your game using the Loader class in the pH library.
+- _resources/_ - Resources placed here will be bundled into the "game.dat" file in your build directory. A file counts as a "resource" if its file extension matches one of the strings in the resourceExtensions setting in your project's ph.json file. The "game.dat" file can be loaded into your game using the Loader class in the pH library.
 - _static/_ - Files placed here will be copied without change into your build directory.
 - _staticRoot/_ - Files placed here will not be copied across, but they will appear in the root directory in your HTTP server. You could put some site-wide files here, like a favicon or css file, to test that your game uses them correctly.
-- _template/_ - Files placed here will be copied into the build directory, but in a modified form. The pH tool searches the files for patterns of the form ${<key>}, look up the key in your project's ph.json file, and substitute the corresponding value.
-- _phaux/_ - pH expects typescript to use this folder as its compile destination. So it expects to find ".js" files here, which will be copied to the build directory. (Also, the default project setup tells Debugger for Firefox to find the source map files here, for easy debugging.)
-- _src/_ - Not used directly by the pH tool. But the default project settings tell typescript to look for source files here.
+- _template/_ - Files placed here will be copied into the build directory, but in a modified form. The pH tool searches the files for patterns of the form ${<key>}, looks up the key in your project's ph.json file, and substitutes the corresponding value.
+- _phaux/_ - pH expects TypeScript to use this folder as its compile destination. So it expects to find ".js" files here, which will be copied to the build directory. Also, the default project setup tells Debugger for Firefox to find the source map files here, for easy debugging.
+- _src/_ - This directory is not used directly by the pH tool. But the default project settings tell TypeScript to look for source files here.
 
 You can change these directories by editing the values in ph.json, but note that you will have to make corresponding changes to tsconfig.json, localtsconfig.json, .vscode/tasks.json and .vscode/launch.json.
 
@@ -95,6 +105,8 @@ Another setting you may like to change is "allowRemote". If this is `false`, the
 <details>
   <summary>Preload assets (Loader)</summary><p>
   
+Note that the empty project already has one of these.
+  
 Constructing a loader (the Loader constructor requires an audiocontext, which it can use to decode audio files):
 ```typescript
 let audioContext = new AudioContext();
@@ -102,7 +114,7 @@ let loader = new PH.Loader(audioContext);
 ```
 Example of downloading a file (call from an async function):
 ```typescript
-let mainFont = <PH.PixelFont>await loader.getFile('m5x7.bff');
+let myImg = <HTMLImageElement>await loader.getFile("img.png");
 ```
 Download a file and set a callback that is called when the download makes progress (call from an async function):
 ```typescript
@@ -119,6 +131,8 @@ Loader can only decode a file if a handler function has been registered for the 
 <details>
   <summary>Automate frame requests and frame rate calculations (FrameManager)</summary><p>
   
+Note that the empty project already has one of these.
+  
 Example usage of a frame manager:
 ```typescript
 let fm = new PH.FrameManager({
@@ -126,7 +140,7 @@ let fm = new PH.FrameManager({
 });
 fm.start();
 ```
-Now your frame function will be called every "frame". The value of deltat passed to your function will be the time since the last frame. The definition of a frame is up to the browser, but in my experience it is often every 1/60 seconds, as long as your computer can handle it. You can call `fm.stop()` to stop it. You can check `fm.frameRate` if you want an estimate of the frame rate.
+Now your `frame` function will be called once every "frame". The value of deltat passed to your function will be the time since the last frame. The definition of a frame is up to the browser, but in my experience it is often every 1/60 seconds, as long as your computer can handle it. You can call `fm.stop()` to stop it. You can check `fm.frameRate` if you want an estimate of the frame rate.
 </p></details>
 
 <details>
@@ -169,7 +183,7 @@ If you have multiple layers, the layer manager's draw function will call them in
 
 The exception to this is `handleMouseMove`, which can't be cancelled in this way. The `handleMouseMove` function handles both the `mousemove` and `mouseout` events. It takes a parameter of type `MousePosition`, which is defined as `[number, number] | null`. A pair of numbers gives the mouse coordinates; null means that the mouse is outside the visible area.
 
-Mouse move is special in another way, which is that two methods get called: `transformMousePosition`, and then `handleMouseMove`. Ordinarily, you can override `handleMouseMove`, and leave `transformMousePosition` alone. But in some circumstances, you may want to implement a layer that modifies the mouse position for _this and all lower layers_. Override `transformMousePosition` and return the new mouse coordinates to do this. PixelationLayer does this to transform the mouse coordinates from "on-screen canvas coordinates" to "off-screen coordinates".
+Mouse move is special in another way, which is that two methods get called: `transformMousePosition`, and then `handleMouseMove`. Ordinarily, you can override `handleMouseMove`, and leave `transformMousePosition` alone. But in some circumstances, you may want to implement a layer that modifies the mouse position that gets passed to the `transformMousePosition` and `handleMouseMove` functions for _this and all lower layers_. To do this, override `transformMousePosition` and return the new mouse coordinates. PixelationLayer does this to transform the mouse coordinates from "on-screen canvas coordinates" to "off-screen coordinates".
 
 The `setupMouseListeners` method has a second, optional, parameter, `touchToo`. Set this to `true` if you want the LayerManager to listen to touch-related events, and try to pretend that they are mouse events. This might give you an easy way to handle touch, but it is quite simplistic. In particular, you can't handle multitouch this way.
 
@@ -270,21 +284,25 @@ Create a `PixelationLayer`:
 ```typescript
 let pixelationLayer = new PH.PixelationLayer(ctx, outCtx);
 ```
-If we need mouse coordinates, set up a mouse move listener:
+During both preloading and the main game loop, make sure any calls to `PH.resizeCanvasToSizeOnScreen` are applied to `outGameCanvas`, not `mainGameCanvas`.
+
+If you are using a `LayerManager`: add the `PixelationLayer` (probably at the top, or close to it):
 ```typescript
-outGameCanvas.addEventListener("mousemove",
-    (e) => pixelationLayer.handleMouseMoveClientCoords([e.clientX, e.clientY]));
+layerManager.setTopLayers(/* other top layers, */this.pixelationLayer);
 ```
+If you are not using a `LayerManager`:
+- In the draw loop: draw everything to `ctx`, and then get the PixelationLayer to to scale it up:
+  ```typescript
+  pixelationLayer.draw();
+  ```
+- If you ever have to get the mouse position in `mainGameCanvas` coordinates, you can calculate it as follows:
+  ```typescript
+  // e is a MouseEvent. First, convert from client coordinates to element-relative coordinates:
+  let outCanvasPos = PH.clientCoordsToElementCoords([e.clientX, e.clientY], outGameCanvas);
+  // Now convert from on-screen canvas coordinates to off-screen canvas coordinates:
+  let mainCanvasPos = pixelationLayer.transformMousePosition(outCanvasPos);
+  ```
 
-_In the draw loop_: draw everything to `ctx`, and then get the PixelationLayer to to scale it up:
-```typescript
-pixelationLayer.draw();
-```
-During both preloading and the main game loop, make sure any calls to `PH.resizeCanvasToSizeOnScreen` are applied to `outGameCanvas`, not `mainGameCanvas`. You can access the mouse position (in pixel coordinates) with `pixelationLayer.mousePos`.
-
-Alternatively, after creating the `pixelationLayer` you can add it at the top of a LayerManager. This will take care of setting up the event listener, and making the draw call.
-
-    
 </p></details>
 
 <details>
@@ -321,7 +339,7 @@ font.drawMultiLineText(ctx, textLines, left, top);
 ```
 Here, `textLines` is an array of lines of text. You can produce such an array manually, or by using the wordWrap method:
 ```typescript
-let textLines = font.wordWrap(text, width)
+let textLines = font.wordWrap(text, width);
 ```
 To draw a single line of centered text:
 ```typescript
@@ -343,7 +361,7 @@ let newImg = PH.changeImageColor(oldImg, [R, G, B]);
 <details>
   <summary>Draw rectangles using sprites (SpriteBox)</summary><p>
 
-The SpriteBox provides a convenient way for drawing patterned rectangles (that you might use for borders, menu frames, and buttons) using sprites. The SpriteBox requires a (3N) x (3N) graphic (the value of N is up to you) consisting of the nine N x N tiles that will be arranged to draw the rectangle. In fact, you can put several of these grids in one image, so your image should have dimensions (3MN) x (3N), where M is the number of different tilesets.
+The SpriteBox provides a convenient way for drawing patterned rectangles (that you might use for borders, menu frames, and buttons) using sprites. The SpriteBox requires a (3N) x (3N) graphic (the value of N is up to you) consisting of the nine N x N tiles that will be arranged to draw the rectangle. In fact, you can put several of these grids in one image, so your image should have dimensions (3MN) x (3N), where M is the number of different tilesets. See the `boxes.png` file in the Juicefruit Orchard sample game for an example of the layout.
 
 To construct a sprite box (for this example, it's the first grid in the image, and the tile size is 4):
 ```typescript
@@ -369,7 +387,7 @@ PH.fillCanvas(ctx, "#000000"); // black
 
 The following call will resize a canvas's _image size_ to match the canvas's _size in CSS pixels_. Without this, you could end up with a 300x150 image being stretched to fill the whole game area.
 ```typescript
-PH.resizeCanvasToSizeOnScreen(canvas)
+PH.resizeCanvasToSizeOnScreen(canvas);
 ```
 Generally, this should make the image size big enough to look good. But technically, CSS pixels don't equal pixels on the screen. Passing `true` as the optional second parameter to this function attempts to account for this by using the browser's `devicePixelRatio` value...
 ```typescript
@@ -396,10 +414,7 @@ let buttonDrawer = new PH.CanvasButtonSpriteDrawer(spriteBoxButton, spriteBoxPre
 ```
 Create a Canvas UI layer:
 ```typescript
-// Assuming coordinateLayer extends PH.CoordinateLayer, which provides mouse coordinates.
-// It should already be set up to listen to mouse move events. See the section on
-// PixelationLayer.
-let uiLayer = new PH.CanvasUILayer(coordinateLayer);
+let uiLayer = new PH.CanvasUILayer();
 ```
 Create a button and add it to the Canvas UI Layer:
 ```typescript
