@@ -98,7 +98,7 @@ namespace PH {
          * passed (b, mouseButton), where b is this button, and mouseButton is
          * the number of the mouse button that this button was clicked with.
          */
-        clickCallback: (b: CanvasButton, mouseButton: number) => void | null;
+        clickCallback: ((b: CanvasButton, mouseButton: number) => void) | null;
 
         /**
          * Text to display on the button.
@@ -187,7 +187,7 @@ namespace PH {
             if (this.doHandleButton(mouseButton)) {
                 let doCallback = this.pressedMouseButton !== null && this.mouseOver;
                 this.pressedMouseButton = null;
-                if (doCallback) {
+                if (doCallback && this.clickCallback !== null) {
                     this.clickCallback(this, mouseButton);
                 }
             }
