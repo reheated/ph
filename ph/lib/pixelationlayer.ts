@@ -76,16 +76,37 @@ namespace PH {
         destCtx: CanvasRenderingContext2D;
 
         /**
+         * Should we automatically resize the on-screen canvas on update?
+         */
+        autoResize: boolean;
+
+        /**
+         * Should we scale by the device pixel ratio, if we resize
+         * the canvas, or compute mouse coordinates?
+         */
+        accountForDevicePixelRatio: boolean;
+
+        /**
          * Construct the pixelation layer.
          *
          * @param srcCtx - 2D context for off-screen drawing.
          * @param destCtx - 2D context of an on-screen canvas. The
          * PixelationLayer will scale up the graphics and draw it here.
+         * @param autoResize - Should we automatically resize the on-screen
+         * canvas on update?
+         * @param accountForDevicePixelRatio - Should we scale by the device
+         * pixel ratio, if we resize the canvas, or compute mouse coordinates?
+         * Setting this to true will attempt to make sure that pixels of the
+         * canvas match pixels on the screen. But there is no guarantee, since
+         * the browser can report what it likes for the device pixel ratio.
          */
-        constructor(srcCtx: CanvasRenderingContext2D, destCtx: CanvasRenderingContext2D) {
+        constructor(srcCtx: CanvasRenderingContext2D, destCtx: CanvasRenderingContext2D,
+            autoResize: boolean, accountForDevicePixelRatio: boolean) {
             super();
             this.srcCtx = srcCtx;
             this.destCtx = destCtx;
+            this.autoResize = autoResize;
+            this.accountForDevicePixelRatio = accountForDevicePixelRatio;
         }
 
         /**
@@ -96,24 +117,24 @@ namespace PH {
          * @returns Off-screen coordinates.
          */
         fromCanvasCoords(canvasCoords: [number, number]): [number, number] {
-            // Convert into canvas coordinates.
-            // Apply a transformation if the canvas is scaled up
+            // Get the scaling parameters.
             let w, h, drawScale, tlx, tly: number;
-            if (this.srcCtx.canvas !== null) {
-                w = this.srcCtx.canvas.width;
-                h = this.srcCtx.canvas.height;
-                [drawScale, tlx, tly] = getCanvasPixelScalingParameters(this.srcCtx.canvas, this.destCtx.canvas);
-            }
-            else {
-                w = this.destCtx.canvas.width;
-                h = this.destCtx.canvas.height;
-                drawScale = 1;
-                tlx = 0;
-                tly = 0;
+            w = this.srcCtx.canvas.width;
+            h = this.srcCtx.canvas.height;
+            [drawScale, tlx, tly] = getCanvasPixelScalingParameters(this.srcCtx.canvas, this.destCtx.canvas);
+
+            // Check if we need to adjust to account for the device pixel ratio.
+            let modX = canvasCoords[0];
+            let modY = canvasCoords[1];
+            if(this.accountForDevicePixelRatio) {
+                let dpr = window.devicePixelRatio;
+                modX *= dpr;
+                modY *= dpr;
             }
 
-            var resX = Math.floor((canvasCoords[0] - tlx) / drawScale);
-            var resY = Math.floor((canvasCoords[1] - tly) / drawScale);
+            // Compute the off-screen coordinates.
+            var resX = Math.floor((modX - tlx) / drawScale);
+            var resY = Math.floor((modY - tly) / drawScale);
             
             return [resX, resY];
         }
@@ -138,9 +159,23 @@ namespace PH {
          */
         transformMousePosition(mousePos: MousePosition): MousePosition {
             mousePos = (mousePos === null) ? null : this.fromCanvasCoords(mousePos);
-            if(mousePos === null) mousePos = null;
-            else mousePos = this.rect().contains(mousePos)? mousePos: null;
+            if (mousePos === null) mousePos = null;
+            else mousePos = this.rect().contains(mousePos) ? mousePos : null;
             return mousePos;
+        }
+
+        /**
+         * Updates the pixelation layer. The only effect of this is: if
+         * autoResize is true, this function will make sure that the on-screen
+         * canvas's image buffer has the same dimensions as its size on the
+         * screen.
+         */
+        update(deltat: number) {
+            if (this.autoResize) {
+                resizeCanvasToSizeOnScreen(this.destCtx.canvas,
+                    this.accountForDevicePixelRatio);
+            }
+            return true;
         }
 
         /**

@@ -73,7 +73,6 @@ class Game {
         this.layerManager.update(deltat);
 
         // Graphics step.
-        PH.resizeCanvasToSizeOnScreen(this.outCtx.canvas);
         PH.fillCanvas(this.ctx, "#154617");
         this.layerManager.draw();
     }
@@ -125,7 +124,7 @@ async function start() {
     let outCtx = outGameCanvas.getContext('2d')!;
     let ctx = mainGameCanvas.getContext('2d')!;
     let layerManager = new PH.LayerManager();
-    let pixelationLayer = new PH.PixelationLayer(ctx, outCtx);
+    let pixelationLayer = new PH.PixelationLayer(ctx, outCtx, true, false);
     
     // Load a font
     let mainFont = <PH.PixelFont>await loader.getFile('m5x7.bff');
@@ -139,7 +138,7 @@ async function start() {
     // Start animation frames for while the game is loading.
     let fm = new PH.FrameManager({
         frameCallback: (deltat) => {
-            PH.resizeCanvasToSizeOnScreen(outCtx.canvas);
+            pixelationLayer.update(deltat);
             PH.fillCanvas(ctx, "#154617");
             loadingScreen.draw();
             pixelationLayer.draw();
