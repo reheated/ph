@@ -268,7 +268,7 @@ let outCtx = outGameCanvas.getContext('2d')!;
 ```
 Create a `PixelationLayer`:
 ```typescript
-let pixelationLayer = new PH.PixelationLayer(ctx, outCtx);
+let pixelationLayer = new PH.PixelationLayer(ctx, outCtx, true, false);
 ```
 If we need mouse coordinates, set up a mouse move listener:
 ```typescript
@@ -280,9 +280,9 @@ _In the draw loop_: draw everything to `ctx`, and then get the PixelationLayer t
 ```typescript
 pixelationLayer.draw();
 ```
-During both preloading and the main game loop, make sure any calls to `PH.resizeCanvasToSizeOnScreen` are applied to `outGameCanvas`, not `mainGameCanvas`. You can access the mouse position (in pixel coordinates) with `pixelationLayer.mousePos`.
+During both preloading and the main game loop, call `pixelationLayer.update` to make sure the on-screen canvas has an appropriate image buffer size. You can access the mouse position (in pixel coordinates) with `pixelationLayer.mousePos`.
 
-Alternatively, after creating the `pixelationLayer` you can add it at the top of a LayerManager. This will take care of setting up the event listener, and making the draw call.
+Alternatively, after creating the `pixelationLayer` you can add it at the top of a LayerManager. This will take care of setting up the event listener, updating the image buffer dimensions and making the draw call.
 
     
 </p></details>
