@@ -114,7 +114,7 @@ namespace PH {
          * you can use this tag to tell the buttons apart.
          */
         tag: any;
-        
+
         /**
          * Create a clickable button in a canvas.
          *
@@ -187,12 +187,13 @@ namespace PH {
             if (this.doHandleButton(mouseButton)) {
                 let doCallback = this.pressedMouseButton !== null && this.mouseOver;
                 this.pressedMouseButton = null;
-                if (doCallback && this.clickCallback !== null) {
-                    this.clickCallback(this, mouseButton);
+                if (doCallback) {
+                    if (this.clickCallback !== null) {
+                        this.clickCallback(this, mouseButton);
+                    }
+                    return false;
                 }
             }
-            // It seems best to always let a mouse up event pass through the buttons,
-            // so that other parts of the game can detect it.
             return true;
         }
 
