@@ -41,11 +41,11 @@ class Game {
         this.layerManager = layerManager;
 
         // Initialize subsystems.
-        this.spriteBoxNormal = new PH.SpriteBox(this.data.boxes, 4, 0);
-        this.spriteBoxButton = new PH.SpriteBox(this.data.boxes, 4, 1);
-        this.spriteBoxPressed = new PH.SpriteBox(this.data.boxes, 4, 2);
-        this.spriteBoxPlot = new PH.SpriteBox(this.data.boxes, 4, 3);
-        this.spriteBoxConvo = new PH.SpriteBox(this.data.boxes, 4, 4);
+        this.spriteBoxNormal = new PH.SpriteBox(this.ctx, this.data.boxes, 4, 0);
+        this.spriteBoxButton = new PH.SpriteBox(this.ctx, this.data.boxes, 4, 1);
+        this.spriteBoxPressed = new PH.SpriteBox(this.ctx, this.data.boxes, 4, 2);
+        this.spriteBoxPlot = new PH.SpriteBox(this.ctx, this.data.boxes, 4, 3);
+        this.spriteBoxConvo = new PH.SpriteBox(this.ctx, this.data.boxes, 4, 4);
 
         this.buttonDrawer = new PH.CanvasButtonSpriteDrawer(
             this.spriteBoxButton, this.spriteBoxPressed, this.mainFont);

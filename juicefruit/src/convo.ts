@@ -69,7 +69,7 @@ class ConvoLayer extends PH.Layer {
                 }
                 else {
                     // draw the box
-                    this.game.spriteBoxConvo!.draw(this.game.ctx, l, t, w, h);
+                    this.game.spriteBoxConvo!.draw(l, t, w, h);
 
                     if (c.speaker === null) {
                         // no speaker - just draw text

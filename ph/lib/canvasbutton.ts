@@ -248,7 +248,7 @@ namespace PH {
 
         draw(ctx: CanvasRenderingContext2D, b: CanvasButton) {
             let sb = (b.pressedMouseButton !== null && b.mouseOver) ? this.sbPressed : this.sbUnpressed;
-            sb.draw(ctx, b.l, b.t, b.w, b.h);
+            sb.draw(b.l, b.t, b.w, b.h);
             this.font.drawText(ctx, b.text, b.l + 4, b.t + 4);
         }
     }
