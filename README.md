@@ -177,9 +177,9 @@ Inside your main game loop, call the layer manager's update and draw functions:
 layerManager.update(deltat);
 layerManager.draw();
 ```
-Now, if your MenuLayer class overrides the Layer class's `draw` function, it will get called as part of layerManager's draw step. If you override the `update` function, it will get called as part of the LayerManager's update step. And if you override one of the mouse or keyboard handling functions (e.g., `handleClick`, it will get called on the corresponding mouse or keyboard event.
+Now, if your MenuLayer class overrides the Layer class's `draw` function, it will get called as part of layerManager's draw step. If you override the `update` function, it will get called as part of the LayerManager's update step. And if you override one of the mouse or keyboard handling functions (e.g., `handleClick`), it will get called on the corresponding mouse or keyboard event.
 
-If you have multiple layers, the layer manager's draw function will call them in order from first to last. The update function and the event handlers will call them in reverse order. Furthermore, for update and most of the event handlers, your override function must return a boolean value. If this return value is `true`, the layer manager will continue on its way. But if you return `false`, the layer manager will consider this event "caught" by your layer, and will not call the event handlers for the layers under it. It will also cancel the event so that other objects in the DOM and the browser won't try to process it.
+If you have multiple layers, the layer manager's draw function will call them in order from first to last. The update function and the event handlers will call them in reverse order. Furthermore, for update and most of the event handlers, your override function must return a boolean value. If this return value is `true`, the layer manager will continue on its way. But if you return `false`, the layer manager will consider this event "caught" by your layer, and will not call the event handlers for the layers under it. It will also cancel the event so that other objects in the DOM and the browser won't try to process it. (Note that under typical circumstances, the release of the mouse button will trigger both a `mouseUp` and a `click` event, and each of these will propagate through your layers separately.)
 
 The exception to this is `handleMouseMove`, which can't be cancelled in this way. The `handleMouseMove` function handles both the `mousemove` and `mouseout` events. It takes a parameter of type `MousePosition`, which is defined as `[number, number] | null`. A pair of numbers gives the mouse coordinates; null means that the mouse is outside the visible area.
 
@@ -282,26 +282,16 @@ let outCtx = outGameCanvas.getContext('2d')!;
 ```
 Create a `PixelationLayer`:
 ```typescript
-let pixelationLayer = new PH.PixelationLayer(ctx, outCtx);
+let pixelationLayer = new PH.PixelationLayer(ctx, outCtx, true, false);
 ```
-During both preloading and the main game loop, make sure any calls to `PH.resizeCanvasToSizeOnScreen` are applied to `outGameCanvas`, not `mainGameCanvas`.
 
-If you are using a `LayerManager`: add the `PixelationLayer` (probably at the top, or close to it):
+_In the draw loop_: draw everything to `ctx`, and then get the PixelationLayer to to scale it up:
 ```typescript
-layerManager.setTopLayers(/* other top layers, */this.pixelationLayer);
+pixelationLayer.draw();
 ```
-If you are not using a `LayerManager`:
-- In the draw loop: draw everything to `ctx`, and then get the PixelationLayer to to scale it up:
-  ```typescript
-  pixelationLayer.draw();
-  ```
-- If you ever have to get the mouse position in `mainGameCanvas` coordinates, you can calculate it as follows:
-  ```typescript
-  // e is a MouseEvent. First, convert from client coordinates to element-relative coordinates:
-  let outCanvasPos = PH.clientCoordsToElementCoords([e.clientX, e.clientY], outGameCanvas);
-  // Now convert from on-screen canvas coordinates to off-screen canvas coordinates:
-  let mainCanvasPos = pixelationLayer.transformMousePosition(outCanvasPos);
-  ```
+During both preloading and the main game loop, call `pixelationLayer.update` to make sure the on-screen canvas has an appropriate image buffer size.
+
+Alternatively, after creating the `pixelationLayer` you can add it at the top of a LayerManager. This will take care of setting up the event listener, updating the image buffer dimensions and making the draw call. It will also transform mouse coordinates for you.
 
 </p></details>
 

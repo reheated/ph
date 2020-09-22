@@ -1,6 +1,6 @@
 {
   "name": "ph",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A tool for HTML5 game development. Includes resource bundling functionality and HTTP serving for debugging.",
   "main": "ph.js",
   "scripts": {

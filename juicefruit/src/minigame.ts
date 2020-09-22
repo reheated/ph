@@ -687,6 +687,7 @@ class MinigameLayer extends PH.Layer {
         this.game.ctx.fillStyle = "#78cfe3";
         this.game.ctx.fillRect(0, 0, this.game.ctx.canvas.width, this.game.ctx.canvas.height);
 
+        this.game.ctx.save();
         this.setScreenTransform();
         this.drawBackground();
         this.drawParticles();
@@ -699,6 +700,7 @@ class MinigameLayer extends PH.Layer {
         {
             this.game.mainFont!.drawText(this.game.ctx, "GET READY", 128, 32);
         }
+        this.game.ctx.restore();
     }
 
     collDist(pos1: [number, number], pos2: [number, number])

@@ -98,7 +98,7 @@ namespace PH {
          * passed (b, mouseButton), where b is this button, and mouseButton is
          * the number of the mouse button that this button was clicked with.
          */
-        clickCallback: (b: CanvasButton, mouseButton: number) => void | null;
+        clickCallback: ((b: CanvasButton, mouseButton: number) => void) | null;
 
         /**
          * Text to display on the button.
@@ -114,7 +114,7 @@ namespace PH {
          * you can use this tag to tell the buttons apart.
          */
         tag: any;
-        
+
         /**
          * Create a clickable button in a canvas.
          *
@@ -188,11 +188,12 @@ namespace PH {
                 let doCallback = this.pressedMouseButton !== null && this.mouseOver;
                 this.pressedMouseButton = null;
                 if (doCallback) {
-                    this.clickCallback(this, mouseButton);
+                    if (this.clickCallback !== null) {
+                        this.clickCallback(this, mouseButton);
+                    }
+                    return false;
                 }
             }
-            // It seems best to always let a mouse up event pass through the buttons,
-            // so that other parts of the game can detect it.
             return true;
         }
 
@@ -247,7 +248,7 @@ namespace PH {
 
         draw(ctx: CanvasRenderingContext2D, b: CanvasButton) {
             let sb = (b.pressedMouseButton !== null && b.mouseOver) ? this.sbPressed : this.sbUnpressed;
-            sb.draw(ctx, b.l, b.t, b.w, b.h);
+            sb.draw(b.l, b.t, b.w, b.h);
             this.font.drawText(ctx, b.text, b.l + 4, b.t + 4);
         }
     }

@@ -176,7 +176,7 @@ class FarmLayer extends PH.Layer {
             for (var j = 0; j < this.GRID_W; j++) {
                 var x = j * 22 + this.FARM_LEFT;
                 var y = i * 22 + this.FARM_TOP;
-                this.game.spriteBoxPlot!.draw(this.game.ctx, x, y, 20, 20);
+                this.game.spriteBoxPlot!.draw(x, y, 20, 20);
             }
         }
 
@@ -229,36 +229,36 @@ class FarmLayer extends PH.Layer {
 
     draw() {
         // Draw the farm plots
-        this.game.spriteBoxNormal!.draw(this.game.ctx, 4, 4, 152, 104);
+        this.game.spriteBoxNormal!.draw(4, 4, 152, 104);
         this.game.mainFont!.drawText(this.game.ctx, "Farm plots", 8, 8);
 
         this.drawPlots();
 
         // Draw the calendar
-        this.game.spriteBoxNormal!.draw(this.game.ctx, 4, 112, 152, 84);
+        this.game.spriteBoxNormal!.draw(4, 112, 152, 84);
         this.game.mainFont!.drawText(this.game.ctx, "Calendar", 8, 116);
         this.drawCalendar();
 
         // Draw the cash display
-        this.game.spriteBoxButton!.draw(this.game.ctx, this.cashRect);
+        this.game.spriteBoxButton!.draw(this.cashRect);
         this.game.ctx.drawImage(this.game.data.cash, 160, 4);
         var s = this.cash.toString();
         var sx = 248 - 7 * s.length;
         this.game.mainFont!.drawText(this.game.ctx, s, sx, 8);
 
         // Draw the energy display
-        this.game.spriteBoxNormal!.draw(this.game.ctx, 256, 4, 60, 16);
+        this.game.spriteBoxNormal!.draw(256, 4, 60, 16);
         this.game.ctx.drawImage(this.game.data.energy, 256, 4);
         var s = this.energy.toString();
         var sx = 312 - 7 * s.length;
         this.game.mainFont!.drawText(this.game.ctx, s, sx, 8);
 
         // Draw the upgrades box
-        this.game.spriteBoxNormal!.draw(this.game.ctx, 160, 24, 156, 96);
+        this.game.spriteBoxNormal!.draw(160, 24, 156, 96);
         this.game.mainFont!.drawText(this.game.ctx, "Upgrades", 164, 28);
 
         // Draw the info box
-        this.game.spriteBoxNormal!.draw(this.game.ctx, 160, 124, 156, 72);
+        this.game.spriteBoxNormal!.draw(160, 124, 156, 72);
         this.drawInfoText();
 
         // Draw text
@@ -287,6 +287,10 @@ class FarmLayer extends PH.Layer {
             if (callback) callback(b);
         }
         return true;
+    }
+    
+    handleMouseMove(mousePos: PH.MousePosition) {
+        this.mousePos = mousePos;
     }
 
     handleMouseDown(): boolean {

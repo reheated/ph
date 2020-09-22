@@ -7,7 +7,18 @@ import path = require('path');
 
 
 let PHJSON = "ph.json";
+
+// Number of milliseconds between checking if we need to rebundle
 let CHECK_INTERVAL = 100;
+
+// Sometimes the bundling process fails in a way beyond our control,
+// e.g., if files got deleted in the middle of trying to rebundle.
+// This is the number of milliseconds before trying again if the bundle failed.
+let RETRY_INTERVAL = 2500;
+
+// If we retry too many times in a row and it's still failing, something
+// really is wrong, and we should let the exception fall through.
+let MAX_RETRIES = 3;
 
 interface PHSettings {
     dirResources: string;
@@ -60,6 +71,22 @@ function relativeFile(srcPath: string, destPath: string, file: string) {
     return destPath + file.slice(srcPath.length);
 }
 
+class CopyError extends Error {
+    constructor() {
+        super("Failed to copy file(s)");
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
+}
+
+function tryCopyFileSync(src: string, dest: string) {
+    try {
+        fs.copyFileSync(src, dest);
+    }
+    catch {
+        throw new CopyError();
+    }
+}
+
 function copyFilesRecursive(srcPath: string, destPath: string) {
     let staticFiles = getFilesRecursive(srcPath);
     for (let file of staticFiles) {
@@ -67,7 +94,7 @@ function copyFilesRecursive(srcPath: string, destPath: string) {
         let dest = relativeFile(srcPath, destPath, file);
         let dir = path.dirname(dest);
         fs.mkdirSync(dir, { recursive: true });
-        fs.copyFileSync(file, dest);
+        tryCopyFileSync(file, dest);
     }
 }
 
@@ -197,7 +224,7 @@ function bundle(settings: PHSettings) {
         for (let filename of getFilesRecursive(settings.dirAux)) {
             if (filename.slice(filename.length - 3) === ".js") {
                 let dest = relativeFile(settings.dirAux, settings.dirBuild, filename);
-                fs.copyFileSync(filename, dest);
+                tryCopyFileSync(filename, dest);
             }
         }
     }
@@ -234,6 +261,8 @@ class PHWatcher {
     gamePathWatchers: fs.FSWatcher[] = [];
     dirty = true;
     watchTimeout: NodeJS.Timeout | null = null;
+    retryTimeout: NodeJS.Timeout | null = null;
+    retries = 0;
 
     constructor() {
         this.settings = getSettings(PHJSON);
@@ -251,7 +280,7 @@ class PHWatcher {
                 <connect.HandleFunction>serveStatic(this.settings.dirBuild, {}))
             .use(<connect.HandleFunction>serveStatic(this.settings.dirStaticRoot, {}))
             .use('/sourcemap',
-            <connect.HandleFunction>serveStatic(this.settings.dirAux, {}))
+                <connect.HandleFunction>serveStatic(this.settings.dirAux, {}))
             .listen(this.settings.port, hostname);
 
         // Start the resource watcher.
@@ -307,9 +336,32 @@ class PHWatcher {
     }
 
     rebundle() {
+        if (this.retryTimeout !== null) {
+            clearTimeout(this.retryTimeout);
+            this.retryTimeout = null;
+        }
         console.log((new Date()).toJSON() + ": Bundling");
         this.settings = getSettings(PHJSON);
-        bundle(this.settings);
+        try {
+            bundle(this.settings);
+            this.retries = 0;
+        }
+        catch (err) {
+            this.retries += 1;
+            if (err instanceof CopyError) {
+                if(this.retries >= MAX_RETRIES) {
+                    console.log(`Copy failed too many times (${this.retries}).`)
+                    throw err;
+                }
+                console.log(`Copy failed (attempt ${this.retries}). Will retry in a moment...`);
+                this.retryTimeout = setTimeout(() => {
+                    this.dirty = true;
+                }, RETRY_INTERVAL);
+            }
+            else {
+                throw err;
+            }
+        }
     }
 }
 

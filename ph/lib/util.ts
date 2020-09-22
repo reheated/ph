@@ -117,6 +117,30 @@ namespace PH {
     }
 
     /**
+     * Create a new image from a rectangular portion of a specified image.
+     *
+     * Note that this creates an entire new image in memory. If you just want to
+     * draw a rectangular portion of an image, you can use the 9-parameter
+     * version of drawImage. However, there may be other times you want to
+     * create an entire new image: e.g., to use it as a fill pattern.
+     *
+     * @param srcImg: The original image.
+     * @param l: Left source coordinate.
+     * @param t: Top source coordinate.
+     * @param w: Width of the new image.
+     * @param h: Height of the new image.
+     * 
+     * @returns - An object that can be used as a CanvasImageSource, containing the
+     * image data for the specified portion of the original image.
+     */
+    export function partialImage(srcImg: CanvasImageSource, l: number, t: number, w: number, h: number) {
+        let result = createCanvas(w, h);
+        let ctx = result.getContext('2d')!;
+        ctx.drawImage(srcImg, l, t, w, h, 0, 0, w, h);
+        return result;
+    }
+
+    /**
      * Take an image and create a new one that changes all the RGB values to the
      * specified color, but leaves the alpha channel alone. Useful for creating
      * a new pixel font with a different color from an existing one.
