@@ -288,6 +288,10 @@ class FarmLayer extends PH.Layer {
         }
         return true;
     }
+    
+    handleMouseMove(mousePos: PH.MousePosition) {
+        this.mousePos = mousePos;
+    }
 
     handleMouseDown(): boolean {
         this.mouseDownOverPlot = this.mouseOverPlot; // ditto.
