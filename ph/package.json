@@ -9,7 +9,7 @@
   "author": "",
   "dependencies": {
     "@types/compression": "^1.7.0",
-    "compression": "^1.7.4",
+    "compression": "^1.8.1",
     "connect": "^3.7.0",
     "serve-static": "^1.16.2"
   },
